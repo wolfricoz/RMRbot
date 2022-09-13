@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 from datetime import datetime, timedelta
 import re
-
+import typing
 
 Session = sessionmaker(bind=db.engine)
 session = Session()
@@ -85,7 +85,6 @@ user: <@{exists.uid}>
 UID: {exists.uid}
 DOB: {exists.dob}""")
     @commands.command()
-    @commands.has_any_role('Moderator', 'Trial Moderator', 'Administrator')
     @adefs.check_admin_roles()
     async def dbremove(self, ctx, userid: discord.Member):
         try:
@@ -95,6 +94,17 @@ DOB: {exists.dob}""")
             await ctx.send("Removal complete")
         except:
             await ctx.send("Removal failed")
+    @commands.command()
+    @adefs.check_admin_roles()
+    async def dbremoveid(self, ctx, userid: int):
+        try:
+            exists = session.query(db.user).filter_by(uid=userid).first()
+            session.delete(exists)
+            session.commit()
+            await ctx.send("Removal complete")
+        except:
+            await ctx.send("Removal failed")
+
 
     @commands.command()
     @adefs.check_db_roles()

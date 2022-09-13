@@ -2,6 +2,7 @@
 # IMPORT THE OS MODULE.
 import logging
 import os
+import re
 import pytz
 import discord
 from datetime import datetime
@@ -15,12 +16,12 @@ import db
 # IMPORT LOAD_DOTENV FUNCTION FROM DOTENV MODULE.
 from dotenv import load_dotenv
 logger = logging.getLogger('discord')
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.WARNING)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 alogger = logging.getLogger('sqlalchemy')
-alogger.setLevel(logging.INFO)
+alogger.setLevel(logging.WARNING)
 handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='w')
 handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 alogger.addHandler(handler2)
@@ -102,6 +103,7 @@ async def on_message(message):
     listcount = 0
     if message.author.bot:
         return
+    #length counters
     if str(message.channel.id) in channels24:
         if messlength > 650:
             await modchannel.send(f"{user.mention} in {ad.mention} has posted over 650 characters. \n Character Count: {messlength}")
@@ -125,6 +127,31 @@ async def on_message(message):
 
     else:
         return
+#database sessionmaker
+Session = sessionmaker(bind=db.engine)
+session = Session()
+@bot.listen()
+async def on_message(message):
+    #Enforces lobby format
+    dobreg = re.compile("([0-9][0-9]) ([0-1]?[0-9])\/([0-3]?[0-9])\/([0-2][0-9][0-9][0-9])")
+    match = dobreg.search(message.content)
+    if message.guild is None:
+        return
+    if message.author.bot:
+        return
+    #Searches the config for the lobby for a specific guild
+    c = session.query(db.config).filter_by(guild=message.guild.id).first()
+    if message.channel.id == c.lobby:
+        if match:
+            await message.add_reaction("🤖")
+            return
+        else:
+            try:
+                await message.author.send(f"Please use format age mm/dd/yyyy \n Example: `122 01/01/1900` \n __**Do not round up your age**__ \n You can input your age and dob at: <#{c.lobby}>")
+            except:
+                await message.channel.send("Couldn't message user! Please use format age mm/dd/yyyy")
+            await message.delete()
+            return
 
 
 @bot.event
@@ -138,15 +165,13 @@ async def on_command_error(ctx, error):
         await ctx.send("You do not have permission")
     elif isinstance(error, commands.MemberNotFound):
         await ctx.send("User not found")
-    elif isinstance(error, commands.CommandInvokeError):
-        await ctx.send("Command failed: See log.")
-    else:
-        raise error
+#    elif isinstance(error, commands.CommandInvokeError):
+#        await ctx.send("Command failed: See log.")
+#    else:
+#        raise error
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 
-Session = sessionmaker(bind=db.engine)
-session = Session()
 # EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
 @bot.event
 async def on_ready():
@@ -164,7 +189,6 @@ async def on_ready():
         # INCREMENTS THE GUILD COUNTER.
         guild_count = guild_count + 1
         exists = session.query(db.config).filter_by(guild=guild.id).first()
-        print(exists)
         if exists is not None:
             pass
         else:
@@ -180,9 +204,11 @@ async def on_ready():
             session.commit()
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 1.2 Loaded and Ready to Serve")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 1.3 Loaded and Ready to Serve")
+    return guilds
 @bot.event
 async def on_guild_join(guild):
+    #adds user to database
     exists = session.query(db.config).filter_by(guild=guild.id).first()
     if exists is not None:
         pass
@@ -208,30 +234,49 @@ async def on_member_join(member):
         session.commit()
 
 def find_invite_by_code(invite_list, code):
+    #makes an invite dictionary
     for inv in invite_list:
         if inv.code == code:
             return inv
 
 @bot.listen()
 async def on_member_join(member):
+    #reads invite dictionary, and outputs user info
     invites_before_join = invites[member.guild.id]
     invites_after_join = await member.guild.invites()
 
     for invite in invites_before_join:
         if invite.uses < find_invite_by_code(invites_after_join, invite.code).uses:
-            embed = discord.Embed(description=f"""Member {member} Joined
+            if member.guild.id == 395614061393477632:
+                embed = discord.Embed(description=f"""Member {member} Joined
 Invite Code: **{invite.code}**
-Code created by: {invite.inviter}
+Code created by: {invite.inviter} ({invite.inviter.id})
 account created at: {member.created_at.strftime("%m/%d/%Y")}
 Member joined at {datetime.now().strftime("%m/%d/%Y")}
 """)
-            embed.set_image(url=member.avatar.url)
-            channel = bot.get_channel(692529154695889022)
-            await channel.send(embed=embed)
+                embed.set_image(url=member.avatar.url)
+                embed.set_footer(text=f"USERID: {member.id}")
+                channel = bot.get_channel(692529154695889022)
+                await channel.send(embed=embed)
 
-            invites[member.guild.id] = invites_after_join
+                invites[member.guild.id] = invites_after_join
 
-            return
+                return
+            if member.guild.id == 780622396297183252:
+                embed = discord.Embed(description=f"""Member {member} Joined
+Invite Code: **{invite.code}**
+Code created by: {invite.inviter} ({invite.inviter.id})
+account created at: {member.created_at.strftime("%m/%d/%Y")}
+Member joined at {datetime.now().strftime("%m/%d/%Y")}
+""")
+                embed.set_image(url=member.avatar.url)
+                embed.set_footer(text=f"USERID: {member.id}")
+                channel = bot.get_channel(1019029308620152902)
+                await channel.send(embed=embed)
+
+                invites[member.guild.id] = invites_after_join
+
+                return
 
 
 @bot.command()
