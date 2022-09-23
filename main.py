@@ -222,7 +222,7 @@ async def on_ready():
         if p is not None:
             pass
         else:
-            tr = db.permissions(guild.id, None, None, None)
+            tr = db.permissions(guild.id, None, None, None, None)
             session.add(tr)
             session.commit()
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
