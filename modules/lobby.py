@@ -46,6 +46,17 @@ class agecalc(ABC):
         print(agechecker)
         age_output = str(agechecker).split()[0]
         return age_output
+    async def removemessage(ctx, bot, user):
+        c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+        print(c.lobby)
+        channel = bot.get_channel(c.lobby)
+        messages = channel.history(limit=100)
+        count = 0
+        async for message in messages:
+            if message.author == user or user in message.mentions and count < 10:
+                count += 1
+                print(message.id)
+                await message.delete()
 
 class dblookup(ABC):
 
@@ -56,6 +67,14 @@ class dblookup(ABC):
             pass
         else:
             tr = db.user(userid.id, dob)
+            session.add(tr)
+            session.commit()
+    def dobsaveid(self, userid: int, dob):
+        exists = session.query(db.user).filter_by(uid=userid).first()
+        if exists is not None:
+            pass
+        else:
+            tr = db.user(userid, dob)
             session.add(tr)
             session.commit()
 
@@ -170,12 +189,7 @@ DOB: {exists.dob}""")
                 except:
                     await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
                 # this deletes user info
-                messages = ctx.channel.history(limit=100)
-                count = 0
-                async for message in messages:
-                    if message.author == user or user in message.mentions and count < 10:
-                        count += 1
-                        await message.delete()
+                await agecalc.removemessage(ctx, bot, user)
             else:
                 waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
                 await user.add_roles(waiting)
@@ -199,8 +213,6 @@ DOB: {exists.dob}""")
                      f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
             except:
                 await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
-
-
 
     @commands.command(name="21a")
     @adefs.check_db_roles()
@@ -261,12 +273,7 @@ DOB: {exists.dob}""")
                     await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
 
                 # this deletes user info
-                messages = ctx.channel.history(limit=100)
-                count = 0
-                async for message in messages:
-                    if message.author == user or user in message.mentions and count < 10:
-                        count += 1
-                        await message.delete()
+                await agecalc.removemessage(ctx, bot, user)
             else:
                 waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
                 await user.add_roles(waiting)
@@ -353,12 +360,7 @@ DOB: {exists.dob}""")
                 except:
                     await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
                 # this deletes user info
-                messages = ctx.channel.history(limit=100)
-                count = 0
-                async for message in messages:
-                    if message.author == user or user in message.mentions and count < 10:
-                        count += 1
-                        await message.delete()
+                await agecalc.removemessage(ctx, bot, user)
             else:
                 waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
                 await user.add_roles(waiting)
@@ -426,13 +428,17 @@ DOB: {exists.dob}""")
 
     @commands.command()
     @adefs.check_admin_roles()
-    async def agefix(self, ctx: commands.Context, user: discord.Member, age, dob):
+    async def agefix(self, ctx: commands.Context, user: typing.Union[discord.Member, int], age, dob):
         c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
         agelog = c.agelog
         channel = self.bot.get_channel(agelog)
         regdob = agecalc.regex(dob)
         await ctx.message.delete()
-        userdata = session.query(db.user).filter_by(uid=user.id).first()
+        try:
+            user= user.id
+        except:
+            pass
+        userdata = session.query(db.user).filter_by(uid=user).first()
         userdata.dob = regdob
         session.commit()
         await channel.send(f"""user: {user.mention}
@@ -441,6 +447,35 @@ DOB: {dob}
 User info:  UID: {user.id} 
 
 Entry uppdated by: {ctx.author}""")
+
+    @commands.command()
+    @adefs.check_admin_roles()
+    async def ageadd(self, ctx: commands.Context, user: typing.Union[discord.Member, int], age, dob):
+        c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+        agelog = c.agelog
+        channel = self.bot.get_channel(agelog)
+        regdob = agecalc.regex(dob)
+
+        await ctx.message.delete()
+        if user is discord.Member:
+            await dblookup.dobsave(self, user, regdob)
+        else:
+            await dblookup.dobsaveid(self, user, regdob)
+        try:
+            await channel.send(f"""user: {user.name}
+Age: {age}
+DOB: {dob}
+User info:  UID: {user.id} 
+
+Entry uppdated by: {ctx.author}""")
+        except:
+            await channel.send(f"""**USER ADDED**
+Age: {age}
+DOB: {dob}
+UID: {user} 
+
+Entry uppdated by: {ctx.author}""")
+
 
 
 async def setup(bot: commands.Bot):

@@ -4,6 +4,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
+import pymysql
+pymysql.install_as_MySQLdb()
 load_dotenv('main.env')
 DBTOKEN = os.getenv("DB")
 
@@ -49,12 +51,14 @@ class permissions (base):
    admin = Column(Integer)
    mod = Column(Integer)
    trial = Column(Integer)
+   lobbystaff = Column(Integer, default=None)
 
-   def __init__(self,guild, admin, mod, trial):
+   def __init__(self,guild, admin, mod, trial, lobbystaff):
        self.guild = guild
        self.admin = admin
        self.mod = mod
        self.trial = trial
+       self.lobbystaff = lobbystaff
 
 class warnings (base):
 

@@ -5,6 +5,7 @@ import adefs
 from abc import ABC, abstractmethod
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
+import typing
 
 import db
 
@@ -22,7 +23,15 @@ class advert(ABC):
         if len(msg.content) > 2000:
             await lc.send(msg.content[0:2000])
             await lc.send(msg.content[2000:4000])
-        await msg.delete()
+        if msg.channel.type is discord.ChannelType.text:
+            print(f"This is a Text channel {msg.channel.id}")
+            await msg.delete()
+        elif msg.channel.type is discord.ChannelType.public_thread:
+            print(f"This is a Thread channel {msg.channel.id}")
+            await msg.channel.delete()
+        else:
+            print("Channel was neither")
+            await msg.delete()
 
     async def sendadvertuser(ctx, msg, warning):
         user = msg.author
@@ -37,6 +46,7 @@ class advert(ABC):
         except:
             await ctx.send("Can't DM user")
             pass
+
     async def increasewarnings(ctx, user):
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         if exists is not None:
@@ -279,7 +289,7 @@ If you have any more questions, our staff team is always available to help you.
 
     @commands.command(aliases=['adpic', 'pictures'])
     @adefs.check_db_roles()
-    async def adpictures(self, ctx, msgID: discord.Message):
+    async def adpictures(self, ctx, msg: discord.Message):
         "Warn users who have more than 3 images in their advert"
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
@@ -298,16 +308,26 @@ If you have any more questions, our staff team is always available to help you.
         await advert.logadvert(ctx, msg, warning, loggingchannel)
         await advert.sendadvertuser(ctx, msg, warning)
 
-    @commands.command(aliases=[])
+    @commands.command(aliases=['ft'])
     @adefs.check_db_roles()
-    async def adtest(self, ctx, link: discord.Message):
+    async def forumtest(self, ctx, msg: discord.Message):
         bot = self.bot
+        loggingchannel = bot.get_channel(997282508523704350)
         await ctx.message.delete()
-        await ctx.send(link.channel)
-        await ctx.send(link.content)
+        adchannel = bot.get_channel(763058339088957548)
+        user = msg.author
+        # adds warning to database
+        swarnings = await advert.increasewarnings(ctx, user)
+        warning = """Test""".format(msg.channel.mention)
+        await adchannel.send(
+            f"{ctx.message.author.mention} has warned {user.mention} Test {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+        # Logs the advert and sends it to the user.
+        await advert.logadvert(ctx, msg, warning, loggingchannel)
+        await advert.sendadvertuser(ctx, msg, warning)
+
 
     # allows staff to remove user's warnings
-    @commands.command(aliases=["adr", "warningremove","warnremove","warnrem"])
+    @commands.command(aliases=["warnrem"])
     @adefs.check_admin_roles()
     async def adwarningremove(self, ctx, user : discord.Member, number: int = 1):
         bot = self.bot
@@ -320,7 +340,7 @@ If you have any more questions, our staff team is always available to help you.
         except:
             await ctx.send("Can't edit user's warnings")
 #allows staff to change user's warnings
-    @commands.command(aliases=[])
+    @commands.command(aliases=["warnset"])
     @adefs.check_admin_roles()
     async def adwarningset(self, ctx, user : discord.Member, number: int):
         bot = self.bot
@@ -351,8 +371,8 @@ If you have any more questions, our staff team is always available to help you.
         else:
             ctx.send("This is a developer only command")
 #looks up user's warnings
-    @commands.command(aliases=[])
-    @adefs.check_admin_roles()
+    @commands.command(aliases=["warncheck"])
+    @adefs.check_db_roles()
     async def warnlookup(self, ctx, user:discord.Member):
         bot = self.bot
         await ctx.message.delete()
