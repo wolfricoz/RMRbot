@@ -16,12 +16,12 @@ import db
 # IMPORT LOAD_DOTENV FUNCTION FROM DOTENV MODULE.
 from dotenv import load_dotenv
 logger = logging.getLogger('discord')
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 alogger = logging.getLogger('sqlalchemy')
-alogger.setLevel(logging.WARNING)
+alogger.setLevel(logging.ERROR)
 handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='w')
 handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 alogger.addHandler(handler2)
@@ -49,6 +49,12 @@ db.engine.echo = False
 @commands.is_owner()
 async def stop(ctx):
     await ctx.send("Rmrbot shutting down")
+    exit()
+@bot.command()
+@commands.is_owner()
+async def restart(ctx):
+    await ctx.send("Rmrbot shutting down")
+    exec(open("main.py").read())
     exit()
 
 invites = {}
@@ -82,13 +88,13 @@ async def on_message(message):
             f"{message.author.mention}: You can repost in {message.channel.mention} at: {cooldown.strftime('%m/%d/%Y %I:%M:%S %p')} EST \nBy posting in this channel, you are agreeing to our search rules")
     #24h Version
     if str(message.channel.id) in channels24 and status == True:
-        current = datetime.now()
+        current = datetime.now(tz)
         cooldown = current + timedelta(hours=24)
         await message.author.send(
             f"{message.author.mention}: You can repost in {message.channel.mention} at: {cooldown.strftime('%m/%d/%Y %I:%M:%S %p')} EST \nBy posting in this channel, you are agreeing to our search rules")
     #single post version
     if str(message.channel.id) in single and status == True:
-        current = datetime.now()
+        current = datetime.now(tz)
         await message.author.send(
             "{}: You can repost in {} after the next purge.".format(message.author.mention, message.channel.mention) + "\nBy posting in this channel, you are agreeing to our search rules")
     await bot.process_commands(message)
@@ -133,26 +139,40 @@ session = Session()
 @bot.listen()
 async def on_message(message):
     #Enforces lobby format
-    dobreg = re.compile("([0-9][0-9]) ([0-1]?[0-9])\/([0-3]?[0-9])\/([0-2][0-9][0-9][0-9])")
+    dobreg = re.compile("([0-9][0-9]) (1[0-2]|[0]?[0-9]|1)\/([0-3]?[0-9])\/([0-2][0-9][0-9][0-9])")
     match = dobreg.search(message.content)
     if message.guild is None:
         return
     if message.author.bot:
         return
     #Searches the config for the lobby for a specific guild
+    p = session.query(db.permissions).filter_by(guild=message.guild.id).first()
     c = session.query(db.config).filter_by(guild=message.guild.id).first()
-    if message.channel.id == c.lobby:
-        if match:
-            await message.add_reaction("🤖")
-            return
-        else:
-            try:
-                await message.author.send(f"Please use format age mm/dd/yyyy \n Example: `122 01/01/1900` \n __**Do not round up your age**__ \n You can input your age and dob at: <#{c.lobby}>")
-            except:
-                await message.channel.send("Couldn't message user! Please use format age mm/dd/yyyy")
-            await message.delete()
-            return
-
+    staff = [p.mod, p.admin, p.trial]
+    #reminder: change back to c.lobby
+    if message.author.get_role(p.mod) is None and message.author.get_role(p.admin) is None and message.author.get_role(p.trial) is None:
+        if message.channel.id == c.lobby :
+            if match:
+                channel = bot.get_channel(c.modlobby)
+                await message.add_reaction("🤖")
+                if int(match.group(1)) < 18:
+                    await channel.send(f"<@&{p.lobbystaff}> {message.author.mention} has given an age under the age of 18: {message.content}")
+                if int(match.group(1)) > 18 and not int(match.group(1)) > 20:
+                    await channel.send(f"<@&{p.lobbystaff}> user has given age. You can let them through with `?18a {message.author.mention} {message.content}`")
+                elif int(match.group(1)) > 21 and not int(match.group(1)) > 24:
+                    await channel.send(f"<@&{p.lobbystaff}> user has given age. You can let them through with `?21a {message.author.mention} {message.content}`")
+                elif int(match.group(1)) > 25:
+                    await channel.send(f"<@&{p.lobbystaff}> user has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
+                return
+            else:
+                try:
+                    await message.author.send(f"Please use format age mm/dd/yyyy \n Example: `122 01/01/1900` \n __**Do not round up your age**__ \n You can input your age and dob at: <#{c.lobby}>")
+                except:
+                    await message.channel.send(f"Couldn't message {message.author.mention}! Please use format age mm/dd/yyyy \n Example: `122 01/01/1900")
+                await message.delete()
+                return
+    else:
+        pass
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -165,10 +185,13 @@ async def on_command_error(ctx, error):
         await ctx.send("You do not have permission")
     elif isinstance(error, commands.MemberNotFound):
         await ctx.send("User not found")
-#    elif isinstance(error, commands.CommandInvokeError):
-#        await ctx.send("Command failed: See log.")
-#    else:
-#        raise error
+    elif isinstance(error, commands.CommandInvokeError):
+        await ctx.send("Command failed: See log.")
+        await ctx.send(error)
+        raise error
+    else:
+        await ctx.send(error)
+        raise error
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 
@@ -204,7 +227,7 @@ async def on_ready():
             session.commit()
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 1.3 Loaded and Ready to Serve")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 1.5: Stronger than before")
     return guilds
 @bot.event
 async def on_guild_join(guild):
