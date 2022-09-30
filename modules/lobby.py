@@ -428,25 +428,45 @@ DOB: {exists.dob}""")
 
     @commands.command()
     @adefs.check_admin_roles()
-    async def agefix(self, ctx: commands.Context, user: typing.Union[discord.Member, int], age, dob):
+    async def agefix(self, ctx: commands.Context, user: discord.Member, age, dob):
+        "Updates the database entry for an user in the server"
         c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
         agelog = c.agelog
         channel = self.bot.get_channel(agelog)
         regdob = agecalc.regex(dob)
         await ctx.message.delete()
-        try:
-            user= user.id
-        except:
-            pass
-        userdata = session.query(db.user).filter_by(uid=user).first()
+        userdata = session.query(db.user).filter_by(uid=user.id).first()
         userdata.dob = regdob
         session.commit()
-        await channel.send(f"""user: {user.mention}
+        await ctx.send(f"Entry for {user} updated to: {age} {regdob}")
+        await channel.send(f"""**USER UPDATED**
+user: {user.mention}
 Age: {age}
 DOB: {dob}
 User info:  UID: {user.id} 
 
 Entry uppdated by: {ctx.author}""")
+
+    @commands.command()
+    @adefs.check_admin_roles()
+    async def agefixid(self, ctx: commands.Context, userid: int, age, dob):
+        "Updates the database entry for an user in the server when user ISN'T in the server"
+        c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+        agelog = c.agelog
+        channel = self.bot.get_channel(agelog)
+        regdob = agecalc.regex(dob)
+        await ctx.message.delete()
+        userdata = session.query(db.user).filter_by(uid=userid).first()
+        userdata.dob = regdob
+        session.commit()
+        await ctx.send(f"Entry for {userid} updated to: {age} {regdob}")
+        await channel.send(f"""**USER UPDATED**
+(User not in server)
+Age: {age}
+DOB: {dob}
+User info:  UID: {userid} 
+
+Entry updated by: {ctx.author}""")
 
     @commands.command()
     @adefs.check_admin_roles()
@@ -474,7 +494,7 @@ Age: {age}
 DOB: {dob}
 UID: {user} 
 
-Entry uppdated by: {ctx.author}""")
+Entry updated by: {ctx.author}""")
 
 
 

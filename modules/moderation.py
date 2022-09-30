@@ -1,9 +1,10 @@
 from discord.ext import commands
+from discord import app_commands
 import discord
 import adefs
 from datetime import datetime
 from abc import ABC, abstractmethod
-
+from discord.app_commands import Choice
 class moduser(ABC):
     @abstractmethod
     async def userbanned(self, ctx, member, bot, reason):
@@ -48,11 +49,12 @@ class moduser(ABC):
     async def warnlog(ctx, member, reason, guild):
         embed = discord.Embed(title=f"{member.name} warned", description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
         embed.set_footer(text=datetime.now().strftime('%m/%d/%Y, %H:%M:%S'))
+        await ctx.send(embed=embed)
         if guild.id == 395614061393477632:
             log = ctx.bot.get_channel(537365631675400192)
             await log.send(embed=embed)
         if guild.id == 780622396297183252:
-            log = ctx.bot.get_channel(537365631675400192)
+            log = ctx.bot.get_channel(780622396595372039)
             await log.send(embed=embed)
 
 class moderation(commands.Cog, name="Moderation"):
@@ -84,9 +86,15 @@ UID: {user.id}
 username: {user}
 age: {age}""")
 
-    @commands.command(aliases=["aban"])
+    @commands.hybrid_command(name="ban", aliases=["aban"], description="Bans user from all roleplay meets servers")
+    @app_commands.choices(type=[
+        Choice(name="id", value="id"),
+        Choice(name="underage", value="underage"),
+        Choice(name="community", value="community"),
+        Choice(name="custom", value="custom"),
+    ])
     @adefs.check_admin_roles()
-    async def ban(self, ctx, type="default", member : discord.Member=None,*, reason="You have been banned by an admin"):
+    async def ban(self, ctx, type: Choice[str], member : discord.Member,*, reason:str="You have been banned by an admin"):
         bot = self.bot
         await ctx.message.delete()
         match type.lower():

@@ -28,6 +28,7 @@ alogger.addHandler(handler2)
 # LOADS THE .ENV FILE THAT RESIDES ON THE SAME LEVEL AS THE SCRIPT.
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
+spec = os.getenv('spec')
 channels24 = os.getenv('channels24')
 single = os.getenv('single')
 test = os.getenv('test')
@@ -54,7 +55,7 @@ async def stop(ctx):
 @commands.is_owner()
 async def restart(ctx):
     await ctx.send("Rmrbot shutting down")
-    exec(open("main.py").read())
+    exec(open("restart.py").read())
     exit()
 
 invites = {}
@@ -122,6 +123,14 @@ async def on_message(message):
             await message.add_reaction("❓")
         if messlength > 600:
             await message.add_reaction("🤖")
+        for i in message.content:
+            if i == "-" or i == "•" or i == "»":
+                listcount += 1
+        if listcount >= 10:
+            await modchannel.send(f"{user.mention} in {ad.mention} has potentially posted a list with too many options. \n list Count: {listcount}")
+        else:
+            pass
+    elif str(message.channel.id) in spec:
         for i in message.content:
             if i == "-" or i == "•" or i == "»":
                 listcount += 1
@@ -222,11 +231,12 @@ async def on_ready():
         if p is not None:
             pass
         else:
-            tr = db.permissions(guild.id, None, None, None)
+            tr = db.permissions(guild.id, None, None, None, None)
             session.add(tr)
             session.commit()
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
+    await bot.tree.sync()
     await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 1.5: Stronger than before")
     return guilds
 @bot.event
