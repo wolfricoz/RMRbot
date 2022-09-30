@@ -60,14 +60,6 @@ async def restart(ctx):
 
 invites = {}
 
-# slash commands
-''''@slash.slash(
-    name="sher",
-    description="A screechy void",
-    guild_ids="395614061393477632"
-)'''
-'''channel : discord.TextChannel,'''
-
 @bot.command(name="sher", description="Oh god")
 async def sher(ctx):
     await ctx.send(f"<:void:654990134957178901> **SCREEEEEEECHES**")
