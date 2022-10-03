@@ -12,7 +12,9 @@ session = Session()
 
 def check_db_roles():
     async def pred(ctx):
+        print(ctx.guild.id)
         modrole = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
+        print(modrole.mod)
         user_roles = ctx.message.author.roles
         if ctx.author.get_role(modrole.mod) is not None:
             return True
@@ -28,7 +30,9 @@ def check_db_roles():
     return commands.check(pred)
 def check_admin_roles():
     async def pred(ctx):
+        print(ctx.guild.id)
         modrole = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
+        print(modrole.mod)
         user_roles = ctx.message.author.roles
         if ctx.author.get_role(modrole.admin) is not None:
             return True

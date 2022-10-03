@@ -5,7 +5,7 @@ import db
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 import typing
-from discord import app_commands
+
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
@@ -49,10 +49,6 @@ class config(commands.Cog, name="config"):
                 p.trial = input.id
                 session.commit()
                 await ctx.send(f"Value **trial** role has been updated to {input.id}")
-            case "lobbystaff":
-                p.lobbystaff = input.id
-                session.commit()
-                await ctx.send(f"Value **lobbyteam** role has been updated to {input.id}")
             case default:
                 await ctx.send("""**Config options**: 
 • lobby #channel
@@ -61,8 +57,8 @@ class config(commands.Cog, name="config"):
 • general #channel
 • admin @role
 • mod @role
-• trial @role
-• lobbystaff @role""")
+• trial @role""")
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(config(bot))

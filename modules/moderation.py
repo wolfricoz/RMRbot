@@ -1,10 +1,9 @@
 from discord.ext import commands
-from discord import app_commands
 import discord
 import adefs
 from datetime import datetime
 from abc import ABC, abstractmethod
-from discord.app_commands import Choice
+
 class moduser(ABC):
     @abstractmethod
     async def userbanned(self, ctx, member, bot, reason):
@@ -17,7 +16,7 @@ class moduser(ABC):
                 if user is not None:
                     await member.send(
                         f"You've been banned from {guild} with reason: \n {reason} \n\n To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com")
-                    await user.ban(reason=reason, delete_message_days=0)
+                    #await user.ban(reason=reason)
                     await moduser.banlog(ctx, member, reason, guild)
                     rguilds.append(guild.name)
                 else:
@@ -49,12 +48,11 @@ class moduser(ABC):
     async def warnlog(ctx, member, reason, guild):
         embed = discord.Embed(title=f"{member.name} warned", description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
         embed.set_footer(text=datetime.now().strftime('%m/%d/%Y, %H:%M:%S'))
-        await ctx.send(embed=embed)
         if guild.id == 395614061393477632:
             log = ctx.bot.get_channel(537365631675400192)
             await log.send(embed=embed)
         if guild.id == 780622396297183252:
-            log = ctx.bot.get_channel(780622396595372039)
+            log = ctx.bot.get_channel(537365631675400192)
             await log.send(embed=embed)
 
 class moderation(commands.Cog, name="Moderation"):
@@ -86,15 +84,9 @@ UID: {user.id}
 username: {user}
 age: {age}""")
 
-    @commands.hybrid_command(name="ban", aliases=["aban"], description="Bans user from all roleplay meets servers")
-    @app_commands.choices(type=[
-        Choice(name="id", value="id"),
-        Choice(name="underage", value="underage"),
-        Choice(name="community", value="community"),
-        Choice(name="custom", value="custom"),
-    ])
+    @commands.command(aliases=["aban"])
     @adefs.check_admin_roles()
-    async def ban(self, ctx, type: Choice[str], member : discord.Member,*, reason:str="You have been banned by an admin"):
+    async def ban(self, ctx, type, member : discord.Member=None,*, reason="You have been banned by an admin"):
         bot = self.bot
         await ctx.message.delete()
         match type.lower():
@@ -115,27 +107,20 @@ age: {age}""")
     @commands.command(aliases=["k"])
     @adefs.check_db_roles()
     async def kick(self, ctx, user: discord.Member,*, reason=None):
-        try:
-            await user.send(f"you've been kicked from {ctx.guild.name} for {reason} \n \n You may rejoin once your behavior improves.")
-        except:
-            await ctx.send("Error: user could not be dmed.")
+        await user.send(f"you've been kicked from {ctx.guild.name} for {reason} \n \n You may rejoin once your behavior improves.")
         await user.kick(reason=reason)
         await moduser.kicklog(ctx, user, reason, ctx.guild)
-        await ctx.message.delete()
 
     @commands.command(aliases=["w"])
     @adefs.check_db_roles()
     async def warn(self, ctx, user: discord.Member,*, reason=None):
         await user.send(f"{ctx.guild.name} **__WARNING__**: You've been warned for: {reason} ")
-        await ctx.send(f"{user.mention} has been warned about {reason}")
         await moduser.warnlog(ctx, user, reason, ctx.guild)
-        await ctx.message.delete()
     @commands.command(aliases=["n"])
     @adefs.check_db_roles()
     async def notify(self, ctx, user: discord.Member,*, reason=None):
         await user.send(f"{ctx.guild.name} **__Notification__**: {reason} ")
         await ctx.send(f"{user.mention} has been notified about {reason}")
-        await ctx.message.delete()
 
 
 
