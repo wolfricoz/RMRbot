@@ -5,6 +5,7 @@ import os
 import re
 import pytz
 import discord
+import jsonmaker
 from datetime import datetime
 from discord.ext import commands
 from sqlalchemy import create_engine
@@ -13,6 +14,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from discord import app_commands
 import db
+from discord import Interaction
+from discord.app_commands import AppCommandError
 # IMPORT LOAD_DOTENV FUNCTION FROM DOTENV MODULE.
 from dotenv import load_dotenv
 logger = logging.getLogger('discord')
@@ -175,6 +178,7 @@ async def on_message(message):
     else:
         pass
 
+#error logging for regular commands
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -193,6 +197,14 @@ async def on_command_error(ctx, error):
     else:
         await ctx.send(error)
         raise error
+#error logging for app commands (slash commands)
+async def on_app_command_error(
+        interaction: Interaction,
+        error: AppCommandError
+):
+    await interaction.channel.send(f"Command failed: {error}")
+    print(error)
+    raise error
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 
@@ -216,20 +228,28 @@ async def on_ready():
         if exists is not None:
             pass
         else:
-            tr = db.config(guild.id, None, None, None, None)
-            session.add(tr)
-            session.commit()
+            try:
+                tr = db.config(guild.id, None, None, None, None)
+                session.add(tr)
+                session.commit()
+            except:
+                print("Database error, rolled back")
+                session.rollback()
         p = session.query(db.permissions).filter_by(guild=guild.id).first()
         if p is not None:
             pass
         else:
-            tr = db.permissions(guild.id, None, None, None, None)
-            session.add(tr)
-            session.commit()
+            try:
+                tr = db.permissions(guild.id, None, None, None, None)
+                session.add(tr)
+                session.commit()
+            except:
+                print("Database error, rolled back")
+                session.rollback()
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 1.5: Stronger than before")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.0: Less questions, more slashing.")
     return guilds
 @bot.event
 async def on_guild_join(guild):
@@ -238,25 +258,38 @@ async def on_guild_join(guild):
     if exists is not None:
         pass
     else:
-        tr = config(guild.id, None, None, None, None)
-        session.add(tr)
-        session.commit()
+        try:
+            tr = config(guild.id, None, None, None, None)
+            session.add(tr)
+            session.commit()
+        except:
+            print("Database error, rolled back")
+            session.rollback()
     p = session.query(db.permissions).filter_by(guild=guild.id).first()
     if p is not None:
         pass
     else:
-        tr = permissions(guild.id, None, None, None)
-        session.add(tr)
-        session.commit()
+        try:
+            tr = permissions(guild.id, None, None, None)
+            session.add(tr)
+            session.commit()
+        except:
+            print("Database error, rolled back")
+            session.rollback()
 @bot.event
 async def on_member_join(member):
     add = session.query(db.warnings).filter_by(uid=member.id).first()
     if add is not None:
         pass
     else:
-        tr = warnings(member.id, 0)
-        session.add(tr)
-        session.commit()
+        try:
+            tr = warnings(member.id, 0)
+            session.add(tr)
+            session.commit()
+        except:
+            print("Database error, rolled back")
+            session.rollback()
+    await jsonmaker.configer.create(member.id, member)
 
 def find_invite_by_code(invite_list, code):
     #makes an invite dictionary
@@ -279,7 +312,10 @@ Code created by: {invite.inviter} ({invite.inviter.id})
 account created at: {member.created_at.strftime("%m/%d/%Y")}
 Member joined at {datetime.now().strftime("%m/%d/%Y")}
 """)
-                embed.set_image(url=member.avatar.url)
+                try:
+                    embed.set_image(url=member.avatar.url)
+                except:
+                    pass
                 embed.set_footer(text=f"USERID: {member.id}")
                 channel = bot.get_channel(692529154695889022)
                 await channel.send(embed=embed)
@@ -294,7 +330,10 @@ Code created by: {invite.inviter} ({invite.inviter.id})
 account created at: {member.created_at.strftime("%m/%d/%Y")}
 Member joined at {datetime.now().strftime("%m/%d/%Y")}
 """)
-                embed.set_image(url=member.avatar.url)
+                try:
+                    embed.set_image(url=member.avatar.url)
+                except:
+                    pass
                 embed.set_footer(text=f"USERID: {member.id}")
                 channel = bot.get_channel(1019029308620152902)
                 await channel.send(embed=embed)
@@ -308,7 +347,10 @@ Member joined at {datetime.now().strftime("%m/%d/%Y")}
 @commands.is_owner()
 async def addall(ctx):
     count = 0
-    for member in ctx.guild.members:
+    guildmembers = ctx.guild.members
+    print(guildmembers)
+    for member in guildmembers:
+        await jsonmaker.configer.create(member.id, member)
         add = session.query(db.warnings).filter_by(uid=member.id).first()
         if add is not None:
             pass
@@ -318,6 +360,7 @@ async def addall(ctx):
             session.add(tr)
             session.commit()
         continue
+
     await ctx.send(f"added {count} members to the database")
 #cogloader
 @bot.event
@@ -346,6 +389,7 @@ async def cogreload(ctx):
             filesloaded.append(filename[:-3])
     fp = ', '.join(filesloaded)
     await ctx.send(f"Modules loaded: {fp}")
+    await bot.tree.sync()
 
 
 

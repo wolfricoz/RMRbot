@@ -5,6 +5,12 @@ import adefs
 from datetime import datetime
 from abc import ABC, abstractmethod
 from discord.app_commands import Choice
+import jsonmaker
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select, column
+import db
+Session = sessionmaker(bind=db.engine)
+session = Session()
 class moduser(ABC):
     @abstractmethod
     async def userbanned(self, ctx, member, bot, reason):
@@ -14,14 +20,18 @@ class moduser(ABC):
         else:
             for guild in bot.guilds:
                 user = guild.get_member(member.id)
-                if user is not None:
+                user2 = await bot.fetch_user(member.id)
+                try:
                     await member.send(
                         f"You've been banned from {guild} with reason: \n {reason} \n\n To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com")
-                    await user.ban(reason=reason, delete_message_days=0)
+                    await guild.ban(user2, reason=reason, delete_message_days=0)
                     await moduser.banlog(ctx, member, reason, guild)
                     rguilds.append(guild.name)
+                except:
+                    print(f"{guild} could not ban, permissions?")
+                """if user is not None:
                 else:
-                    await ctx.followup.send(f"User was not in {guild}, could not ban. Please do this manually.")
+                    await ctx.followup.send(f"User was not in {guild}, could not ban. Please do this manually.")"""
             print(rguilds)
             guilds = ", ".join(rguilds)
             embed = discord.Embed(title=f"{member.name} banned", description=reason)
@@ -32,29 +42,29 @@ class moduser(ABC):
         embed = discord.Embed(title=f"{member.name} Banned", description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
         embed.set_footer(text=datetime.now().strftime('%m/%d/%Y, %H:%M:%S'))
         if guild.id == 395614061393477632:
-            log = ctx.bot.get_channel(695112426642997279)
+            log = guild.get_channel(695112426642997279)
             await log.send(embed=embed)
         if guild.id == 780622396297183252:
-            log = ctx.bot.get_channel(851651921823268874)
+            log = guild.get_channel(851651921823268874)
             await log.send(embed=embed)
     async def kicklog(ctx, member, reason, guild):
         embed = discord.Embed(title=f"{member.name} kicked", description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
         embed.set_footer(text=datetime.now().strftime('%m/%d/%Y, %H:%M:%S'))
         if guild.id == 395614061393477632:
-            log = ctx.bot.get_channel(695112426642997279)
+            log = guild.get_channel(537365631675400192)
             await log.send(embed=embed)
         if guild.id == 780622396297183252:
-            log = ctx.bot.get_channel(851651921823268874)
+            log = guild.get_channel(851651921823268874)
             await log.send(embed=embed)
     async def warnlog(ctx, member, reason, guild):
         embed = discord.Embed(title=f"{member.name} warned", description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
         embed.set_footer(text=datetime.now().strftime('%m/%d/%Y, %H:%M:%S'))
-        await ctx.send(embed=embed)
+        await ctx.channel.send(embed=embed)
         if guild.id == 395614061393477632:
-            log = ctx.bot.get_channel(537365631675400192)
+            log = guild.get_channel(537365631675400192)
             await log.send(embed=embed)
         if guild.id == 780622396297183252:
-            log = ctx.bot.get_channel(780622396595372039)
+            log = guild.get_channel(780622396595372039)
             await log.send(embed=embed)
 
 class moderation(commands.Cog, name="Moderation"):
@@ -85,7 +95,6 @@ reason {reason}""")
 UID: {user.id}
 username: {user}
 age: {age}""")
-
     @app_commands.command(name="ban", description="Bans user from all roleplay meets servers")
     @app_commands.choices(type=[
         Choice(name="Id", value="id"),
@@ -94,7 +103,7 @@ age: {age}""")
         Choice(name="Custom", value="custom"),
     ])
     @adefs.check_admin_roles()
-    async def ban(self, interaction: discord.Interaction, type: Choice[str], member : discord.Member, *, reason:str= "You have been banned by an admin"):
+    async def ban(self, interaction: discord.Interaction, type: Choice[str], member : discord.User, *, reason:str= "You have been banned by an admin"):
         await interaction.response.defer(ephemeral=True)
         bot = self.bot
         match type.value:
@@ -111,7 +120,6 @@ age: {age}""")
                 await moduser.userbanned(self, interaction, member, bot, reason)
             case default:
                 await interaction.followup.send("Options:\n- ID @user \n- underage @user \n- community @user  \n- Custom @user reason")
-
     @commands.command(aliases=["k"])
     @adefs.check_db_roles()
     async def kick(self, ctx, user: discord.Member,*, reason=None):
@@ -122,25 +130,31 @@ age: {age}""")
         await user.kick(reason=reason)
         await moduser.kicklog(ctx, user, reason, ctx.guild)
         await ctx.message.delete()
+    @app_commands.command(name="warn")
+    @adefs.check_slash_db_roles()
+    async def warn(self, interaction: discord.Interaction, user: discord.Member,*, reason:str):
+        await interaction.response.defer(ephemeral=True)
+        await user.send(f"{interaction.guild.name} **__WARNING__**: You've been warned for: {reason} ")
+        await jsonmaker.configer.addwarning(self, user, interaction, reason)
+        await moduser.warnlog(interaction, user, reason, interaction.guild)
+        await interaction.followup.send(f"{user.mention} has been warned about {reason}")
+    @app_commands.command(name="notify")
+    @adefs.check_slash_db_roles()
+    async def notify(self, interaction: discord.Interaction, user: discord.Member,*, reason:str):
+        await interaction.response.defer()
+        await user.send(f"{interaction.guild.name} **__Notification__**: {reason} ")
+        await interaction.followup.send(f"{user.mention} has been notified about {reason}")
 
-    @commands.command(aliases=["w"])
-    @adefs.check_db_roles()
-    async def warn(self, ctx, user: discord.Member,*, reason=None):
-        await user.send(f"{ctx.guild.name} **__WARNING__**: You've been warned for: {reason} ")
-        await ctx.send(f"{user.mention} has been warned about {reason}")
-        await moduser.warnlog(ctx, user, reason, ctx.guild)
-        await ctx.message.delete()
-    @commands.command(aliases=["n"])
-    @adefs.check_db_roles()
-    async def notify(self, ctx, user: discord.Member,*, reason=None):
-        await user.send(f"{ctx.guild.name} **__Notification__**: {reason} ")
-        await ctx.send(f"{user.mention} has been notified about {reason}")
-        await ctx.message.delete()
-
-
-
-
-
+    @app_commands.command(name="warnings")
+    @adefs.check_slash_db_roles()
+    async def warns(self, interaction:discord.Interaction, user:discord.Member):
+        await interaction.response.defer()
+        bot = self.bot
+        exists = session.query(db.warnings).filter_by(uid=user.id).first()
+        embed = discord.Embed(title=f"{user}'s warnings", description=f"""User ID: {user.id}
+search Warning count: {exists.swarnings}""")
+        await interaction.channel.send(embed=embed)
+        await jsonmaker.configer.getwarnings(self, user, interaction)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(moderation(bot))
