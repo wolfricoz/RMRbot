@@ -202,6 +202,7 @@ async def on_app_command_error(
         interaction: Interaction,
         error: AppCommandError
 ):
+    await interaction.followup.send(f"Command failed: {error}")
     await interaction.channel.send(f"Command failed: {error}")
     print(error)
     raise error
@@ -276,6 +277,7 @@ async def on_guild_join(guild):
         except:
             print("Database error, rolled back")
             session.rollback()
+
 @bot.event
 async def on_member_join(member):
     add = session.query(db.warnings).filter_by(uid=member.id).first()
@@ -290,6 +292,25 @@ async def on_member_join(member):
             print("Database error, rolled back")
             session.rollback()
     await jsonmaker.configer.create(member.id, member)
+@bot.command()
+@commands.is_owner()
+async def addall(ctx):
+    count = 0
+    guildmembers = ctx.guild.members
+    print(guildmembers)
+    for member in guildmembers:
+        await jsonmaker.configer.create(member.id, member)
+        add = session.query(db.warnings).filter_by(uid=member.id).first()
+        if add is not None:
+            pass
+        else:
+            count += 1
+            tr = db.warnings(member.id, 0)
+            session.add(tr)
+            session.commit()
+        continue
+
+    await ctx.send(f"added {count} members to the database")
 
 def find_invite_by_code(invite_list, code):
     #makes an invite dictionary
@@ -343,25 +364,7 @@ Member joined at {datetime.now().strftime("%m/%d/%Y")}
                 return
 
 
-@bot.command()
-@commands.is_owner()
-async def addall(ctx):
-    count = 0
-    guildmembers = ctx.guild.members
-    print(guildmembers)
-    for member in guildmembers:
-        await jsonmaker.configer.create(member.id, member)
-        add = session.query(db.warnings).filter_by(uid=member.id).first()
-        if add is not None:
-            pass
-        else:
-            count += 1
-            tr = db.warnings(member.id, 0)
-            session.add(tr)
-            session.commit()
-        continue
 
-    await ctx.send(f"added {count} members to the database")
 #cogloader
 @bot.event
 async def setup_hook():
@@ -389,6 +392,9 @@ async def cogreload(ctx):
             filesloaded.append(filename[:-3])
     fp = ', '.join(filesloaded)
     await ctx.send(f"Modules loaded: {fp}")
+    session.rollback()
+    session.close()
+    engine.dispose()
     await bot.tree.sync()
 
 

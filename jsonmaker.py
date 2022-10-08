@@ -4,10 +4,10 @@ from abc import ABC, abstractmethod
 # Data to be written
 class configer(ABC):
     @abstractmethod
-    async def create(self, userid, username):
+    async def create(userid, member):
         "Creates the user data"
         dictionary = {
-            "Name": username,
+            "Name": member.name,
             "warnings": [],
         }
         json_object = json.dumps(dictionary, indent=4)
@@ -19,6 +19,7 @@ class configer(ABC):
             with open(f"users/{userid}.json", "w") as outfile:
                 outfile.write(json_object)
                 print(f"config created for {userid}")
+
 
     async def addwarning(self, user, interaction, warning):
         if os.path.exists(f"users/{user.id}.json"):
