@@ -1,3 +1,4 @@
+import logging
 from discord.ext import commands
 from discord import app_commands
 import discord
@@ -9,6 +10,7 @@ import jsonmaker
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 import db
+from discord.app_commands import AppCommandError
 Session = sessionmaker(bind=db.engine)
 session = Session()
 class moduser(ABC):
@@ -17,21 +19,47 @@ class moduser(ABC):
         rguilds = []
         if member == ctx.user:
             await ctx.followup.send(f"Error: user ID belongs to {member.mention}.")
+        try:
+            await member.send(
+                f"You've been banned from {ctx.guild} with reason: \n {reason} \n\n To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com")
+        except:
+            logging.exception(f"Can't DM {member}")
         else:
             for guild in bot.guilds:
                 user = guild.get_member(member.id)
                 user2 = await bot.fetch_user(member.id)
                 try:
-                    await member.send(
-                        f"You've been banned from {guild} with reason: \n {reason} \n\n To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com")
                     await guild.ban(user2, reason=reason, delete_message_days=0)
                     await moduser.banlog(ctx, member, reason, guild)
                     rguilds.append(guild.name)
                 except:
-                    print(f"{guild} could not ban, permissions?")
-                """if user is not None:
-                else:
-                    await ctx.followup.send(f"User was not in {guild}, could not ban. Please do this manually.")"""
+                    print(f"{guild} could not ban, permissions? \n {AppCommandError}")
+                    await ctx.followup.send(f"User was not in {guild}, could not ban. Please do this manually.")
+            print(rguilds)
+            guilds = ", ".join(rguilds)
+            embed = discord.Embed(title=f"{member.name} banned", description=reason)
+            embed.set_footer(text=f"User removed from: {guilds}")
+            await ctx.channel.send(embed=embed)
+
+    async def userbannedid(self, ctx, member, bot, reason):
+        rguilds = []
+        if member == ctx.user:
+            await ctx.followup.send(f"Error: user ID belongs to {member.mention}.")
+        try:
+            await member.send(f"You've been banned from {ctx.guild} with reason: \n {reason} \n\n To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com")
+        except:
+            logging.exception(f"Can't DM {member}")
+        else:
+            for guild in bot.guilds:
+                user = guild.get_member(member.id)
+                user2 = await bot.fetch_user(member.id)
+                try:
+                    await guild.ban(user2, reason=reason, delete_message_days=0)
+                    await moduser.banlog(ctx, member, reason, guild)
+                    rguilds.append(guild.name)
+                except:
+                    print(f"{guild} could not ban, permissions? \n {AppCommandError}")
+                    await ctx.followup.send(f"User was not in {guild}, could not ban. Please do this manually.")
             print(rguilds)
             guilds = ", ".join(rguilds)
             embed = discord.Embed(title=f"{member.name} banned", description=reason)
@@ -120,6 +148,36 @@ age: {age}""")
                 await moduser.userbanned(self, interaction, member, bot, reason)
             case default:
                 await interaction.followup.send("Options:\n- ID @user \n- underage @user \n- community @user  \n- Custom @user reason")
+
+    @app_commands.command(name="banid", description="TEST COMMAND: Bans user from all roleplay meets servers.")
+    @app_commands.choices(type=[
+        Choice(name="Id", value="id"),
+        Choice(name="Pedophilia", value="underage"),
+        Choice(name="Community", value="community"),
+        Choice(name="Custom", value="custom"),
+    ])
+    @adefs.check_admin_roles()
+    async def banid(self, interaction: discord.Interaction, type: Choice[str], member : str, *, reason:str= "You have been banned by an admin"):
+        await interaction.response.defer(ephemeral=True)
+
+        member = await self.bot.fetch_user(int(member))
+        print(member)
+        print(member.name)
+        bot = self.bot
+        match type.value:
+            case "id":
+                preason = f"{member.name} you've failed to ID after lying about your age, we'll be banning you from our server, as per our rules: **RMR is restricted to users 18 or older. Lying about your age may put our users (your partners) at risk and may result in an immediate ban. If you refuse to give staff your age in the lobby, you will be refused access to the server and removed.**"
+                await moduser.userbannedid(self, interaction, member, bot, preason)
+            case "underage":
+                preason = f"Your roleplay profile/F-list/advert indicate a willingness to write with underaged people and write underaged characters. As we have a strict ban on pedophilia, we have made the decision to ban you from our server. There is no appealing this ban."
+                await moduser.userbannedid(self, interaction, member, bot, preason)
+            case "community":
+                preason = f"After discussion amongst the staff and a majority vote, we have decided that you are not fit to remain within RMR. There is no appealing this ban."
+                await moduser.userbannedid(self, interaction, member, bot, preason)
+            case "custom":
+                await moduser.userbannedid(self, interaction, member, bot, reason)
+            case default:
+                await interaction.followup.send("Options:\n- ID @user \n- underage @user \n- community @user  \n- Custom @user reason")
     @commands.command(aliases=["k"])
     @adefs.check_db_roles()
     async def kick(self, ctx, user: discord.Member,*, reason=None):
@@ -155,6 +213,7 @@ age: {age}""")
 search Warning count: {exists.swarnings}""")
         await interaction.channel.send(embed=embed)
         await jsonmaker.configer.getwarnings(self, user, interaction)
+        await interaction.followup.send("Success! ~~The bot is still thinking about world domination~~")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(moderation(bot))

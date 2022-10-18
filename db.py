@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
 from dotenv import load_dotenv
 import os
 import pymysql
@@ -10,7 +11,7 @@ load_dotenv('main.env')
 DBTOKEN = os.getenv("DB")
 
 #sqlalchemy
-engine = create_engine(DBTOKEN, echo=True) #connects to the database
+engine = create_engine(DBTOKEN, echo=False, pool_pre_ping=True, poolclass=QueuePool) #connects to the database
 base = declarative_base()
 engine.echo = False
 #class creates table

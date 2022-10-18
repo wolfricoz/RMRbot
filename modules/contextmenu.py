@@ -49,16 +49,20 @@ class advert(ABC):
 
     async def cincreasewarnings(ctx, user):
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
-        if exists is not None:
-            exists.swarnings += 1
-            session.commit()
-            return exists.swarnings
-        else:
-            tr = db.warnings(member.id, 1)
-            session.add(tr)
-            session.commit()
-            exists = session.query(db.warnings).filter_by(uid=user.id).first()
-            return exists.swarnings
+        try:
+            if exists is not None:
+                exists.swarnings += 1
+                session.commit()
+                return exists.swarnings
+            else:
+                tr = db.warnings(member.id, 1)
+                session.add(tr)
+                session.commit()
+                exists = session.query(db.warnings).filter_by(uid=user.id).first()
+                return exists.swarnings
+        except:
+            print("Database error, rolled back")
+            session.rollback()
 
 class contextmenus(commands.Cog, name="contextmenus"):
     def __init__(self, bot: commands.Bot) -> None:
@@ -188,7 +192,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
         Thank you for your cooperation!""".format(message.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {message.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await advert.clogadvert(interaction, message, warning, loggingchannel)
         await advert.csendadvertuser(interaction, message, warning)

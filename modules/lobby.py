@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from discord.ext import commands
 from abc import ABC, abstractmethod
@@ -8,6 +10,7 @@ from sqlalchemy import select, column
 from datetime import datetime, timedelta
 import re
 import typing
+import logging
 
 Session = sessionmaker(bind=db.engine)
 session = Session()
@@ -66,17 +69,27 @@ class dblookup(ABC):
         if exists is not None:
             pass
         else:
-            tr = db.user(userid.id, dob)
-            session.add(tr)
-            session.commit()
+            try:
+                tr = db.user(userid.id, dob)
+                session.add(tr)
+                session.commit()
+            except:
+                logging.exception("Database error, rolled back")
+                session.rollback()
+                session.close()
     def dobsaveid(self, userid: int, dob):
         exists = session.query(db.user).filter_by(uid=userid).first()
         if exists is not None:
             pass
         else:
-            tr = db.user(userid, dob)
-            session.add(tr)
-            session.commit()
+            try:
+                tr = db.user(userid, dob)
+                session.add(tr)
+                session.commit()
+            except:
+                print("Database error, rolled back")
+                session.rollback()
+                session.close()
 
     def dobcheck(self, userid: discord.Member, dob):
         exists = session.query(db.user).filter_by(uid=userid.id).first()

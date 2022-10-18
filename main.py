@@ -1,5 +1,7 @@
 # IMPORT DISCORD.PY. ALLOWS ACCESS TO DISCORD'S API.
 # IMPORT THE OS MODULE.
+import traceback
+import sys
 import logging
 import os
 import re
@@ -16,6 +18,8 @@ from discord import app_commands
 import db
 from discord import Interaction
 from discord.app_commands import AppCommandError
+import adefs
+import cryptography
 # IMPORT LOAD_DOTENV FUNCTION FROM DOTENV MODULE.
 from dotenv import load_dotenv
 logger = logging.getLogger('discord')
@@ -24,7 +28,7 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 alogger = logging.getLogger('sqlalchemy')
-alogger.setLevel(logging.ERROR)
+alogger.setLevel(logging.WARN)
 handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='w')
 handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 alogger.addHandler(handler2)
@@ -54,12 +58,14 @@ db.engine.echo = False
 async def stop(ctx):
     await ctx.send("Rmrbot shutting down")
     exit()
+def restart_bot():
+  os.execv(sys.executable, ["python"] + sys.argv)
 @bot.command()
 @commands.is_owner()
 async def restart(ctx):
-    await ctx.send("Rmrbot shutting down")
-    exec(open("restart.py").read())
-    exit()
+    await ctx.send("Restarting bot...")
+    restart_bot()
+    await ctx.send("succesfully restarted")
 
 invites = {}
 
@@ -140,44 +146,6 @@ async def on_message(message):
 #database sessionmaker
 Session = sessionmaker(bind=db.engine)
 session = Session()
-@bot.listen()
-async def on_message(message):
-    #Enforces lobby format
-    dobreg = re.compile("([0-9][0-9]) (1[0-2]|[0]?[0-9]|1)\/([0-3]?[0-9])\/([0-2][0-9][0-9][0-9])")
-    match = dobreg.search(message.content)
-    if message.guild is None:
-        return
-    if message.author.bot:
-        return
-    #Searches the config for the lobby for a specific guild
-    p = session.query(db.permissions).filter_by(guild=message.guild.id).first()
-    c = session.query(db.config).filter_by(guild=message.guild.id).first()
-    staff = [p.mod, p.admin, p.trial]
-    #reminder: change back to c.lobby
-    if message.author.get_role(p.mod) is None and message.author.get_role(p.admin) is None and message.author.get_role(p.trial) is None:
-        if message.channel.id == c.lobby :
-            if match:
-                channel = bot.get_channel(c.modlobby)
-                await message.add_reaction("🤖")
-                if int(match.group(1)) < 18:
-                    await channel.send(f"<@&{p.lobbystaff}> {message.author.mention} has given an age under the age of 18: {message.content}")
-                if int(match.group(1)) > 18 and not int(match.group(1)) > 20:
-                    await channel.send(f"<@&{p.lobbystaff}> user has given age. You can let them through with `?18a {message.author.mention} {message.content}`")
-                elif int(match.group(1)) > 21 and not int(match.group(1)) > 24:
-                    await channel.send(f"<@&{p.lobbystaff}> user has given age. You can let them through with `?21a {message.author.mention} {message.content}`")
-                elif int(match.group(1)) > 25:
-                    await channel.send(f"<@&{p.lobbystaff}> user has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
-                return
-            else:
-                try:
-                    await message.author.send(f"Please use format age mm/dd/yyyy \n Example: `122 01/01/1900` \n __**Do not round up your age**__ \n You can input your age and dob at: <#{c.lobby}>")
-                except:
-                    await message.channel.send(f"Couldn't message {message.author.mention}! Please use format age mm/dd/yyyy \n Example: `122 01/01/1900")
-                await message.delete()
-                return
-    else:
-        pass
-
 #error logging for regular commands
 @bot.event
 async def on_command_error(ctx, error):
@@ -195,16 +163,20 @@ async def on_command_error(ctx, error):
         await ctx.send(error)
         raise error
     else:
+        session.rollback()
+        session.close()
+        engine.dispose()
         await ctx.send(error)
         raise error
 #error logging for app commands (slash commands)
+@bot.tree.error
 async def on_app_command_error(
         interaction: Interaction,
         error: AppCommandError
 ):
-    await interaction.followup.send(f"Command failed: {error}")
-    await interaction.channel.send(f"Command failed: {error}")
+    await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
     print(error)
+    logger.error(traceback.format_exc())
     raise error
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
@@ -236,6 +208,7 @@ async def on_ready():
             except:
                 print("Database error, rolled back")
                 session.rollback()
+                session.close()
         p = session.query(db.permissions).filter_by(guild=guild.id).first()
         if p is not None:
             pass
@@ -247,6 +220,7 @@ async def on_ready():
             except:
                 print("Database error, rolled back")
                 session.rollback()
+            session.close()
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
@@ -266,6 +240,7 @@ async def on_guild_join(guild):
         except:
             print("Database error, rolled back")
             session.rollback()
+            session.close()
     p = session.query(db.permissions).filter_by(guild=guild.id).first()
     if p is not None:
         pass
@@ -277,6 +252,7 @@ async def on_guild_join(guild):
         except:
             print("Database error, rolled back")
             session.rollback()
+            session.close()
 
 @bot.event
 async def on_member_join(member):
@@ -291,15 +267,18 @@ async def on_member_join(member):
         except:
             print("Database error, rolled back")
             session.rollback()
+            session.close()
+
     await jsonmaker.configer.create(member.id, member)
 @bot.command()
 @commands.is_owner()
 async def addall(ctx):
     count = 0
+    concount = 0
     guildmembers = ctx.guild.members
     print(guildmembers)
     for member in guildmembers:
-        await jsonmaker.configer.create(member.id, member)
+
         add = session.query(db.warnings).filter_by(uid=member.id).first()
         if add is not None:
             pass
@@ -309,8 +288,22 @@ async def addall(ctx):
             session.add(tr)
             session.commit()
         continue
+        try:
+            tr = warnings(member.id, 0)
+            session.add(tr)
+            session.commit()
+        except:
+            print("Database error, rolled back")
+            session.rollback()
+            session.close()
+    for member in guildmembers:
+        try:
+            await jsonmaker.configer.create(member.id, member)
+            concount += 1
+        except:
+            continue
 
-    await ctx.send(f"added {count} members to the database")
+    await ctx.send(f"added {count} members to the database\ncreated {concount} member configs")
 
 def find_invite_by_code(invite_list, code):
     #makes an invite dictionary
@@ -383,7 +376,7 @@ async def on_member_remove(member):
 
 
 @bot.command(aliases=["cr", "reload"])
-@commands.is_owner()
+@adefs.check_admin_roles()
 async def cogreload(ctx):
     filesloaded = []
     for filename in os.listdir("modules"):

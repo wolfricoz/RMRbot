@@ -58,6 +58,7 @@ class advert(ABC):
             except:
                 ctx.send("Database error, rolled back but warning not logged")
                 session.rollback()
+                session.close()
         else:
             try:
                 tr = db.warnings(member.id, 1)
@@ -68,6 +69,7 @@ class advert(ABC):
             except:
                 ctx.send("Database error, rolled back but user not added and warning not logged")
                 session.rollback()
+                session.close()
 
 
 class searchcommands(commands.GroupCog, name="ad"):
@@ -80,9 +82,16 @@ class searchcommands(commands.GroupCog, name="ad"):
     async def ages(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        message_link = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            message_link = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            message_link = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -108,9 +117,16 @@ If you have any more questions, our staff team is always available to help you.
     async def toolong(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -134,9 +150,16 @@ If you have any questions regarding adverts or the rules, don't hesitate to ask.
     async def tooshort(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -159,9 +182,16 @@ If you have any questions regarding adverts or the rules, don't hesitate to ask.
     async def early24(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -186,9 +216,16 @@ Thank you for your cooperation!""".format(msg.channel.mention)
     async def early72(self, interaction: discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -214,9 +251,16 @@ Thank you for your cooperation!""".format(msg.channel.mention)
     async def template(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -241,9 +285,16 @@ Thank you for your cooperation!""".format(msg.channel.mention)
     async def custom(self, interaction:discord.Interaction, message_link: str, *, warning:str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -262,9 +313,16 @@ Thank you for your cooperation!""".format(msg.channel.mention)
     async def duplicate(self, interaction:discord.Interaction, message_link: str, *, args:str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -289,9 +347,16 @@ Thank you for your cooperation!""".format(dupchannels, msg.channel.mention)
     async def format(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -319,9 +384,16 @@ If your advert has excessive lists, we do recommend using forums in order to sha
     async def pictures(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
-        server = self.bot.get_guild(int(link[4]))
-        channel = server.get_channel(int(link[5]))
-        msg = await channel.fetch_message(int(link[6]))
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
         bot = self.bot
         loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
@@ -353,6 +425,8 @@ If your advert has excessive lists, we do recommend using forums in order to sha
             await ctx.send(f"<@{exists.uid}> now has {exists.swarnings} warnings (removed: {number})")
         except:
             await ctx.send("Can't edit user's warnings")
+            session.rollback()
+            session.close()
 #allows staff to change user's warnings
     @commands.command(aliases=["warnset"])
     @adefs.check_admin_roles()
@@ -366,6 +440,8 @@ If your advert has excessive lists, we do recommend using forums in order to sha
             await ctx.send(f"<@{exists.uid}> now has {exists.swarnings} warnings (set to: {number} by {ctx.message.author.mention})")
         except:
             await ctx.send("Can't edit user's warnings")
+            session.rollback()
+            session.close()
 
 # PURGES ALL WARNINGS FROM DB. Only usable by dev.
     @commands.command(aliases=[])
