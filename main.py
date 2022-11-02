@@ -175,8 +175,9 @@ async def on_app_command_error(
         error: AppCommandError
 ):
     await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
-    print(error)
     logger.error(traceback.format_exc())
+    channel = bot.get_channel(1033787967929589831)
+    await channel.send(traceback.format_exc())
     raise error
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
@@ -220,12 +221,13 @@ async def on_ready():
             except:
                 print("Database error, rolled back")
                 session.rollback()
-            session.close()
+
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
     await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.0: Less questions, more slashing.")
     return guilds
+    session.close()
 @bot.event
 async def on_guild_join(guild):
     #adds user to database

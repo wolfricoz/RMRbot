@@ -1,5 +1,7 @@
 import logging
+import traceback
 
+from discord import app_commands
 import discord
 from discord.ext import commands
 from abc import ABC, abstractmethod
@@ -77,7 +79,8 @@ class dblookup(ABC):
                 logging.exception("Database error, rolled back")
                 session.rollback()
                 session.close()
-    def dobsaveid(self, userid: int, dob):
+    @abstractmethod
+    async def dobsaveid(self, userid: int, dob):
         exists = session.query(db.user).filter_by(uid=userid).first()
         if exists is not None:
             pass
@@ -90,15 +93,58 @@ class dblookup(ABC):
                 print("Database error, rolled back")
                 session.rollback()
                 session.close()
-
+    @abstractmethod
     def dobcheck(self, userid: discord.Member, dob):
         exists = session.query(db.user).filter_by(uid=userid.id).first()
         if exists.dob == dob:
             return True
         else:
             return False
+    @abstractmethod
+    def idcheckchecker(self, userid: discord.Member):
+        exists = session.query(db.idcheck).filter_by(uid=userid.id).first()
+        print(exists.uid)
+        print(exists.check)
+        if exists is not None:
+            if exists.check == True:
+                return True
+            else:
+                return False
+        else:
+            return False
+    @abstractmethod
+    def idcheckeradd(self, userid:int):
+        idchecker = session.query(db.idcheck).filter_by(uid=userid).first()
+        if idchecker is not None:
+            idchecker.check = True
+            session.commit()
+        else:
+            try:
+                idcheck = db.idcheck(userid, True)
+                session.add(idcheck)
+                session.commit()
+            except:
+                session.rollback()
+                session.close()
+                logging.exception("failed to  log to database")
+    @abstractmethod
+    def idcheckerremove(self, userid:int):
+        idchecker = session.query(db.idcheck).filter_by(uid=userid).first()
+        if idchecker is not None:
+            idchecker.check = False
+            session.commit()
+        else:
+            try:
+                idcheck = db.idcheck(userid, False)
+                session.add(idcheck)
+                session.commit()
+            except:
+                session.rollback()
+                session.close()
+                logging.exception("failed to  log to database")
 
-class lobby(commands.Cog, name="Lobby"):
+
+class lobby(commands.GroupCog, name="lobby"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -157,75 +203,78 @@ DOB: {exists.dob}""")
         regdob = agecalc.regex(arg2)
         bot = self.bot
         await ctx.message.delete()
-        if agecalc.agechecker(self, arg1, regdob) == 0:
-            dblookup.dobsave(self, user, regdob)
-            print(dblookup.dobcheck(self, user, regdob))
-            if dblookup.dobcheck(self, user, regdob) is True:
-                # Role adding
-                # await ctx.send('This user\'s age is correct')
-                agerole = discord.utils.get(ctx.guild.roles, name="18+")
-                rulesaccepted = discord.utils.get(ctx.guild.roles, name="Rules Accepted")
-                newuser = discord.utils.get(ctx.guild.roles, name="New User")
-                waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
-                rl = discord.utils.get(ctx.guild.roles, name="Rules Lobby")
-                await user.add_roles(agerole, rulesaccepted)
-                await user.remove_roles(newuser, waiting, rl)
-                # output for lobby ages
-                from datetime import datetime
-                username = user.mention
-                userid = user.id
-                userjoin = user.joined_at
-                userjoinformatted = userjoin.strftime('%m/%d/%Y %I:%M:%S %p')
-                executed = datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
-                print(userjoinformatted)
-                staff = ctx.author
-                try:
-                    log = bot.get_channel(c.agelog)
-                    await log.send(
-                        f"user: {username}\n Age: {arg1} \n DOB: {arg2} \n User info:  UID: {userid} \n joined at: {userjoinformatted} \n \n executed: {executed} \n staff: {staff}")
-                except:
-                    await ctx.send("Channel **agelobby** not set. Use ?config agelobby #channel to fix this.")
+        if dblookup.idcheckchecker(self, user) is True:
+            await ctx.send(f"<@{a.admin}> user {user.mention} was flagged for manual ID check.")
+        else:
+            if agecalc.agechecker(self, arg1, regdob) == 0:
+                dblookup.dobsave(self, user, regdob)
+                print(dblookup.dobcheck(self, user, regdob))
+                if dblookup.dobcheck(self, user, regdob) is True:
+                    # Role adding
+                    # await ctx.send('This user\'s age is correct')
+                    agerole = discord.utils.get(ctx.guild.roles, name="18+")
+                    rulesaccepted = discord.utils.get(ctx.guild.roles, name="Rules Accepted")
+                    newuser = discord.utils.get(ctx.guild.roles, name="New User")
+                    waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
+                    rl = discord.utils.get(ctx.guild.roles, name="Rules Lobby")
+                    await user.add_roles(agerole, rulesaccepted)
+                    await user.remove_roles(newuser, waiting, rl)
+                    # output for lobby ages
+                    from datetime import datetime
+                    username = user.mention
+                    userid = user.id
+                    userjoin = user.joined_at
+                    userjoinformatted = userjoin.strftime('%m/%d/%Y %I:%M:%S %p')
+                    executed = datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
+                    print(userjoinformatted)
+                    staff = ctx.author
+                    try:
+                        log = bot.get_channel(c.agelog)
+                        await log.send(
+                            f"user: {username}\n Age: {arg1} \n DOB: {arg2} \n User info:  UID: {userid} \n joined at: {userjoinformatted} \n \n executed: {executed} \n staff: {staff}")
+                    except:
+                        await ctx.send("Channel **agelobby** not set. Use ?config agelobby #channel to fix this.")
 
-                # welcomes them in general chat.
-                try:
-                    general = bot.get_channel(general)
-                    exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
-                    if exists.guild == 395614061393477632:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
-                    elif exists.guild == 780622396297183252:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
-                    else:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
-                except:
-                    await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
-                # this deletes user info
-                await agecalc.removemessage(ctx, bot, user)
+                    # welcomes them in general chat.
+                    try:
+                        general = bot.get_channel(general)
+                        exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+                        if exists.guild == 395614061393477632:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
+                        elif exists.guild == 780622396297183252:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
+                        else:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
+                    except:
+                        await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
+                    # this deletes user info
+                    await agecalc.removemessage(ctx, bot, user)
+                else:
+                    waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
+                    await user.add_roles(waiting)
+                    channel = bot.get_channel(925193288997298226)
+                    try:
+                        channel = bot.get_channel(c.modlobby)
+                        u = session.query(db.user).filter_by(uid=user.id).first()
+
+                        await channel.send(
+                            f'<@&{a.admin}> User {user.mention}\'s dob ({regdob}) does not match a previously given dob ({u.dob}) and has been given Waiting in Lobby. \n \n To check previously given ages or edit them use: ?agelookup or ?agefix')
+                    except:
+                        await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
+
             else:
                 waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
                 await user.add_roles(waiting)
-                channel = bot.get_channel(925193288997298226)
+                print(agecalc.agecheckfail(arg2))
                 try:
                     channel = bot.get_channel(c.modlobby)
-                    u = session.query(db.user).filter_by(uid=user.id).first()
-
                     await channel.send(
-                        f'<@&{a.admin}> User {user.mention}\'s dob ({regdob}) does not match a previously given dob ({u.dob}) and has been given Waiting in Lobby. \n \n To check previously given ages or edit them use: ?agelookup or ?agefix')
+                         f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
                 except:
                     await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
-
-        else:
-            waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
-            await user.add_roles(waiting)
-            print(agecalc.agecheckfail(arg2))
-            try:
-                channel = bot.get_channel(c.modlobby)
-                await channel.send(
-                     f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
-            except:
-                await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
 
     @commands.command(name="21a")
     @adefs.check_db_roles()
@@ -240,76 +289,79 @@ DOB: {exists.dob}""")
         regdob = agecalc.regex(arg2)
         bot = self.bot
         await ctx.message.delete()
-        if agecalc.agechecker(self, arg1, regdob) == 0:
-            dblookup.dobsave(self, user, regdob)
-            print(dblookup.dobcheck(self, user, regdob))
-            if dblookup.dobcheck(self, user, regdob) is True:
-                # Role adding
-                # await ctx.send('This user\'s age is correct')
-                agerole = discord.utils.get(ctx.guild.roles, name="21+")
-                rulesaccepted = discord.utils.get(ctx.guild.roles, name="Rules Accepted")
-                newuser = discord.utils.get(ctx.guild.roles, name="New User")
-                waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
-                RL = discord.utils.get(ctx.guild.roles, name="Rules Lobby")
-                await user.add_roles(agerole, rulesaccepted)
-                await user.remove_roles(newuser, waiting, RL)
-                # output for lobby ages
-                from datetime import datetime
-                username = user.mention
-                userid = user.id
-                userjoin = user.joined_at
-                userjoinformatted = userjoin.strftime('%m/%d/%Y %I:%M:%S %p')
-                executed = datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
-                print(userjoinformatted)
-                staff = ctx.author
-                try:
-                    log = bot.get_channel(c.agelog)
-                    await log.send(
-                        f"user: {username}\n Age: {arg1} \n DOB: {arg2} \n User info:  UID: {userid} \n joined at: {userjoinformatted} \n \n executed: {executed} \n staff: {staff}")
-                except:
-                    await ctx.send("Channel **agelobby** not set. Use ?config agelobby #channel to fix this.")
+        if dblookup.idcheckchecker(self, user) is True:
+            await ctx.send(f"<@{a.admin}> user {user.mention} was flagged for manual ID check.")
+        else:
+            if agecalc.agechecker(self, arg1, regdob) == 0:
+                dblookup.dobsave(self, user, regdob)
+                print(dblookup.dobcheck(self, user, regdob))
+                if dblookup.dobcheck(self, user, regdob) is True:
+                    # Role adding
+                    # await ctx.send('This user\'s age is correct')
+                    agerole = discord.utils.get(ctx.guild.roles, name="21+")
+                    rulesaccepted = discord.utils.get(ctx.guild.roles, name="Rules Accepted")
+                    newuser = discord.utils.get(ctx.guild.roles, name="New User")
+                    waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
+                    RL = discord.utils.get(ctx.guild.roles, name="Rules Lobby")
+                    await user.add_roles(agerole, rulesaccepted)
+                    await user.remove_roles(newuser, waiting, RL)
+                    # output for lobby ages
+                    from datetime import datetime
+                    username = user.mention
+                    userid = user.id
+                    userjoin = user.joined_at
+                    userjoinformatted = userjoin.strftime('%m/%d/%Y %I:%M:%S %p')
+                    executed = datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
+                    print(userjoinformatted)
+                    staff = ctx.author
+                    try:
+                        log = bot.get_channel(c.agelog)
+                        await log.send(
+                            f"user: {username}\n Age: {arg1} \n DOB: {arg2} \n User info:  UID: {userid} \n joined at: {userjoinformatted} \n \n executed: {executed} \n staff: {staff}")
+                    except:
+                        await ctx.send("Channel **agelobby** not set. Use ?config agelobby #channel to fix this.")
 
-                # welcomes them in general chat.
-                try:
-                    general = bot.get_channel(general)
-                    exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
-                    if exists.guild == 395614061393477632:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
-                    elif exists.guild == 780622396297183252:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
-                    else:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
-                except:
-                    await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
+                    # welcomes them in general chat.
+                    try:
+                        general = bot.get_channel(general)
+                        exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+                        if exists.guild == 395614061393477632:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
+                        elif exists.guild == 780622396297183252:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
+                        else:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
+                    except:
+                        await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
 
-                # this deletes user info
-                await agecalc.removemessage(ctx, bot, user)
+                    # this deletes user info
+                    await agecalc.removemessage(ctx, bot, user)
+                else:
+                    waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
+                    await user.add_roles(waiting)
+                    channel = bot.get_channel(925193288997298226)
+                    try:
+                        channel = bot.get_channel(c.modlobby)
+                        u = session.query(db.user).filter_by(uid=user.id).first()
+
+                        await channel.send(
+                            f'<@&{a.admin}> User {user.mention}\'s dob ({regdob}) does not match a previously given dob ({u.dob}) and has been given Waiting in Lobby. \n \n To check previously given ages or edit them use: ?agelookup or ?agefix')
+                    except:
+                        await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
+
             else:
                 waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
                 await user.add_roles(waiting)
-                channel = bot.get_channel(925193288997298226)
+                print(agecalc.agecheckfail(arg2))
                 try:
                     channel = bot.get_channel(c.modlobby)
-                    u = session.query(db.user).filter_by(uid=user.id).first()
-
                     await channel.send(
-                        f'<@&{a.admin}> User {user.mention}\'s dob ({regdob}) does not match a previously given dob ({u.dob}) and has been given Waiting in Lobby. \n \n To check previously given ages or edit them use: ?agelookup or ?agefix')
+                         f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
                 except:
                     await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
-
-        else:
-            waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
-            await user.add_roles(waiting)
-            print(agecalc.agecheckfail(arg2))
-            try:
-                channel = bot.get_channel(c.modlobby)
-                await channel.send(
-                     f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
-            except:
-                await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
 
 
 
@@ -327,76 +379,79 @@ DOB: {exists.dob}""")
         print(regdob)
         bot = self.bot
         await ctx.message.delete()
-        if agecalc.agechecker(self, arg1, regdob) == 0:
-            dblookup.dobsave(self, user, regdob)
-            print(dblookup.dobcheck(self, user, regdob))
-            if dblookup.dobcheck(self, user, regdob) is True:
-                # Role adding
-                # await ctx.send('This user\'s age is correct')
-                agerole = discord.utils.get(ctx.guild.roles, name="25+")
-                rulesaccepted = discord.utils.get(ctx.guild.roles, name="Rules Accepted")
-                newuser = discord.utils.get(ctx.guild.roles, name="New User")
-                waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
-                RL = discord.utils.get(ctx.guild.roles, name="Rules Lobby")
-                await user.add_roles(agerole, rulesaccepted)
-                await user.remove_roles(newuser, waiting, RL)
-                # output for lobby ages
-                from datetime import datetime
-                username = user.mention
-                userid = user.id
-                userjoin = user.joined_at
-                userjoinformatted = userjoin.strftime('%m/%d/%Y %I:%M:%S %p')
-                executed = datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
-                print(userjoinformatted)
-                staff = ctx.author
-                try:
-                    log = bot.get_channel(c.agelog)
-                    await log.send(
-                        f"user: {username}\n Age: {arg1} \n DOB: {arg2} \n User info:  UID: {userid} \n joined at: {userjoinformatted} \n \n executed: {executed} \n staff: {staff}")
-                except:
-                    await ctx.send("Channel **agelobby** not set. Use ?config agelobby #channel to fix this.")
+        if dblookup.idcheckchecker(self, user) is True:
+            await ctx.send(f"<@{a.admin}> user {user.mention} was flagged for manual ID check.")
+        else:
+            if agecalc.agechecker(self, arg1, regdob) == 0:
+                dblookup.dobsave(self, user, regdob)
+                print(dblookup.dobcheck(self, user, regdob))
+                if dblookup.dobcheck(self, user, regdob) is True:
+                    # Role adding
+                    # await ctx.send('This user\'s age is correct')
+                    agerole = discord.utils.get(ctx.guild.roles, name="25+")
+                    rulesaccepted = discord.utils.get(ctx.guild.roles, name="Rules Accepted")
+                    newuser = discord.utils.get(ctx.guild.roles, name="New User")
+                    waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
+                    RL = discord.utils.get(ctx.guild.roles, name="Rules Lobby")
+                    await user.add_roles(agerole, rulesaccepted)
+                    await user.remove_roles(newuser, waiting, RL)
+                    # output for lobby ages
+                    from datetime import datetime
+                    username = user.mention
+                    userid = user.id
+                    userjoin = user.joined_at
+                    userjoinformatted = userjoin.strftime('%m/%d/%Y %I:%M:%S %p')
+                    executed = datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')
+                    print(userjoinformatted)
+                    staff = ctx.author
+                    try:
+                        log = bot.get_channel(c.agelog)
+                        await log.send(
+                            f"user: {username}\n Age: {arg1} \n DOB: {arg2} \n User info:  UID: {userid} \n joined at: {userjoinformatted} \n \n executed: {executed} \n staff: {staff}")
+                    except:
+                        await ctx.send("Channel **agelobby** not set. Use ?config agelobby #channel to fix this.")
 
-                # welcomes them in general chat.
-                try:
-                    general = bot.get_channel(c.general)
-                    exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
-                    if exists.guild == 395614061393477632:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. We hope you have a wonderful time!")
-                    elif exists.guild == 780622396297183252:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. We hope you have a wonderful time!")
-                    else:
-                        await general.send(
-                            f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
+                    # welcomes them in general chat.
+                    try:
+                        general = bot.get_channel(c.general)
+                        exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+                        if exists.guild == 395614061393477632:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. We hope you have a wonderful time!")
+                        elif exists.guild == 780622396297183252:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. We hope you have a wonderful time!")
+                        else:
+                            await general.send(
+                                f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
 
-                except:
-                    await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
-                # this deletes user info
-                await agecalc.removemessage(ctx, bot, user)
+                    except:
+                        await ctx.send("Channel **general** not set. Use ?config general #channel to fix this.")
+                    # this deletes user info
+                    await agecalc.removemessage(ctx, bot, user)
+                else:
+                    waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
+                    await user.add_roles(waiting)
+                    channel = bot.get_channel(925193288997298226)
+                    try:
+                        channel = bot.get_channel(c.modlobby)
+                        u = session.query(db.user).filter_by(uid=user.id).first()
+
+                        await channel.send(
+                            f'<@&{a.admin}> User {user.mention}\'s dob ({regdob}) does not match a previously given dob ({u.dob}) and has been given Waiting in Lobby. \n \n To check previously given ages or edit them use: ?agelookup or ?agefix')
+                    except:
+                        await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
+
             else:
                 waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
                 await user.add_roles(waiting)
-                channel = bot.get_channel(925193288997298226)
+                print(agecalc.agecheckfail(arg2))
                 try:
                     channel = bot.get_channel(c.modlobby)
-                    u = session.query(db.user).filter_by(uid=user.id).first()
-
                     await channel.send(
-                        f'<@&{a.admin}> User {user.mention}\'s dob ({regdob}) does not match a previously given dob ({u.dob}) and has been given Waiting in Lobby. \n \n To check previously given ages or edit them use: ?agelookup or ?agefix')
+                         f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
                 except:
                     await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
-
-        else:
-            waiting = discord.utils.get(ctx.guild.roles, name="Waiting in Lobby")
-            await user.add_roles(waiting)
-            print(agecalc.agecheckfail(arg2))
-            try:
-                channel = bot.get_channel(c.modlobby)
-                await channel.send(
-                     f'<@&{a.admin}> User {user.mention}\'s age does not match and has been timed out. User gave {arg1} but dob indicates {agecalc.agecheckfail(arg2)}')
-            except:
-                await ctx.send("Channel **modlobby** not set. Use ?config modlobby #channel to fix this.")
 
     @commands.command(name="returnlobby", aliases=['Returnlobby', 'return'])
     @adefs.check_db_roles()
@@ -462,7 +517,7 @@ Entry uppdated by: {ctx.author}""")
 
     @commands.command()
     @adefs.check_admin_roles()
-    async def agefixid(self, ctx: commands.Context, userid: int, age, dob):
+    async def agefixid(self, ctx: commands.Context, userid: str, age: str, dob: str):
         "Updates the database entry for an user in the server when user ISN'T in the server"
         c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
         agelog = c.agelog
@@ -481,33 +536,73 @@ User info:  UID: {userid}
 
 Entry updated by: {ctx.author}""")
 
-    @commands.command()
-    @adefs.check_admin_roles()
-    async def ageadd(self, ctx: commands.Context, user: typing.Union[discord.Member, int], age, dob):
-        c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
+    @app_commands.command(name="ageadd", description="Add ages to the database")
+    @adefs.check_slash_db_roles()
+    async def ageadd(self, interaction: discord.Interaction, user: str, age:str, dob: str):
+        await interaction.response.defer()
+        c = session.query(db.config).filter_by(guild=interaction.guild.id).first()
         agelog = c.agelog
         channel = self.bot.get_channel(agelog)
         regdob = agecalc.regex(dob)
-
-        await ctx.message.delete()
-        if user is discord.Member:
-            await dblookup.dobsave(self, user, regdob)
-        else:
-            await dblookup.dobsaveid(self, user, regdob)
-        try:
-            await channel.send(f"""user: {user.name}
-Age: {age}
-DOB: {dob}
-User info:  UID: {user.id} 
-
-Entry uppdated by: {ctx.author}""")
-        except:
-            await channel.send(f"""**USER ADDED**
+        await dblookup.dobsaveid(self, int(user), regdob)
+        await channel.send(f"""**USER ADDED**
 Age: {age}
 DOB: {dob}
 UID: {user} 
 
-Entry updated by: {ctx.author}""")
+Entry updated by: {interaction.user}""")
+        await interaction.followup.send(f"User was added to the database")
+
+    @app_commands.command(name="idverify", description="approves user for ID verification.")
+    @adefs.check_slash_db_roles()
+    async def idverify(self, interaction: discord.Interaction, user: discord.Member, age:str, dob: str):
+        await interaction.response.defer(ephemeral=True)
+        c = session.query(db.config).filter_by(guild=interaction.guild.id).first()
+        agelog = c.agelog
+        channel = self.bot.get_channel(agelog)
+        regdob = agecalc.regex(dob)
+        try:
+            userdata = session.query(db.user).filter_by(uid=user.id).first()
+            userdata.dob = regdob
+            idchecker = session.query(db.idcheck).filter_by(uid=user.id).first()
+            if idchecker is not None:
+                idchecker.check = False
+                session.commit()
+            else:
+                try:
+                    idcheck = db.idcheck(user.id, False)
+                    session.add(idcheck)
+                    session.commit()
+                except:
+                    session.rollback()
+                    session.close()
+                    logging.exception("failed to  log to database")
+            await channel.send(f"""**USER ID VERIFICATION**
+user: {user.mention}
+Age: {age}
+DOB: {dob}
+UID: {user.id} 
+**ID VERIFIED BY:** {interaction.user}""")
+            await interaction.followup.send(f"Entry for {user} updated to: {age} {regdob}")
+        except:
+            session.rollback()
+            session.close()
+            await interaction.followup.send(f"Command failed: {traceback.format_exc()}")
+    #TODO: make this a command to add
+    @app_commands.command(name="idadd", description="add a user to manual ID list")
+    @adefs.check_slash_db_roles()
+    async def addverify(self, interaction: discord.Interaction, userid: str):
+        await interaction.response.defer(ephemeral=True)
+        dblookup.idcheckeradd(self, userid)
+        await interaction.followup.send(f"Added user {userid} to the ID list")
+
+    #TODO: make this a command to add
+    @app_commands.command(name="idremove", description="remove a user to manual ID list")
+    @adefs.check_slash_db_roles()
+    async def addverify(self, interaction: discord.Interaction, userid: str):
+        await interaction.response.defer(ephemeral=True)
+        dblookup.idcheckerremove(self, userid)
+        await interaction.followup.send(f"Removed user {userid} to the ID list")
 
 
 

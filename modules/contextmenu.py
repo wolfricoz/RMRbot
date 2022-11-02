@@ -48,21 +48,26 @@ class advert(ABC):
             pass
 
     async def cincreasewarnings(ctx, user):
-        exists = session.query(db.warnings).filter_by(uid=user.id).first()
         try:
-            if exists is not None:
-                exists.swarnings += 1
-                session.commit()
-                return exists.swarnings
-            else:
-                tr = db.warnings(member.id, 1)
-                session.add(tr)
-                session.commit()
-                exists = session.query(db.warnings).filter_by(uid=user.id).first()
-                return exists.swarnings
+            exists = session.query(db.warnings).filter_by(uid=user.id).first()
+            try:
+                if exists is not None:
+                    exists.check += 1
+                    session.commit()
+                    return exists.check
+                else:
+                    tr = db.warnings(member.id, 1)
+                    session.add(tr)
+                    session.commit()
+                    exists = session.query(db.warnings).filter_by(uid=user.id).first()
+                    return exists.check
+            except:
+                print("Database error, rolled back")
+                session.rollback()
+                session.close()
         except:
-            print("Database error, rolled back")
-            session.rollback()
+            await ctx.followup.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
+            session.close()
 
 class contextmenus(commands.Cog, name="contextmenus"):
     def __init__(self, bot: commands.Bot) -> None:

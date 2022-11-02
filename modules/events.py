@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from discord.ext import commands
 from abc import ABC, abstractmethod
@@ -41,6 +43,19 @@ class Events(commands.Cog):
                     if int(match.group(1)) < 18:
                         await channel.send(
                             f"<@&{p.lobbystaff}> {message.author.mention} has given an age under the age of 18: {message.content}")
+                        idchecker = session.query(db.idcheck).filter_by(uid=message.author.id).first()
+                        if idchecker is not None:
+                            idchecker.check = True
+                            session.commit()
+                        else:
+                            try:
+                                idcheck = db.idcheck(message.author.id, True)
+                                session.add(idcheck)
+                                session.commit()
+                            except:
+                                session.rollback()
+                                session.close()
+                                logging.exception("failed to  log to database")
                     if int(match.group(1)) >= 18 and not int(match.group(1)) > 20:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?18a {message.author.mention} {message.content}`")

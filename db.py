@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy import Column, String, Integer, Boolean
+from sqlalchemy import Column, String, Integer, Boolean, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -11,7 +11,7 @@ load_dotenv('main.env')
 DBTOKEN = os.getenv("DB")
 
 #sqlalchemy
-engine = create_engine(DBTOKEN, echo=False, pool_pre_ping=True, poolclass=QueuePool) #connects to the database
+engine = create_engine(DBTOKEN, echo=False,echo_pool=True, pool_pre_ping=True, poolclass=QueuePool, max_overflow=20,pool_timeout=30,pool_recycle=30) #connects to the database
 base = declarative_base()
 engine.echo = False
 #class creates table
@@ -19,7 +19,7 @@ class user (base):
 
    __tablename__ = 'user'
 
-   uid = Column(Integer, primary_key=True)
+   uid = Column(BIGINT, primary_key=True)
    dob = Column(String(10))
 
    def __init__(self, uid, dob):
@@ -31,11 +31,11 @@ class config(base):
 
     __tablename__ = 'config'
 
-    guild = Column(Integer, primary_key=True)
-    lobby = Column(Integer)
-    agelog = Column(Integer)
-    modlobby = Column(Integer)
-    general = Column(Integer)
+    guild = Column(BIGINT, primary_key=True)
+    lobby = Column(BIGINT)
+    agelog = Column(BIGINT)
+    modlobby = Column(BIGINT)
+    general = Column(BIGINT)
 
     def __init__(self, guild, lobby, agelog, modlobby, general):
         self.guild = guild
@@ -48,11 +48,11 @@ class permissions (base):
 
    __tablename__ = 'permissions'
 
-   guild = Column(Integer, primary_key=True)
-   admin = Column(Integer)
-   mod = Column(Integer)
-   trial = Column(Integer)
-   lobbystaff = Column(Integer, default=None)
+   guild = Column(BIGINT, primary_key=True)
+   admin = Column(BIGINT)
+   mod = Column(BIGINT)
+   trial = Column(BIGINT)
+   lobbystaff = Column(BIGINT, default=None)
 
    def __init__(self,guild, admin, mod, trial, lobbystaff):
        self.guild = guild
@@ -65,14 +65,24 @@ class warnings (base):
 
    __tablename__ = 'warnings'
 
-   uid = Column(Integer, primary_key=True)
-   swarnings = Column(Integer)
+   uid = Column(BIGINT, primary_key=True)
+   swarnings = Column(BIGINT)
 
 
    def __init__(self, uid, swarnings):
        self.uid = uid
        self.swarnings = swarnings
 
+class idcheck (base):
+
+   __tablename__ = 'idcheck'
+
+   uid = Column(BIGINT, primary_key=True)
+   check = Column(Boolean, default=False)
+
+
+   def __init__(self, uid, check):
+       self.uid = uid
+       self.check = check
+
 base.metadata.create_all(engine)
-
-

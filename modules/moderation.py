@@ -1,4 +1,6 @@
 import logging
+import pytz
+from datetime import timedelta
 from discord.ext import commands
 from discord import app_commands
 import discord
@@ -45,10 +47,6 @@ class moduser(ABC):
         rguilds = []
         if member == ctx.user:
             await ctx.followup.send(f"Error: user ID belongs to {member.mention}.")
-        try:
-            await member.send(f"You've been banned from {ctx.guild} with reason: \n {reason} \n\n To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com")
-        except:
-            logging.exception(f"Can't DM {member}")
         else:
             for guild in bot.guilds:
                 user = guild.get_member(member.id)
@@ -210,10 +208,48 @@ age: {age}""")
         bot = self.bot
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         embed = discord.Embed(title=f"{user}'s warnings", description=f"""User ID: {user.id}
-search Warning count: {exists.swarnings}""")
+search Warning count: {exists.check}""")
         await interaction.channel.send(embed=embed)
         await jsonmaker.configer.getwarnings(self, user, interaction)
         await interaction.followup.send("Success! ~~The bot is still thinking about world domination~~")
+    @app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
+    @app_commands.choices(time=[
+        Choice(name="one week", value="for **1 Week**"),
+        Choice(name="two weeks", value="for **2 Weeks**"),
+        Choice(name="1 month", value="for **1 Month**"),
+        Choice(name="permanent", value="**permanently**"),
+        Choice(name="custom", value=f"custom"),
+    ])
+    @adefs.check_slash_admin_roles()
+    async def searchban(self, interaction: discord.Interaction, member: discord.Member, time: Choice[str], custom:str=None) -> None:
+        await interaction.response.defer(ephemeral=True)
+        tz = pytz.timezone("US/Eastern")
+        bot = self.bot
+        searchbanrole =  discord.utils.get(interaction.guild.roles, id=538809717808693248)
+        await member.add_roles(searchbanrole)
+        current = datetime.now(tz)
+        cooldown = None
+        if time.name == "one week":
+            cooldown = current + timedelta(weeks=1)
+        elif time.name == "two weeks":
+            cooldown = current + timedelta(weeks=2)
+        elif time.name == "1 month":
+            cooldown = current + timedelta(days=30)
+        else:
+            pass
+        reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban {time.value}. Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban. This search ban expires on {cooldown.strftime('%m/%d/%Y %I:%M:%S %p')} EST."
+        customr = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban for {custom}. Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban."
+        if time.value == "custom":
+            await member.send(customr)
+            await jsonmaker.configer.addwarning(self, member, interaction, customr)
+            await moduser.warnlog(interaction, member, customr, interaction.guild)
+            await interaction.followup.send(
+                f"{member.mention} has been search banned for {custom}\n(Note: the bot currently does not auto remove the role.)")
+        else:
+            await member.send(reason)
+            await jsonmaker.configer.addwarning(self, member, interaction, reason)
+            await moduser.warnlog(interaction, member, reason, interaction.guild)
+            await interaction.followup.send(f"{member.mention} has been search banned {time.value} ({cooldown.strftime('%m/%d/%Y %I:%M:%S %p')})\n(Note: the bot currently does not auto remove the role.)")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(moderation(bot))

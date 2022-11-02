@@ -1,3 +1,5 @@
+import logging
+import jsonmaker
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -7,7 +9,7 @@ from abc import ABC, abstractmethod
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 import typing
-
+from discord.app_commands import Choice
 import db
 
 Session = sessionmaker(bind=db.engine)
@@ -49,27 +51,31 @@ class advert(ABC):
             pass
 
     async def increasewarnings(ctx, user):
-        exists = session.query(db.warnings).filter_by(uid=user.id).first()
-        if exists is not None:
-            try:
-                exists.swarnings += 1
-                session.commit()
-                return exists.swarnings
-            except:
-                ctx.send("Database error, rolled back but warning not logged")
-                session.rollback()
-                session.close()
-        else:
-            try:
-                tr = db.warnings(member.id, 1)
-                session.add(tr)
-                session.commit()
-                exists = session.query(db.warnings).filter_by(uid=user.id).first()
-                return exists.swarnings
-            except:
-                ctx.send("Database error, rolled back but user not added and warning not logged")
-                session.rollback()
-                session.close()
+        try:
+            exists = session.query(db.warnings).filter_by(uid=user.id).first()
+            if exists is not None:
+                try:
+                    exists.check += 1
+                    session.commit()
+                    return exists.check
+                except:
+                    session.rollback()
+                    session.close()
+                    logging.error("Couldn't access/add to database. (increase warnings)")
+            else:
+                try:
+                    tr = db.warnings(member.id, 1)
+                    session.add(tr)
+                    session.commit()
+                    exists = session.query(db.warnings).filter_by(uid=user.id).first()
+                    return exists.check
+                except:
+                    session.rollback()
+                    session.close()
+                    logging.error("Couldn't access/add to database. (increase warnings)")
+        except:
+            await ctx.followup.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
+            session.close()
 
 
 class searchcommands(commands.GroupCog, name="ad"):
@@ -373,7 +379,7 @@ Reasons your advert may have been removed include:
 
 If your advert has excessive lists, we do recommend using forums in order to share your lists, be they fandoms, potential pairings, genres, or other items you may want to list. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through <#977720278396305418>. Thank you for your cooperation!""".format(msg.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow formatting guidelines in {message_link.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow formatting guidelines in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await advert.logadvert(interaction, msg, warning, loggingchannel)
         await advert.sendadvertuser(interaction, msg, warning)
@@ -411,7 +417,6 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
-
     # allows staff to remove user's warnings
     @commands.command(aliases=["warnrem"])
     @adefs.check_admin_roles()
@@ -420,9 +425,9 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         await ctx.message.delete()
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         try:
-            exists.swarnings -= number
+            exists.check -= number
             session.commit()
-            await ctx.send(f"<@{exists.uid}> now has {exists.swarnings} warnings (removed: {number})")
+            await ctx.send(f"<@{exists.uid}> now has {exists.check} warnings (removed: {number})")
         except:
             await ctx.send("Can't edit user's warnings")
             session.rollback()
@@ -435,9 +440,9 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         await ctx.message.delete()
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         try:
-            exists.swarnings = number
+            exists.check = number
             session.commit()
-            await ctx.send(f"<@{exists.uid}> now has {exists.swarnings} warnings (set to: {number} by {ctx.message.author.mention})")
+            await ctx.send(f"<@{exists.uid}> now has {exists.check} warnings (set to: {number} by {ctx.message.author.mention})")
         except:
             await ctx.send("Can't edit user's warnings")
             session.rollback()
@@ -453,7 +458,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
             for member in ctx.guild.members:
                 exists = session.query(db.warnings).filter_by(uid=user.id).first()
                 if exists is not None:
-                    exists.swarnings = 0
+                    exists.check = 0
                     continue
                 else:
                     continue
@@ -468,7 +473,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         await ctx.message.delete()
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         embed = discord.Embed(title=f"{user}'s warnings", description=f"""User ID: {user.id}
-Warning count: {exists.swarnings}""")
+Warning count: {exists.check}""")
         await ctx.send(embed=embed)
 
 async def setup(bot: commands.Bot):
