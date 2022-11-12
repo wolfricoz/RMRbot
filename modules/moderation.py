@@ -43,6 +43,33 @@ class moduser(ABC):
             embed.set_footer(text=f"User removed from: {guilds}")
             await ctx.channel.send(embed=embed)
 
+    @abstractmethod
+    async def userbannedperm(self, ctx, member, bot, reason):
+        rguilds = []
+        if member == ctx.user:
+            await ctx.followup.send(f"Error: user ID belongs to {member.mention}.")
+        try:
+            await member.send(
+                f"You've been banned from {ctx.guild} with reason: \n {reason} \n\n This ban can __not__ be appealed")
+        except:
+            logging.exception(f"Can't DM {member}")
+        else:
+            for guild in bot.guilds:
+                user = guild.get_member(member.id)
+                user2 = await bot.fetch_user(member.id)
+                try:
+                    await guild.ban(user2, reason=reason, delete_message_days=0)
+                    await moduser.banlog(ctx, member, reason, guild)
+                    rguilds.append(guild.name)
+                except:
+                    print(f"{guild} could not ban, permissions? \n {AppCommandError}")
+                    await ctx.followup.send(f"User was not in {guild}, could not ban. Please do this manually.")
+            print(rguilds)
+            guilds = ", ".join(rguilds)
+            embed = discord.Embed(title=f"{member.name} banned", description=reason)
+            embed.set_footer(text=f"User removed from: {guilds}")
+            await ctx.channel.send(embed=embed)
+
     async def userbannedid(self, ctx, member, bot, reason):
         rguilds = []
         if member == ctx.user:
@@ -146,6 +173,31 @@ age: {age}""")
                 await moduser.userbanned(self, interaction, member, bot, reason)
             case default:
                 await interaction.followup.send("Options:\n- ID @user \n- underage @user \n- community @user  \n- Custom @user reason")
+    @app_commands.command(name="permban", description="Bans user from all roleplay meets servers")
+    @app_commands.choices(type=[
+        Choice(name="Id", value="id"),
+        Choice(name="Pedophilia", value="underage"),
+        Choice(name="Community", value="community"),
+        Choice(name="Custom", value="custom"),
+    ])
+    @adefs.check_admin_roles()
+    async def permban(self, interaction: discord.Interaction, type: Choice[str], member : discord.User, *, reason:str= "You have been banned by an admin"):
+        await interaction.response.defer(ephemeral=True)
+        bot = self.bot
+        match type.value:
+            case "id":
+                preason = f"{member.name} you've failed to ID after lying about your age, we'll be banning you from our server, as per our rules: **RMR is restricted to users 18 or older. Lying about your age may put our users (your partners) at risk and may result in an immediate ban. If you refuse to give staff your age in the lobby, you will be refused access to the server and removed.**"
+                await moduser.userbannedperm(self, interaction, member, bot, preason)
+            case "underage":
+                preason = f"Your roleplay profile/F-list/advert indicate a willingness to write with underaged people and write underaged characters. As we have a strict ban on pedophilia, we have made the decision to ban you from our server. There is no appealing this ban."
+                await moduser.userbannedperm(self, interaction, member, bot, preason)
+            case "community":
+                preason = f"After discussion amongst the staff and a majority vote, we have decided that you are not fit to remain within RMR. There is no appealing this ban."
+                await moduser.userbannedperm(self, interaction, member, bot, preason)
+            case "custom":
+                await moduser.userbannedperm(self, interaction, member, bot, reason)
+            case default:
+                await interaction.followup.send("Options:\n- ID @user \n- underage @user \n- community @user  \n- Custom @user reason")
 
     @app_commands.command(name="banid", description="TEST COMMAND: Bans user from all roleplay meets servers.")
     @app_commands.choices(type=[
@@ -191,7 +243,7 @@ age: {age}""")
     async def warn(self, interaction: discord.Interaction, user: discord.Member,*, reason:str):
         await interaction.response.defer(ephemeral=True)
         await user.send(f"{interaction.guild.name} **__WARNING__**: You've been warned for: {reason} ")
-        await jsonmaker.configer.addwarning(self, user, interaction, reason)
+        await jsonmaker.Configer.addwarning(self, user, interaction, reason)
         await moduser.warnlog(interaction, user, reason, interaction.guild)
         await interaction.followup.send(f"{user.mention} has been warned about {reason}")
     @app_commands.command(name="notify")
@@ -208,9 +260,9 @@ age: {age}""")
         bot = self.bot
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         embed = discord.Embed(title=f"{user}'s warnings", description=f"""User ID: {user.id}
-search Warning count: {exists.check}""")
+\nSearch warning count: {exists.swarnings}""")
         await interaction.channel.send(embed=embed)
-        await jsonmaker.configer.getwarnings(self, user, interaction)
+        await jsonmaker.Configer.getwarnings(self, user, interaction)
         await interaction.followup.send("Success! ~~The bot is still thinking about world domination~~")
     @app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
     @app_commands.choices(time=[
@@ -241,13 +293,13 @@ search Warning count: {exists.check}""")
         customr = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban for {custom}. Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban."
         if time.value == "custom":
             await member.send(customr)
-            await jsonmaker.configer.addwarning(self, member, interaction, customr)
+            await jsonmaker.Configer.addwarning(self, member, interaction, customr)
             await moduser.warnlog(interaction, member, customr, interaction.guild)
             await interaction.followup.send(
                 f"{member.mention} has been search banned for {custom}\n(Note: the bot currently does not auto remove the role.)")
         else:
             await member.send(reason)
-            await jsonmaker.configer.addwarning(self, member, interaction, reason)
+            await jsonmaker.Configer.addwarning(self, member, interaction, reason)
             await moduser.warnlog(interaction, member, reason, interaction.guild)
             await interaction.followup.send(f"{member.mention} has been search banned {time.value} ({cooldown.strftime('%m/%d/%Y %I:%M:%S %p')})\n(Note: the bot currently does not auto remove the role.)")
 

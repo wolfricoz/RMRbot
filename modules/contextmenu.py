@@ -8,7 +8,7 @@ from sqlalchemy import select, column
 import typing
 from discord import app_commands
 import db
-
+import logging
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
@@ -50,23 +50,29 @@ class advert(ABC):
     async def cincreasewarnings(ctx, user):
         try:
             exists = session.query(db.warnings).filter_by(uid=user.id).first()
-            try:
-                if exists is not None:
-                    exists.check += 1
+            if exists is not None:
+                try:
+                    exists.swarnings += 1
                     session.commit()
-                    return exists.check
-                else:
-                    tr = db.warnings(member.id, 1)
+                    return exists.swarnings
+                except Exception as e:
+                    print(e)
+                    session.rollback()
+                    session.close()
+                    logging.error("Couldn't access/add to database. (increase warnings)")
+            else:
+                try:
+                    tr = db.warnings(user.id, 1)
                     session.add(tr)
                     session.commit()
                     exists = session.query(db.warnings).filter_by(uid=user.id).first()
-                    return exists.check
-            except:
-                print("Database error, rolled back")
-                session.rollback()
-                session.close()
+                    return exists.swarnings
+                except Exception as e:
+                    session.rollback()
+                    session.close()
+                    logging.error("Couldn't access/add to database. (increase warnings)")
         except:
-            await ctx.followup.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
+            await ctx.user.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
             session.close()
 
 class contextmenus(commands.Cog, name="contextmenus"):

@@ -1,11 +1,19 @@
 import json
 import os
 from abc import ABC, abstractmethod
+#makes dir for ban logging
+try:
+    os.mkdir('../bans/')
+except:
+    pass
+
 # Data to be written
-class configer(ABC):
+
+
+class Configer(ABC):
     @abstractmethod
     async def create(userid, member):
-        "Creates the user data"
+        """Creates the user data"""
         dictionary = {
             "Name": member.name,
             "warnings": [],
@@ -18,7 +26,6 @@ class configer(ABC):
                 outfile.write(json_object)
                 print(f"config created for {userid}")
 
-
     async def addwarning(self, user, interaction, warning):
         if os.path.exists(f"users/{user.id}.json"):
             with open(f"users/{user.id}.json") as f:
@@ -27,7 +34,7 @@ class configer(ABC):
             with open(f"users/{user.id}.json", 'w') as f:
                 json.dump(data, f, indent=4)
         else:
-            configer.create(user.id, user)
+            await Configer.create(user.id, user)
             print(f"config created for {user.id}")
             if os.path.exists(f"users/{user.id}.json"):
                 with open(f"users/{user.id}.json") as f:
@@ -35,6 +42,7 @@ class configer(ABC):
                     data['warnings'].append(warning)
                 with open(f"users/{user.id}.json", 'w') as f:
                     json.dump(data, f, indent=4)
+
     async def getwarnings(self, user, interaction):
         if os.path.exists(f"users/{user.id}.json"):
             with open(f"users/{user.id}.json") as f:
@@ -51,5 +59,43 @@ class configer(ABC):
                     await interaction.channel.send(warnmess[2000:4000])
                     await interaction.channel.send(warnmess[4000:6000])
         else:
-            configer.create(user.id, user)
+            await Configer.create(user.id, user)
             print(f"config created for {user.id}")
+
+
+class BanLogger:
+    def create(userid):
+        """Creates the ban log, which is checked by the bot"""
+        banjson = {
+            "uid": userid,
+            "bans": {
+            },
+        }
+        with open(f'../bans/{userid}.json', 'w') as f:
+            json.dump(banjson, f, indent=4)
+
+    def add(userid, guild, reason):
+        ban = {"reason": reason}
+        with open(f'../bans/{userid}.json', 'r+') as f:
+            data = json.load(f)
+            data['bans'][guild] = ban
+            print(data)
+        with open(f'../bans/{userid}.json', 'w') as f:
+            json.dump(data, f, indent=4)
+
+    def read(userid):
+        with open(f'../bans/{userid}.json', 'r+') as f:
+            data = json.load(f)
+            for d, x in data['bans'].items():
+                print(f"{d}: {x['reason']}")
+
+    def check(userid):
+        if os.path.exists(f'../bans/{userid}.json'):
+            with open(f'../bans/{userid}.json', 'r+') as f:
+                data = json.load(f)
+                if len(data['bans'].items()) == 0:
+                    print("user not banned")
+                else:
+                    BanLogger.read(userid)
+        else:
+            print("user not banned")

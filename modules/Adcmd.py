@@ -55,26 +55,27 @@ class advert(ABC):
             exists = session.query(db.warnings).filter_by(uid=user.id).first()
             if exists is not None:
                 try:
-                    exists.check += 1
+                    exists.swarnings += 1
                     session.commit()
-                    return exists.check
-                except:
+                    return exists.swarnings
+                except Exception as e:
+                    print(e)
                     session.rollback()
                     session.close()
                     logging.error("Couldn't access/add to database. (increase warnings)")
             else:
                 try:
-                    tr = db.warnings(member.id, 1)
+                    tr = db.warnings(user.id, 1)
                     session.add(tr)
                     session.commit()
                     exists = session.query(db.warnings).filter_by(uid=user.id).first()
-                    return exists.check
-                except:
+                    return exists.swarnings
+                except Exception as e:
                     session.rollback()
                     session.close()
                     logging.error("Couldn't access/add to database. (increase warnings)")
         except:
-            await ctx.followup.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
+            await ctx.user.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
             session.close()
 
 
@@ -456,7 +457,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         await ctx.message.delete()
         if ctx.message.author.id == 188647277181665280:
             for member in ctx.guild.members:
-                exists = session.query(db.warnings).filter_by(uid=user.id).first()
+                exists = session.query(db.warnings).filter_by(uid=member.id).first()
                 if exists is not None:
                     exists.check = 0
                     continue

@@ -38,7 +38,9 @@ class Events(commands.Cog):
                 p.admin) is None and message.author.get_role(p.trial) is None:
             if message.channel.id == c.lobby:
                 if match:
+                    waitmessage = f"{message.author.mention} Thank you for submitting your age! One of our staff members will let you through into the main server once they are available. Please be patient, as our lobby is handled manually."
                     channel = bot.get_channel(c.modlobby)
+                    lobby = bot.get_channel(c.lobby)
                     await message.add_reaction("🤖")
                     if int(match.group(1)) < 18:
                         await channel.send(
@@ -59,12 +61,15 @@ class Events(commands.Cog):
                     if int(match.group(1)) >= 18 and not int(match.group(1)) > 20:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?18a {message.author.mention} {message.content}`")
+                        await lobby.send(waitmessage)
                     elif int(match.group(1)) >= 21 and not int(match.group(1)) > 24:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?21a {message.author.mention} {message.content}`")
+                        await lobby.send(waitmessage)
                     elif int(match.group(1)) >= 25:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
+                        await lobby.send(waitmessage)
                     return
                 else:
                     try:
@@ -77,6 +82,14 @@ class Events(commands.Cog):
                     return
         else:
             pass
+    @commands.Cog.listener()
+    async def on_command(self, ctx):
+        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+    @commands.Cog.listener()
+    async def on_app_command(self, ctx):
+        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
 
 async def setup(bot):
     await bot.add_cog(Events(bot))

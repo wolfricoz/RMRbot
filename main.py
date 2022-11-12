@@ -24,12 +24,12 @@ import cryptography
 from dotenv import load_dotenv
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 alogger = logging.getLogger('sqlalchemy')
 alogger.setLevel(logging.WARN)
-handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='w')
+handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='r+')
 handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 alogger.addHandler(handler2)
 # LOADS THE .ENV FILE THAT RESIDES ON THE SAME LEVEL AS THE SCRIPT.
@@ -100,45 +100,6 @@ async def on_message(message):
         await message.author.send(
             "{}: You can repost in {} after the next purge.".format(message.author.mention, message.channel.mention) + "\nBy posting in this channel, you are agreeing to our search rules")
     await bot.process_commands(message)
-
-
-@bot.listen()
-async def on_message(message):
-    modchannel = bot.get_channel(763058339088957548)
-    user = message.author
-    ad = message.channel
-    messlength = len(message.content)
-    listcount = 0
-    if message.author.bot:
-        return
-    #length counters
-    if str(message.channel.id) in channels24:
-        if messlength > 650:
-            await modchannel.send(f"{user.mention} in {ad.mention} has posted over 650 characters. \n Character Count: {messlength}")
-            await message.add_reaction("❓")
-        if messlength < 650:
-            await message.add_reaction("🤖")
-    elif str(message.channel.id) in channels72:
-        if messlength < 600:
-            await modchannel.send(f"{user.mention} in {ad.mention} has posted over under 600 characters. \n Character Count: {messlength}")
-            await message.add_reaction("❓")
-        if messlength > 600:
-            await message.add_reaction("🤖")
-        for i in message.content:
-            if i == "-" or i == "•" or i == "»":
-                listcount += 1
-        if listcount >= 10:
-            await modchannel.send(f"{user.mention} in {ad.mention} has potentially posted a list with too many options. \n list Count: {listcount}")
-        else:
-            pass
-    elif str(message.channel.id) in spec:
-        for i in message.content:
-            if i == "-" or i == "•" or i == "»":
-                listcount += 1
-        if listcount >= 10:
-            await modchannel.send(f"{user.mention} in {ad.mention} has potentially posted a list with too many options. \n list Count: {listcount}")
-        else:
-            pass
 
 
     else:
@@ -225,7 +186,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.0: Less questions, more slashing.")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.1: VERIFY OR BE TERMINATED 🤖.")
     return guilds
     session.close()
 @bot.event
@@ -271,7 +232,7 @@ async def on_member_join(member):
             session.rollback()
             session.close()
 
-    await jsonmaker.configer.create(member.id, member)
+    await jsonmaker.Configer.create(member.id, member)
 @bot.command()
 @commands.is_owner()
 async def addall(ctx):
@@ -300,7 +261,7 @@ async def addall(ctx):
             session.close()
     for member in guildmembers:
         try:
-            await jsonmaker.configer.create(member.id, member)
+            await jsonmaker.Configer.create(member.id, member)
             concount += 1
         except:
             continue
