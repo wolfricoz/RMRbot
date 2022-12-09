@@ -102,8 +102,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-    else:
-        return
+
 #database sessionmaker
 Session = sessionmaker(bind=db.engine)
 session = Session()
@@ -186,7 +185,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.1: VERIFY OR BE TERMINATED 🤖.")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.2: Now with more automation!.")
     return guilds
     session.close()
 @bot.event
