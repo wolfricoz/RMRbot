@@ -1,23 +1,24 @@
 import logging
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-
-import discord
-import pytz
-from discord import app_commands
-from discord.app_commands import Choice
-from discord.ext import commands
-from sqlalchemy.orm import sessionmaker
-
-import adefs
-import db
 import jsonmaker
+import discord
+from discord import app_commands
+from discord.ext import commands
+from discord.app_commands import Choice
+from datetime import datetime
+import adefs
+from abc import ABC, abstractmethod
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select, column
+import typing
+from discord.app_commands import Choice
+from datetime import datetime, timedelta
+import pytz
+import db
 
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
-
-class Advert(ABC):
+class advert(ABC):
 
     @abstractmethod
     async def logadvert(ctx, msg, warning, lc):
@@ -80,16 +81,13 @@ class Advert(ABC):
                     logging.error("Couldn't access/add to database. (increase warnings)")
         except Exception as e:
             await ctx.channel.send(f"{e}")
-            await ctx.user.send(
-                "Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
+            await ctx.user.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
             session.close()
-
     async def resetcooldown(self, message, timeincrement):
         tz = pytz.timezone('US/Eastern')
         now = datetime.now(tz)
         cd = now + timedelta(days=timeincrement)
         jsonmaker.Cooldown.add(self, message.author.id, message.channel.id, cd)
-
     @abstractmethod
     async def addreason(self, value):
         match value:
@@ -111,17 +109,14 @@ class Advert(ABC):
                 pass
         return warn
 
-
-# noinspection PyTypeChecker
 class searchcommands(commands.GroupCog, name="ad"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     '''Search Commands'''
-
     @app_commands.command(name="ages", description="adcommand: use this when someone fails to include ages")
     @adefs.check_slash_db_roles()
-    async def ages(self, interaction: discord.Interaction, message_link: str) -> None:
+    async def ages(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -129,7 +124,7 @@ class searchcommands(commands.GroupCog, name="ad"):
             server = self.bot.get_guild(int(link[4]))
             channel = server.get_channel(int(link[5]))
             message_link = await channel.fetch_message(int(link[6]))
-            await Advert.resetcooldown(self, message_link, 0)
+            await advert.resetcooldown(self, message_link, 0)
         except:
             print("thread")
             server = self.bot.get_guild(int(link[4]))
@@ -140,8 +135,8 @@ class searchcommands(commands.GroupCog, name="ad"):
         adchannel = bot.get_channel(763058339088957548)
         user = message_link.author
         print(user)
-        # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        #adds warning to database
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = """Hello, I'm a staff member of **Roleplay Meets Reborn**. The advert you have posted in {} has failed to mention the ages of the characters you intend to use in your roleplay, as required by our sixth search rule. This includes both the characters you intend to write and the characters you want your writing partner to write. Due to this, your advert has been removed. __**Please include the ages of all characters or a general disclaimer**__, such as: "all characters are 18+", in the future. Characters under the age of 18 are not allowed to be advertised within our server.
 
 The ages must be displayed on the advertisement on discord.
@@ -150,15 +145,81 @@ If you have any more questions, our staff team is always available to help you.
 <#977720278396305418>""".format(message_link.channel.mention)
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for failing to include character ages to their adverts in {message_link.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
-        # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, message_link, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, message_link, warning)
+        #Logs the advert and sends it to the user.
+        await advert.logadvert(interaction, message_link, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, message_link, warning)
         await interaction.followup.send(f"{message_link.author.mention} successfully warned")
 
-    @app_commands.command(name="early24",
-                          description="adcommand: Use this when an advert was posted too early in quick search channels")
+#     @app_commands.command(name="toolong", description="adcommand: use this when an advert is over 600 characters")
+#     @adefs.check_slash_db_roles()
+#     async def toolong(self, interaction:discord.Interaction, message_link: str) -> None:
+#         await interaction.response.defer(ephemeral=True)
+#         link = message_link.split('/')
+#         try:
+#             print("channel")
+#             server = self.bot.get_guild(int(link[4]))
+#             channel = server.get_channel(int(link[5]))
+#             msg = await channel.fetch_message(int(link[6]))
+# 
+#         except:
+#             print("thread")
+#             server = self.bot.get_guild(int(link[4]))
+#             thread = server.get_thread(int(link[5]))
+#             msg = await thread.fetch_message(int(link[6]))
+#         bot = self.bot
+#         loggingchannel = bot.get_channel(997282508523704350)
+#         adchannel = bot.get_channel(763058339088957548)
+#         user = msg.author
+#         # adds warning to database
+#         swarnings = await advert.increasewarnings(interaction, user)
+#         warning = """Hello, I'm a staff member of **Roleplay Meets: Reborn**. I'm reaching out to you regarding your ad in {}. It's been removed because: **your advert was over 600 characters (your advert: {})**. Please repost it in the appropriate channel.
+#
+# If you have any questions regarding adverts or the rules, don't hesitate to ask. Thank you for your cooperation!
+# <#977720278396305418>""".format(msg.channel.mention, len(msg.content))
+#         await adchannel.send(
+#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too long  in {msg.channel.mention}\n userId: {user.id}\nCharacter Count: {len(msg.content)} Warning Count: {swarnings}")
+#         # Logs the advert and sends it to the user.
+#         await advert.logadvert(interaction, msg, warning, loggingchannel)
+#         await advert.sendadvertuser(interaction, msg, warning)
+#         await interaction.followup.send(f"{msg.author.mention} successfully warned")
+#
+#
+#     @app_commands.command(name="tooshort", description="adcommand: use this when an advert is under 600 characters")
+#     @adefs.check_slash_db_roles()
+#     async def tooshort(self, interaction:discord.Interaction, message_link: str) -> None:
+#         await interaction.response.defer(ephemeral=True)
+#         link = message_link.split('/')
+#         try:
+#             print("channel")
+#             server = self.bot.get_guild(int(link[4]))
+#             channel = server.get_channel(int(link[5]))
+#             msg = await channel.fetch_message(int(link[6]))
+# 
+#         except:
+#             print("thread")
+#             server = self.bot.get_guild(int(link[4]))
+#             thread = server.get_thread(int(link[5]))
+#             msg = await thread.fetch_message(int(link[6]))
+#         bot = self.bot
+#         loggingchannel = bot.get_channel(997282508523704350)
+#         adchannel = bot.get_channel(763058339088957548)
+#         user = msg.author
+#         # adds warning to database
+#         swarnings = await advert.increasewarnings(interaction, user)
+#         warning = """Hello, I'm a staff member of **Roleplay Meets: Reborn**. I'm reaching out to you regarding your ad in {}. It's been removed because: **your advert was under 600 characters (your advert: {})**. Please repost it in the appropriate channel.
+#
+# If you have any questions regarding adverts or the rules, don't hesitate to ask. Thank you for your cooperation!
+# <#977720278396305418>""".format(msg.channel.mention, len(msg.content))
+#         await adchannel.send(
+#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too short in  {msg.channel.mention}\n userId: {user.id} Character Count: {len(msg.content)} Warning Count: {swarnings}")
+#         # Logs the advert and sends it to the user.
+#         await advert.logadvert(interaction, msg, warning, loggingchannel)
+#         await advert.sendadvertuser(interaction, msg, warning)
+#         await interaction.followup.send(f"{msg.author.mention} successfully warned")
+
+    @app_commands.command(name="early24", description="adcommand: Use this when an advert was posted too early in quick search channels")
     @adefs.check_slash_db_roles()
-    async def early24(self, interaction: discord.Interaction, message_link: str) -> None:
+    async def early24(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -176,7 +237,7 @@ If you have any more questions, our staff team is always available to help you.
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} has been posted too early, please wait 1 day(24 hours) between each posts.
 
 Repeatedly posting too early may lead to a search ban which means you can not post an advert for a certain time.
@@ -186,12 +247,11 @@ Thank you for your cooperation!""".format(msg.channel.mention)
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
-    @app_commands.command(name="early72",
-                          description="adcommand: Use this when an advert was posted too early in normal search channels")
+    @app_commands.command(name="early72", description="adcommand: Use this when an advert was posted too early in normal search channels")
     @adefs.check_slash_db_roles()
     async def early72(self, interaction: discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
@@ -212,7 +272,7 @@ Thank you for your cooperation!""".format(msg.channel.mention)
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} has been posted too early, please wait 3 days(72 hours) between each posts.
 
 Repeatedly posting too early may lead to a search ban which means you can not post an advert for a certain time.
@@ -222,66 +282,49 @@ Thank you for your cooperation!""".format(msg.channel.mention)
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (72h)  {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
-        @app_commands.command(name="template",
-                              description="adcommand: Use this when an advert fails to follow the template")
-        @adefs.check_slash_db_roles()
-        async def template(self, interaction: discord.Interaction, message_link: str) -> None:
-            await interaction.response.defer(ephemeral=True)
-            link = message_link.split('/')
-            try:
-                print("channel")
-                server = self.bot.get_guild(int(link[4]))
-                channel = server.get_channel(int(link[5]))
-                msg = await channel.fetch_message(int(link[6]))
 
-            except:
-                print("thread")
-                server = self.bot.get_guild(int(link[4]))
-                thread = server.get_thread(int(link[5]))
-                msg = await thread.fetch_message(int(link[6]))
-            bot = self.bot
-            loggingchannel = bot.get_channel(997282508523704350)
-            adchannel = bot.get_channel(763058339088957548)
-            user = msg.author
-            # adds warning to database
-            swarnings = await Advert.increasewarnings(interaction, user)
-            warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} does not match the template within the channel, the template can be found in the **channel pins**. 
-
-    Please be sure to provide all information that the template requests, as failure to abide by the template will result in your post being deleted!
-
-    If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
-    Thank you for your cooperation!""".format(msg.channel.mention)
-            await adchannel.send(
-                f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow the template in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
-            # Logs the advert and sends it to the user.
-            await Advert.logadvert(interaction, msg, warning, loggingchannel)
-            await Advert.sendadvertuser(interaction, msg, warning)
-            await interaction.followup.send(f"{msg.author.mention} successfully warned")
-
-    @app_commands.command(name="chatter", description="adcommand: for when users chat in forum comments")
+    @app_commands.command(name="template", description="adcommand: Use this when an advert fails to follow the template")
     @adefs.check_slash_db_roles()
-    async def forummsg(self, interaction: discord.Interaction, user: discord.Member) -> None:
+    async def template(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
-        loggingchannel = self.bot.get_channel(997282508523704350)
-        adchannel = self.bot.get_channel(763058339088957548)
-        warning = """Hello, I am a staff member of **Roleplay Meets: Reborn**. We _do not_ allow users to discuss roleplays or talking within the search channels, please request a dm with the user if you wish to roleplay with them. You may request a dm with the user in the forum comments or in <#607686794971971645>. 
+        link = message_link.split('/')
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
+        bot = self.bot
+        loggingchannel = bot.get_channel(997282508523704350)
+        adchannel = bot.get_channel(763058339088957548)
+        user = msg.author
+        # adds warning to database
+        swarnings = await advert.increasewarnings(interaction, user)
+        warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} does not match the template within the channel, the template can be found in the **channel pins**. 
+
+Please be sure to provide all information that the template requests, as failure to abide by the template will result in your post being deleted!
 
 If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
-Thank you for your cooperation!"""
-        await user.send(warning)
+Thank you for your cooperation!""".format(msg.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for discussing/talking in forum comments\n userId: {user.id} (No warning added)")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow the template in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await interaction.followup.send(f"{user.mention} successfully warned")
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
+        await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
-    @app_commands.command(name="custom",
-                          description="adcommand: Use this when you need to give a custom warning, or multiple at once.")
+    @app_commands.command(name="custom", description="adcommand: Use this when you need to give a custom warning, or multiple at once.")
     @adefs.check_slash_db_roles()
-    async def custom(self, interaction: discord.Interaction, message_link: str, *, warning: str) -> None:
+    async def custom(self, interaction:discord.Interaction, message_link: str, *, warning:str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -301,70 +344,17 @@ Thank you for your cooperation!"""
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} with a custom warning in {msg.channel.mention} with reason: {warning}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
-    @app_commands.command(name="duplicate",
-                          description="adcommand: Use this when an advert is posted in multiple channels. use a comma between links")
+    @app_commands.command(name="duplicate", description="adcommand: Use this when an advert is posted in multiple channels")
     @adefs.check_slash_db_roles()
-    async def duplicate(self, interaction: discord.Interaction, original: str, *, duplicates: str) -> None:
-        await interaction.response.defer(ephemeral=True)
-        dupchans = []
-        dups = duplicates.replace(" ", "").split(',')
-        link = original.split('/')
-        try:
-            server = self.bot.get_guild(int(link[4]))
-            channel = server.get_channel(int(link[5]))
-            msg = await channel.fetch_message(int(link[6]))
-
-        except:
-            server = self.bot.get_guild(int(link[4]))
-            thread = server.get_thread(int(link[5]))
-            msg = await thread.fetch_message(int(link[6]))
-        trash = []
-        for d in dups:
-            dupsplit = d.split('/')
-            try:
-                server = self.bot.get_guild(int(dupsplit[4]))
-                channel = server.get_channel(int(dupsplit[5]))
-                dmsg = await channel.fetch_message(int(dupsplit[6]))
-                dupchans.append(dmsg.channel.mention)
-                trash.append(dmsg)
-            except:
-                server = self.bot.get_guild(int(dupsplit[4]))
-                thread = server.get_thread(int(dupsplit[5]))
-                dmsg = await thread.fetch_message(int(dupsplit[6]))
-                dupchans.append(dmsg.channel.mention)
-                trash.append(dmsg)
-
-        bot = self.bot
-        loggingchannel = bot.get_channel(997282508523704350)
-        adchannel = bot.get_channel(763058339088957548)
-        user = msg.author
-        # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
-        dupmess = ', '.join(dupchans)
-        warning = f"""Hello, I am a staff member of **Roleplay Meets Reborn**, the advert(s) you have posted in {dupmess} is a duplicate of what you've posted in {msg.channel.mention} and has been removed. Please don't repost the same advert in multiple channels! You can repost every 24 hours in quick search channels and every 72 hours in regular search channels or you can make changes to your advert and post it in **another** channel.
-
-If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>.
-Thank you for your cooperation!"""
-        await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posted multiple adverts in: {dupmess} with the original being in  {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
-        # logs all the duplicates
-        for a in trash:
-            await Advert.logadvert(interaction, a, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
-        await interaction.followup.send(f"{msg.author.mention} successfully warned")
-
-    @app_commands.command(name="format",
-                          description="adcommand: Use this when an advert has long lists, excessive spacing, non-standard text.")
-    @adefs.check_slash_db_roles()
-    async def format(self, interaction: discord.Interaction, message_link: str) -> None:
+    async def duplicate(self, interaction:discord.Interaction, message_link: str, *, args:str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -383,7 +373,42 @@ Thank you for your cooperation!"""
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
+        sargs= args.split(" ")
+        dupchannels = ', '.join(sargs)
+        warning = """Hello, I am a staff member of **Roleplay Meets Reborn**, the advert you have posted in {} is a duplicate of what you've posted in {} and has been removed. Please don't repost the same advert in multiple channels! You can repost every 24 hours in quick search channels and every 72 hours in regular search channels or you can make changes to your advert and post it in **another** channel.
+
+If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
+Thank you for your cooperation!""".format(dupchannels, msg.channel.mention)
+        await adchannel.send(
+            f"{interaction.user.mention} has warned {user.mention} for posted multiple adverts in: {dupchannels} with the original being in  {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+        # Logs the advert and sends it to the user.
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
+        await interaction.followup.send(f"{msg.author.mention} successfully warned")
+
+    @app_commands.command(name="format", description="adcommand: Use this when an advert has long lists, excessive spacing, non-standard text.")
+    @adefs.check_slash_db_roles()
+    async def format(self, interaction:discord.Interaction, message_link: str) -> None:
+        await interaction.response.defer(ephemeral=True)
+        link = message_link.split('/')
+        try:
+            print("channel")
+            server = self.bot.get_guild(int(link[4]))
+            channel = server.get_channel(int(link[5]))
+            msg = await channel.fetch_message(int(link[6]))
+
+        except:
+            print("thread")
+            server = self.bot.get_guild(int(link[4]))
+            thread = server.get_thread(int(link[5]))
+            msg = await thread.fetch_message(int(link[6]))
+        bot = self.bot
+        loggingchannel = bot.get_channel(997282508523704350)
+        adchannel = bot.get_channel(763058339088957548)
+        user = msg.author
+        # adds warning to database
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = """Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {}. It has been removed due to **improper formatting.** Please review our Search Rules, specifically S8: Excessive Adverts and repost your ad with the appropriate fixes. 
 
 Reasons your advert may have been removed include:
@@ -392,18 +417,17 @@ Reasons your advert may have been removed include:
 - Having more than 10 items **total** in your lists. Lists **are** counted cumulatively or having an excessively long list
 - Using a font that is not Discord's default font
 
-If your advert has excessive lists, we do recommend using forums in order to share your lists, be they fandoms, potential pairings, genres, or other items you may want to list. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through <#977720278396305418>. Thank you for your cooperation!""".format(
-            msg.channel.mention)
+If your advert has excessive lists, we do recommend using forums in order to share your lists, be they fandoms, potential pairings, genres, or other items you may want to list. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through <#977720278396305418>. Thank you for your cooperation!""".format(msg.channel.mention)
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow formatting guidelines in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
     @app_commands.command(name="website", description="adcommand: Use this when a link is not allowed or suspicious.")
     @adefs.check_slash_db_roles()
-    async def website(self, interaction: discord.Interaction, message_link: str) -> None:
+    async def website(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -422,7 +446,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {msg.channel.mention}. It has been removed due to **dangerous/inappropriate websites.**
 
 Reasons your advert may have been removed include:
@@ -434,13 +458,13 @@ The safety of our members is important to us and we appreciate your understandin
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that has a suspicious/prohibited link in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
     @app_commands.command(name="pictures", description="adcommand: Warn users who have more than 3 images")
     @adefs.check_slash_db_roles()
-    async def pictures(self, interaction: discord.Interaction, message_link: str) -> None:
+    async def pictures(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -459,22 +483,21 @@ The safety of our members is important to us and we appreciate your understandin
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
-        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **having more than 5 images**. Please repost it with the appropriate fixes.
+        swarnings = await advert.increasewarnings(interaction, user)
+        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **having more than 3 images**. Please repost it with the appropriate fixes.
 
     If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
     Thank you for your cooperation!"""
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that had more than 3 images in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
-    @app_commands.command(name="canonuapic",
-                          description="adcommand: Warn user which posted a picture with a canonically underaged character.")
+    @app_commands.command(name="canonuapic", description="adcommand: Warn user which posted a picture with a canonically underaged character.")
     @adefs.check_slash_db_roles()
-    async def uapictures(self, interaction: discord.Interaction, message_link: str) -> None:
+    async def uapictures(self, interaction:discord.Interaction, message_link: str) -> None:
         await interaction.response.defer(ephemeral=True)
         link = message_link.split('/')
         try:
@@ -493,7 +516,7 @@ The safety of our members is important to us and we appreciate your understandin
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **posting an NSFW picture with a canonically underaged character**. Please repost without these images.
 
 Roleplay Meets: Reborn no longer tolerates pictures of characters that have been aged up which are NSFW. Failure to comply further with this rule comes with dire consequences.
@@ -503,8 +526,8 @@ Thank you for your cooperation!"""
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that had more than 3 images in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
     @app_commands.command(name="multi", description="adcommand: Use this when an advert fails to follow the template")
@@ -517,34 +540,33 @@ Thank you for your cooperation!"""
         Choice(name="duplicate", value="dup"),
         Choice(name="pictures", value="pic"),
     ],
-        searchrule2=[
-            Choice(name="ages", value="age"),
-            Choice(name="early72", value="e72"),
-            Choice(name="early24", value="e24"),
-            Choice(name="format", value="form"),
-            Choice(name="template", value="temp"),
-            Choice(name="duplicate", value="dup"),
-            Choice(name="pictures", value="pic"),
-        ],
-        searchrule3=[
-            Choice(name="ages", value="age"),
-            Choice(name="early72", value="e72"),
-            Choice(name="early24", value="e24"),
-            Choice(name="format", value="form"),
-            Choice(name="template", value="temp"),
-            Choice(name="duplicate", value="dup"),
-            Choice(name="pictures", value="pic"),
-        ])
+    searchrule2=[
+        Choice(name="ages", value="age"),
+        Choice(name="early72", value="e72"),
+        Choice(name="early24", value="e24"),
+        Choice(name="format", value="form"),
+        Choice(name="template", value="temp"),
+        Choice(name="duplicate", value="dup"),
+        Choice(name="pictures", value="pic"),
+    ],
+    searchrule3=[
+        Choice(name="ages", value="age"),
+        Choice(name="early72", value="e72"),
+        Choice(name="early24", value="e24"),
+        Choice(name="format", value="form"),
+        Choice(name="template", value="temp"),
+        Choice(name="duplicate", value="dup"),
+        Choice(name="pictures", value="pic"),
+    ])
     @adefs.check_slash_db_roles()
-    async def advanced(self, interaction: discord.Interaction, message_link: str, searchrule1: Choice[str],
-                       searchrule2: Choice[str] = None, searchrule3: Choice[str] = None) -> None:
+    async def advanced(self, interaction:discord.Interaction, message_link: str, searchrule1: Choice[str], searchrule2: Choice[str] = None, searchrule3: Choice[str] = None) -> None:
         await interaction.response.defer(ephemeral=True)
         c = [searchrule1, searchrule2, searchrule3]
         values = []
         rules = ["Broken rules:"]
         for a in c:
             if a is not None:
-                warn = await Advert.addreason(self, a.value)
+                warn = await advert.addreason(self, a.value)
                 rules.append(warn)
                 values.append(a.name)
         urules = "\n- ".join(rules)
@@ -566,7 +588,7 @@ Thank you for your cooperation!"""
         adchannel = bot.get_channel(763058339088957548)
         user = msg.author
         # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
+        swarnings = await advert.increasewarnings(interaction, user)
         warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {msg.channel.mention}. It has been removed due to **improper formatting.** Please review our Search Rules, specifically S8: Excessive Adverts and repost your ad with the appropriate fixes.
 
 {urules}
@@ -575,8 +597,8 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         await adchannel.send(
             f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow multiple rules({uvalues}) in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
+        await advert.logadvert(interaction, msg, warning, loggingchannel)
+        await advert.sendadvertuser(interaction, msg, warning)
         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
     # allows staff to remove user's warnings
@@ -595,7 +617,6 @@ If your advert has excessive lists, we do recommend using forums in order to sha
             await ctx.channel.send("Can't edit user's warnings")
             session.rollback()
             session.close()
-
     @app_commands.command(name="warnadd", description="Adadmin: add a warning from a user")
     @adefs.check_slash_admin_roles()
     async def adwarningadd(self, ctx: discord.Interaction, user: discord.Member, number: int = 1):
@@ -611,8 +632,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
             await ctx.channel.send("Can't edit user's warnings")
             session.rollback()
             session.close()
-
-    # allows staff to change user's warnings
+#allows staff to change user's warnings
 
     @app_commands.command(name="warnset", description="Adadmin: set the amount of warnings of a user")
     @adefs.check_slash_admin_roles()
@@ -623,17 +643,17 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         try:
             exists.swarnings = number
             session.commit()
-            await ctx.channel.send(
-                f"<@{exists.uid}> now has {exists.swarnings} warnings (set to: {number} by {ctx.user.mention})")
+            await ctx.channel.send(f"<@{exists.uid}> now has {exists.swarnings} warnings (set to: {number} by {ctx.message.author.mention})")
         except:
             await ctx.channel.send("Can't edit user's warnings")
             session.rollback()
             session.close()
 
-    # PURGES ALL WARNINGS FROM DB. Only usable by dev.
+# PURGES ALL WARNINGS FROM DB. Only usable by dev.
     @commands.command(aliases=[])
     @adefs.check_admin_roles()
     async def adwarningreset(self, ctx):
+        bot = self.bot
         await ctx.message.delete()
         if ctx.message.author.id == 188647277181665280:
             records = session.query(db.warnings).all()
@@ -653,18 +673,17 @@ If your advert has excessive lists, we do recommend using forums in order to sha
             await ctx.send("All warnings reset.")
         else:
             ctx.send("This is a developer only command")
-
-    # looks up user's warnings
+#looks up user's warnings
 
     @app_commands.command(name="warncheck", description="Adadmin: checks user's search warnings")
     @adefs.check_slash_admin_roles()
-    async def warnlookup(self, ctx, user: discord.Member):
+    async def warnlookup(self, ctx, user:discord.Member):
+        bot = self.bot
         await ctx.response.send_message(f"Attempting to edit look up data for user: {user}")
         exists = session.query(db.warnings).filter_by(uid=user.id).first()
         embed = discord.Embed(title=f"{user}'s warnings", description=f"""User ID: {user.id}
 Warning count: {exists.check}""")
         await ctx.channel.send(embed=embed)
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(searchcommands(bot))

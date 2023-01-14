@@ -1,25 +1,25 @@
-import typing
-
 import discord
-from discord import app_commands
 from discord.ext import commands
-from sqlalchemy.orm import sessionmaker
-
+from abc import ABC, abstractmethod
 import db
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select, column
+import typing
+from discord import app_commands
+
 import jsonmaker
 
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
-
-class config(commands.GroupCog, name="config"):
+class config(commands.Cog, name="config"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command()
     @commands.has_permissions(manage_guild=True)
-    async def config(self, ctx, option="default", input: typing.Union[discord.TextChannel, discord.Role] = None):
+    async def config(self,ctx, option = "default", input : typing.Union[discord.TextChannel, discord.Role] = None):
         print(ctx.guild.id)
         c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
         p = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
@@ -66,25 +66,13 @@ class config(commands.GroupCog, name="config"):
 • mod @role
 • trial @role
 • lobbystaff @role""")
-        session.close()
-
     @app_commands.command(name="updater", description="Updates all user configs")
     @app_commands.checks.has_permissions(manage_guild=True)
     async def ageadd(self, interaction: discord.Interaction):
         await interaction.response.send_message("updater started. please hold.")
         await jsonmaker.Updater.update(self)
         await interaction.channel.send("Updater done")
-
-    @app_commands.command(name="roulette", description="sets roulette channel")
-    @app_commands.checks.has_permissions(manage_guild=True)
-    async def crouls(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        await interaction.response.send_message("updating roulette channel")
-        await jsonmaker.guildconfiger.roulette(interaction.guild.id, channel.id, 'roulette')
-        await interaction.channel.send(f"{channel.mention} is now the new roulette channel")
-
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(config(bot))
-
 
 session.commit()
