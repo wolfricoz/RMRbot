@@ -12,6 +12,7 @@ Devs: Rico Stryker#6666
 4. [advert commands](advert.md)
 5. [warning commands](warning.md)
 6. [Moderation commands](moderation.md)
+6. [partnership commands](partner.md)
 7. [setup commands](setup.md)
 8. [developer commands](developer.md)
 
