@@ -556,14 +556,17 @@ Entry updated by: {interaction.user}""")
     @app_commands.command(name="idverify", description="approves user for ID verification.")
     @adefs.check_slash_db_roles()
     async def idverify(self, interaction: discord.Interaction, user: discord.Member, age:str, dob: str):
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
         c = session.query(db.config).filter_by(guild=interaction.guild.id).first()
         agelog = c.agelog
         channel = self.bot.get_channel(agelog)
         regdob = agecalc.regex(dob)
         try:
             userdata = session.query(db.user).filter_by(uid=user.id).first()
-            userdata.dob = regdob
+            if userdata is not None:
+                userdata.dob = regdob
+            else:
+                dblookup.dobsave(self, user, regdob)
             idchecker = session.query(db.idcheck).filter_by(uid=user.id).first()
             if idchecker is not None:
                 idchecker.check = False
@@ -588,19 +591,23 @@ UID: {user.id}
             session.rollback()
             session.close()
             await interaction.followup.send(f"Command failed: {traceback.format_exc()}")
-    #TODO: make this a command to add
     @app_commands.command(name="idadd", description="add a user to manual ID list")
     @adefs.check_slash_db_roles()
-    async def addverify(self, interaction: discord.Interaction, userid: str):
-        await interaction.response.defer(ephemeral=True)
+    async def idadd(self, interaction: discord.Interaction, userid: str):
+        await interaction.response.defer(ephemeral=False)
         dblookup.idcheckeradd(self, userid)
         await interaction.followup.send(f"Added user {userid} to the ID list")
 
-    #TODO: make this a command to add
     @app_commands.command(name="idremove", description="remove a user to manual ID list")
+<<<<<<< Updated upstream
     @adefs.check_slash_db_roles()
     async def addverify(self, interaction: discord.Interaction, userid: str):
         await interaction.response.defer(ephemeral=True)
+=======
+    @adefs.check_slash_admin_roles()
+    async def remverify(self, interaction: discord.Interaction, userid: str):
+        await interaction.response.defer(ephemeral=False)
+>>>>>>> Stashed changes
         dblookup.idcheckerremove(self, userid)
         await interaction.followup.send(f"Removed user {userid} to the ID list")
 

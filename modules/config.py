@@ -6,6 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, column
 import typing
 from discord import app_commands
+
+import jsonmaker
+
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
@@ -63,7 +66,12 @@ class config(commands.Cog, name="config"):
 • mod @role
 • trial @role
 • lobbystaff @role""")
-
+    @app_commands.command(name="updater", description="Updates all user configs")
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def ageadd(self, interaction: discord.Interaction):
+        await interaction.response.send_message("updater started. please hold.")
+        await jsonmaker.Updater.update(self)
+        await interaction.channel.send("Updater done")
 async def setup(bot: commands.Bot):
     await bot.add_cog(config(bot))
 

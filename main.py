@@ -1,27 +1,24 @@
 # IMPORT DISCORD.PY. ALLOWS ACCESS TO DISCORD'S API.
 # IMPORT THE OS MODULE.
-import traceback
-import sys
 import logging
 import os
-import re
-import pytz
-import discord
-import jsonmaker
+import sys
+import traceback
 from datetime import datetime
-from discord.ext import commands
-from sqlalchemy import create_engine
-from sqlalchemy import Column, String, Integer
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from discord import app_commands
-import db
+
+import discord
+import pytz
 from discord import Interaction
 from discord.app_commands import AppCommandError
-import adefs
-import cryptography
+from discord.ext import commands, tasks
 # IMPORT LOAD_DOTENV FUNCTION FROM DOTENV MODULE.
 from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker
+
+import adefs
+import db
+import jsonmaker
+
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -87,13 +84,21 @@ async def on_message(message):
         current = datetime.now(tz)
         cooldown = current + timedelta(hours=72)
         await message.author.send(
-            f"{message.author.mention}: You can repost in {message.channel.mention} at: {cooldown.strftime('%m/%d/%Y %I:%M:%S %p')} EST \nBy posting in this channel, you are agreeing to our search rules")
+            f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
+            f"\nBy posting in this channel, you are agreeing to our search rules")
+    if str(message.channel.id) in spec and status == True:
+        current = datetime.now(tz)
+        cooldown = current + timedelta(hours=72)
+        await message.author.send(
+            f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
+            f"\nBy posting in this channel, you are agreeing to our search rules")
     #24h Version
     if str(message.channel.id) in channels24 and status == True:
         current = datetime.now(tz)
         cooldown = current + timedelta(hours=24)
         await message.author.send(
-            f"{message.author.mention}: You can repost in {message.channel.mention} at: {cooldown.strftime('%m/%d/%Y %I:%M:%S %p')} EST \nBy posting in this channel, you are agreeing to our search rules")
+            f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
+            f"\nBy posting in this channel, you are agreeing to our search rules")
     #single post version
     if str(message.channel.id) in single and status == True:
         current = datetime.now(tz)
@@ -150,7 +155,6 @@ session = Session()
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        import time
         await ctx.send("Please fill in the required arguments")
     elif isinstance(error, commands.CommandNotFound):
         pass
@@ -165,7 +169,7 @@ async def on_command_error(ctx, error):
     else:
         session.rollback()
         session.close()
-        engine.dispose()
+        db.engine.dispose()
         await ctx.send(error)
         raise error
 #error logging for app commands (slash commands)
@@ -179,8 +183,7 @@ async def on_app_command_error(
     channel = bot.get_channel(1033787967929589831)
     await channel.send(traceback.format_exc())
     raise error
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
+
 
 # EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
 @bot.event
@@ -225,9 +228,16 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
+<<<<<<< Updated upstream
     await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.0: Less questions, more slashing.")
     return guilds
+=======
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.3: Multiple choice questions!.")
+>>>>>>> Stashed changes
     session.close()
+    print("Commands synced, start up _done_")
+    return guilds
+
 @bot.event
 async def on_guild_join(guild):
     #adds user to database
@@ -236,7 +246,7 @@ async def on_guild_join(guild):
         pass
     else:
         try:
-            tr = config(guild.id, None, None, None, None)
+            tr = db.config(guild.id, None, None, None, None)
             session.add(tr)
             session.commit()
         except:
@@ -248,7 +258,7 @@ async def on_guild_join(guild):
         pass
     else:
         try:
-            tr = permissions(guild.id, None, None, None)
+            tr = db.permissions(guild.id, None, None, None)
             session.add(tr)
             session.commit()
         except:
@@ -263,7 +273,7 @@ async def on_member_join(member):
         pass
     else:
         try:
-            tr = warnings(member.id, 0)
+            tr = db.warnings(member.id, 0)
             session.add(tr)
             session.commit()
         except:
@@ -289,15 +299,15 @@ async def addall(ctx):
             tr = db.warnings(member.id, 0)
             session.add(tr)
             session.commit()
-        continue
-        try:
-            tr = warnings(member.id, 0)
-            session.add(tr)
-            session.commit()
-        except:
-            print("Database error, rolled back")
-            session.rollback()
-            session.close()
+            continue
+        # try:
+        #     tr = warnings(member.id, 0)
+        #     session.add(tr)
+        #     session.commit()
+        # except:
+        #     print("Database error, rolled back")
+        #     session.rollback()
+        #     session.close()
     for member in guildmembers:
         try:
             await jsonmaker.configer.create(member.id, member)
@@ -312,6 +322,8 @@ def find_invite_by_code(invite_list, code):
     for inv in invite_list:
         if inv.code == code:
             return inv
+
+
 
 @bot.listen()
 async def on_member_join(member):
@@ -389,7 +401,7 @@ async def cogreload(ctx):
     await ctx.send(f"Modules loaded: {fp}")
     session.rollback()
     session.close()
-    engine.dispose()
+    db.engine.dispose()
     await bot.tree.sync()
 
 

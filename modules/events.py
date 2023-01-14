@@ -23,7 +23,7 @@ class Events(commands.Cog):
     async def on_message(self, message):
         # Enforces lobby format
         bot = self.bot
-        dobreg = re.compile("([0-9][0-9]) (1[0-2]|[0]?[0-9]|1)\/([0-3]?[0-9])\/([0-2][0-9][0-9][0-9])")
+        dobreg = re.compile(r"([0-9][0-9]) (1[0-2]|0?[0-9]|1)/([0-3]?[0-9])/([0-2][0-9][0-9][0-9])")
         match = dobreg.search(message.content)
         if message.guild is None:
             return
@@ -32,17 +32,25 @@ class Events(commands.Cog):
         # Searches the config for the lobby for a specific guild
         p = session.query(db.permissions).filter_by(guild=message.guild.id).first()
         c = session.query(db.config).filter_by(guild=message.guild.id).first()
-        staff = [p.mod, p.admin, p.trial]
-        # reminder: change back to c.lobby
+        # Checks if user is a staff member.
         if message.author.get_role(p.mod) is None and message.author.get_role(
                 p.admin) is None and message.author.get_role(p.trial) is None:
+            # Checks if channel is the lobby
             if message.channel.id == c.lobby:
+                # Checks if message matches the regex
                 if match:
+<<<<<<< Updated upstream
+=======
+                    waitmessage = f"{message.author.mention} Thank you for submitting your age! " \
+                                  f"One of our staff members will let you through into the main server once they are available. " \
+                                  f"Please be patient, as our lobby is handled manually."
+>>>>>>> Stashed changes
                     channel = bot.get_channel(c.modlobby)
                     await message.add_reaction("🤖")
+                    # Checks the ages in the message, and acts based upon it.
                     if int(match.group(1)) < 18:
                         await channel.send(
-                            f"<@&{p.lobbystaff}> {message.author.mention} has given an age under the age of 18: {message.content}")
+                            f"<@&{p.lobbystaff}> {message.author.mention} has given an age under the age of 18: {message.content} (User has been added to ID list)")
                         idchecker = session.query(db.idcheck).filter_by(uid=message.author.id).first()
                         if idchecker is not None:
                             idchecker.check = True
@@ -67,12 +75,10 @@ class Events(commands.Cog):
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
                     return
                 else:
-                    try:
-                        await message.author.send(
-                            f"Please use format age mm/dd/yyyy \n Example: `122 01/01/1900` \n __**Do not round up your age**__ \n You can input your age and dob at: <#{c.lobby}>")
-                    except:
-                        await message.channel.send(
-                            f"Couldn't message {message.author.mention}! Please use format age mm/dd/yyyy \n Example: `122 01/01/1900")
+                    await message.channel.send(
+                        f"{message.author.mention} Please use format age mm/dd/yyyy "
+                        f"\n Example: `122 01/01/1900` "
+                        f"\n __**Do not round up your age**__ ")
                     await message.delete()
                     return
         else:
