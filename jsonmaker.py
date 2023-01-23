@@ -1,14 +1,27 @@
 import json
 import os
 from abc import ABC, abstractmethod
+import datetime
+from datetime import datetime, timedelta
+import pytz
+#makes dir for ban logging
+try:
+    os.mkdir('../bans/')
+except:
+    pass
+
 # Data to be written
-class configer(ABC):
+
+
+class Configer(ABC):
     @abstractmethod
     async def create(userid, member):
-        "Creates the user data"
+        """Creates the user data"""
         dictionary = {
             "Name": member.name,
             "warnings": [],
+            "cooldowns": {
+            },
         }
         json_object = json.dumps(dictionary, indent=4)
         if os.path.exists(f"users/{userid}.json"):
@@ -18,7 +31,6 @@ class configer(ABC):
                 outfile.write(json_object)
                 print(f"config created for {userid}")
 
-
     async def addwarning(self, user, interaction, warning):
         if os.path.exists(f"users/{user.id}.json"):
             with open(f"users/{user.id}.json") as f:
@@ -27,7 +39,7 @@ class configer(ABC):
             with open(f"users/{user.id}.json", 'w') as f:
                 json.dump(data, f, indent=4)
         else:
-            configer.create(user.id, user)
+            await Configer.create(user.id, user)
             print(f"config created for {user.id}")
             if os.path.exists(f"users/{user.id}.json"):
                 with open(f"users/{user.id}.json") as f:
@@ -35,6 +47,7 @@ class configer(ABC):
                     data['warnings'].append(warning)
                 with open(f"users/{user.id}.json", 'w') as f:
                     json.dump(data, f, indent=4)
+
     async def getwarnings(self, user, interaction):
         if os.path.exists(f"users/{user.id}.json"):
             with open(f"users/{user.id}.json") as f:
@@ -51,10 +64,8 @@ class configer(ABC):
                     await interaction.channel.send(warnmess[2000:4000])
                     await interaction.channel.send(warnmess[4000:6000])
         else:
-            configer.create(user.id, user)
+            await Configer.create(user.id, user)
             print(f"config created for {user.id}")
-<<<<<<< Updated upstream
-=======
 
 
 class BanLogger:
@@ -169,4 +180,3 @@ class Datechecker:
             print("time has passed" )
         else:
             print("on cooldown")
->>>>>>> Stashed changes

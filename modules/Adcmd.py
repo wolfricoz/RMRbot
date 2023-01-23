@@ -59,28 +59,20 @@ class advert(ABC):
             exists = session.query(db.warnings).filter_by(uid=user.id).first()
             if exists is not None:
                 try:
-                    exists.check += 1
+                    exists.swarnings += 1
                     session.commit()
-                    return exists.check
-                except:
+                    return exists.swarnings
+                except Exception as e:
+                    print(e)
                     session.rollback()
                     session.close()
                     logging.error("Couldn't access/add to database. (increase warnings)")
             else:
                 try:
-                    tr = db.warnings(member.id, 1)
+                    tr = db.warnings(user.id, 1)
                     session.add(tr)
                     session.commit()
                     exists = session.query(db.warnings).filter_by(uid=user.id).first()
-<<<<<<< Updated upstream
-                    return exists.check
-                except:
-                    session.rollback()
-                    session.close()
-                    logging.error("Couldn't access/add to database. (increase warnings)")
-        except:
-            await ctx.followup.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
-=======
                     return exists.swarnings
                 except Exception as e:
                     print(e)
@@ -90,7 +82,6 @@ class advert(ABC):
         except Exception as e:
             await ctx.channel.send(f"{e}")
             await ctx.user.send("Database is down, user has been warned but not logged. Try (admin) ?reload to fix the db.")
->>>>>>> Stashed changes
             session.close()
     async def resetcooldown(self, message, timeincrement):
         tz = pytz.timezone('US/Eastern')
@@ -158,73 +149,6 @@ If you have any more questions, our staff team is always available to help you.
         await advert.logadvert(interaction, message_link, warning, loggingchannel)
         await advert.sendadvertuser(interaction, message_link, warning)
         await interaction.followup.send(f"{message_link.author.mention} successfully warned")
-
-#     @app_commands.command(name="toolong", description="adcommand: use this when an advert is over 600 characters")
-#     @adefs.check_slash_db_roles()
-#     async def toolong(self, interaction:discord.Interaction, message_link: str) -> None:
-#         await interaction.response.defer(ephemeral=True)
-#         link = message_link.split('/')
-#         try:
-#             print("channel")
-#             server = self.bot.get_guild(int(link[4]))
-#             channel = server.get_channel(int(link[5]))
-#             msg = await channel.fetch_message(int(link[6]))
-# 
-#         except:
-#             print("thread")
-#             server = self.bot.get_guild(int(link[4]))
-#             thread = server.get_thread(int(link[5]))
-#             msg = await thread.fetch_message(int(link[6]))
-#         bot = self.bot
-#         loggingchannel = bot.get_channel(997282508523704350)
-#         adchannel = bot.get_channel(763058339088957548)
-#         user = msg.author
-#         # adds warning to database
-#         swarnings = await advert.increasewarnings(interaction, user)
-#         warning = """Hello, I'm a staff member of **Roleplay Meets: Reborn**. I'm reaching out to you regarding your ad in {}. It's been removed because: **your advert was over 600 characters (your advert: {})**. Please repost it in the appropriate channel.
-#
-# If you have any questions regarding adverts or the rules, don't hesitate to ask. Thank you for your cooperation!
-# <#977720278396305418>""".format(msg.channel.mention, len(msg.content))
-#         await adchannel.send(
-#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too long  in {msg.channel.mention}\n userId: {user.id}\nCharacter Count: {len(msg.content)} Warning Count: {swarnings}")
-#         # Logs the advert and sends it to the user.
-#         await advert.logadvert(interaction, msg, warning, loggingchannel)
-#         await advert.sendadvertuser(interaction, msg, warning)
-#         await interaction.followup.send(f"{msg.author.mention} successfully warned")
-#
-#
-#     @app_commands.command(name="tooshort", description="adcommand: use this when an advert is under 600 characters")
-#     @adefs.check_slash_db_roles()
-#     async def tooshort(self, interaction:discord.Interaction, message_link: str) -> None:
-#         await interaction.response.defer(ephemeral=True)
-#         link = message_link.split('/')
-#         try:
-#             print("channel")
-#             server = self.bot.get_guild(int(link[4]))
-#             channel = server.get_channel(int(link[5]))
-#             msg = await channel.fetch_message(int(link[6]))
-# 
-#         except:
-#             print("thread")
-#             server = self.bot.get_guild(int(link[4]))
-#             thread = server.get_thread(int(link[5]))
-#             msg = await thread.fetch_message(int(link[6]))
-#         bot = self.bot
-#         loggingchannel = bot.get_channel(997282508523704350)
-#         adchannel = bot.get_channel(763058339088957548)
-#         user = msg.author
-#         # adds warning to database
-#         swarnings = await advert.increasewarnings(interaction, user)
-#         warning = """Hello, I'm a staff member of **Roleplay Meets: Reborn**. I'm reaching out to you regarding your ad in {}. It's been removed because: **your advert was under 600 characters (your advert: {})**. Please repost it in the appropriate channel.
-#
-# If you have any questions regarding adverts or the rules, don't hesitate to ask. Thank you for your cooperation!
-# <#977720278396305418>""".format(msg.channel.mention, len(msg.content))
-#         await adchannel.send(
-#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too short in  {msg.channel.mention}\n userId: {user.id} Character Count: {len(msg.content)} Warning Count: {swarnings}")
-#         # Logs the advert and sends it to the user.
-#         await advert.logadvert(interaction, msg, warning, loggingchannel)
-#         await advert.sendadvertuser(interaction, msg, warning)
-#         await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
     @app_commands.command(name="early24", description="adcommand: Use this when an advert was posted too early in quick search channels")
     @adefs.check_slash_db_roles()
@@ -493,7 +417,7 @@ The safety of our members is important to us and we appreciate your understandin
         user = msg.author
         # adds warning to database
         swarnings = await advert.increasewarnings(interaction, user)
-        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **having more than 3 images**. Please repost it with the appropriate fixes.
+        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **having more than 5 images**. Please repost it with the appropriate fixes.
 
     If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
     Thank you for your cooperation!"""
@@ -665,17 +589,12 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         bot = self.bot
         await ctx.message.delete()
         if ctx.message.author.id == 188647277181665280:
-<<<<<<< Updated upstream
-            for member in ctx.guild.members:
-                exists = session.query(db.warnings).filter_by(uid=user.id).first()
-=======
             records = session.query(db.warnings).all()
             for member in records:
                 userid1 = str(member.uid).replace(",", "")
                 userid2 = userid1.replace(")", "")
                 userid3 = userid2.replace("(", "")
                 exists = session.query(db.warnings).filter_by(uid=userid3).first()
->>>>>>> Stashed changes
                 if exists is not None:
                     exists.swarnings = 0
                     print(f"{member} reset")

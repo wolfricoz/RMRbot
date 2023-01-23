@@ -40,14 +40,14 @@ class AutoModeration(ABC):
         print("list checked")
 
     async def spacing(self, message, modchannel):
-        check = re.search(r"\n{3}", message.content)
+        check = re.search(r"\n{3}|\n{4}|\n{5}|\n{6}", message.content)
         if check is not None:
-            await modchannel.send(
-                f"{message.author.mention} in {message.channel.mention} has potentially posted an advert with double spaces")
+            await message.author.send(f"[automod] {message.author.mention} your advert in {message.channel.mention} has double spaces, and has been removed. \n\n"
+                                      f"You may repost once these double spaces have been removed. You do not have to open a ticket.")
+            await message.delete()
         else:
             pass
         print("spacing checked")
-    
 
     async def age(self, message):
         check = re.search(r"\b(all character(s|'s) ([2-9][0-9]|18|19)|all character(s|'s) are ([2-9][0-9]|18|19)|([2-9][0-9]|18|19)\+ character(s|'s))\b", message.content, flags=re.IGNORECASE)
@@ -56,19 +56,9 @@ class AutoModeration(ABC):
         else:
             await message.add_reaction("🆗")
         print("age checked")
-    # async def cooldown(self, message, timeincrement, modchannel):
-    #     tz = pytz.timezone('US/Eastern')
-    #     now = datetime.now(tz)
-    #     cd = now + timedelta(days=timeincrement)
-    #     check = jsonmaker.Cooldown.check(self, message.author.id, message.channel.id, cd)
-    #     if check is True:
-    #         jsonmaker.Cooldown.add(self, message.author.id, message.channel.id, cd)
-    #     if check is False:
-    #         await jsonmaker.Cooldown.notify(self, message.author.id, message.channel.id, modchannel, message)
-
     async def cooldown(self, message, timeincrement, modchannel):
         # check = datetime.utcnow() + timedelta(days=timeincrement)
-        bcheck = datetime.utcnow() + timedelta(days=-timeincrement)
+        bcheck = datetime.utcnow() + timedelta(hours=-timeincrement)
         messages = message.channel.history(limit=300, after=bcheck, oldest_first=False)
         count = 0
         async for m in messages:
@@ -89,7 +79,38 @@ class AutoModeration(ABC):
             await message.add_reaction("⏲")
             return
 
-
+    async def repost(self, message):
+        status = True
+        tz = pytz.timezone("US/Eastern")
+        from datetime import datetime, timedelta
+        if message.author.bot:
+            return
+        # 72h Version
+        if str(message.channel.id) in channels72 and status == True:
+            current = datetime.now(tz)
+            cooldown = current + timedelta(hours=72)
+            await message.author.send(
+                f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
+                f"\nBy posting in this channel, you are agreeing to our search rules")
+        if str(message.channel.id) in spec and status == True:
+            current = datetime.now(tz)
+            cooldown = current + timedelta(hours=72)
+            await message.author.send(
+                f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
+                f"\nBy posting in this channel, you are agreeing to our search rules")
+        # 24h Version
+        if str(message.channel.id) in channels24 and status == True:
+            current = datetime.now(tz)
+            cooldown = current + timedelta(hours=24)
+            await message.author.send(
+                f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
+                f"\nBy posting in this channel, you are agreeing to our search rules")
+        # single post version
+        if str(message.channel.id) in single and status == True:
+            current = datetime.now(tz)
+            await message.author.send(
+                "{}: You can repost in {} after the next purge.".format(message.author.mention,
+                                                                        message.channel.mention) + "\nBy posting in this channel, you are agreeing to our search rules")
 class Automod(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -112,10 +133,14 @@ Please repost in the appropriate channel or shorten your advert.""")
                 await message.delete()
             if messlength < 650:
                 # list checker
-                await AutoModeration().list(message, modchannel)
-                await AutoModeration().spacing(message, modchannel)
-                await AutoModeration().age(message)
-                await AutoModeration().cooldown(message, 1, modchannel)
+                try:
+                    await AutoModeration().list(message, modchannel)
+                    await AutoModeration().spacing(message, modchannel)
+                    await AutoModeration().age(message)
+                    await AutoModeration().cooldown(message, 22, modchannel)
+                    await AutoModeration().repost(message)
+                except discord.NotFound:
+                    pass
         # regular search
         elif str(message.channel.id) in channels72:
             if messlength < 600:
@@ -126,21 +151,33 @@ Please repost in the appropriate channel or shorten your advert.""")
                 await message.delete()
             if messlength > 600:
                 # list checker
-                await AutoModeration().list(message, modchannel)
-                await AutoModeration().spacing(message, modchannel)
-                await AutoModeration().age(message)
-                await AutoModeration().cooldown(message, 3, modchannel)
+                try:
+                    await AutoModeration().list(message, modchannel)
+                    await AutoModeration().spacing(message, modchannel)
+                    await AutoModeration().age(message)
+                    await AutoModeration().cooldown(message, 70, modchannel)
+                    await AutoModeration().repost(message)
+                except discord.NotFound:
+                    pass
         # other channels
         elif str(message.channel.id) in spec:
-            await AutoModeration().list(message, modchannel)
-            await AutoModeration().spacing(message, modchannel)
-            await AutoModeration().age(message)
-            await AutoModeration().cooldown(message, 3, modchannel)
+                try:
+                    await AutoModeration().list(message, modchannel)
+                    await AutoModeration().spacing(message, modchannel)
+                    await AutoModeration().age(message)
+                    await AutoModeration().cooldown(message, 70, modchannel)
+                    await AutoModeration().repost(message)
+                except discord.NotFound:
+                    pass
         elif str(message.channel.id) in test:
-            await AutoModeration().list(message, modchannel)
-            await AutoModeration().spacing(message, modchannel)
-            await AutoModeration().age(message)
-            await AutoModeration().cooldown(message, 3, modchannel)
+                try:
+                    await AutoModeration().list(message, modchannel)
+                    await AutoModeration().spacing(message, modchannel)
+                    await AutoModeration().age(message)
+                    await AutoModeration().cooldown(message, 70, modchannel)
+                    await AutoModeration().repost(message)
+                except discord.NotFound:
+                    pass
         else:
             return
 

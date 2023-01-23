@@ -103,8 +103,6 @@ class dblookup(ABC):
     @abstractmethod
     def idcheckchecker(self, userid: discord.Member):
         exists = session.query(db.idcheck).filter_by(uid=userid.id).first()
-        print(exists.uid)
-        print(exists.check)
         if exists is not None:
             if exists.check == True:
                 return True
@@ -162,6 +160,7 @@ class lobby(commands.GroupCog, name="lobby"):
 user: <@{exists.uid}>
 UID: {exists.uid}
 DOB: {exists.dob}""")
+    # TODO: make it so this command removes _all_ data from the database, maybe separate command.
     @commands.command()
     @adefs.check_admin_roles()
     async def dbremove(self, ctx, userid: discord.Member):
@@ -183,13 +182,6 @@ DOB: {exists.dob}""")
         except:
             await ctx.send("Removal failed")
 
-
-    @commands.command()
-    @adefs.check_db_roles()
-    async def test(self, ctx, user: discord.Member, arg1, arg2):
-        await ctx.message.delete()
-        await ctx.send(agecalc.regex(arg2))
-
     @commands.command(name="18a", usage="@user age mm/dd/yyyy", )
     @adefs.check_db_roles()
     async def _18a(self, ctx, user: discord.Member, arg1, arg2):
@@ -204,7 +196,7 @@ DOB: {exists.dob}""")
         bot = self.bot
         await ctx.message.delete()
         if dblookup.idcheckchecker(self, user) is True:
-            await ctx.send(f"<@{a.admin}> user {user.mention} was flagged for manual ID check.")
+            await ctx.send(f"<@&{a.admin}> user {user.mention} was flagged for manual ID check.")
         else:
             if agecalc.agechecker(self, arg1, regdob) == 0:
                 dblookup.dobsave(self, user, regdob)
@@ -290,7 +282,7 @@ DOB: {exists.dob}""")
         bot = self.bot
         await ctx.message.delete()
         if dblookup.idcheckchecker(self, user) is True:
-            await ctx.send(f"<@{a.admin}> user {user.mention} was flagged for manual ID check.")
+            await ctx.send(f"<@&{a.admin}> user {user.mention} was flagged for manual ID check.")
         else:
             if agecalc.agechecker(self, arg1, regdob) == 0:
                 dblookup.dobsave(self, user, regdob)
@@ -380,7 +372,7 @@ DOB: {exists.dob}""")
         bot = self.bot
         await ctx.message.delete()
         if dblookup.idcheckchecker(self, user) is True:
-            await ctx.send(f"<@{a.admin}> user {user.mention} was flagged for manual ID check.")
+            await ctx.send(f"<@&{a.admin}> user {user.mention} was flagged for manual ID check.")
         else:
             if agecalc.agechecker(self, arg1, regdob) == 0:
                 dblookup.dobsave(self, user, regdob)
@@ -554,7 +546,7 @@ Entry updated by: {interaction.user}""")
         await interaction.followup.send(f"User was added to the database")
 
     @app_commands.command(name="idverify", description="approves user for ID verification.")
-    @adefs.check_slash_db_roles()
+    @adefs.check_slash_admin_roles()
     async def idverify(self, interaction: discord.Interaction, user: discord.Member, age:str, dob: str):
         await interaction.response.defer(ephemeral=False)
         c = session.query(db.config).filter_by(guild=interaction.guild.id).first()
@@ -599,15 +591,9 @@ UID: {user.id}
         await interaction.followup.send(f"Added user {userid} to the ID list")
 
     @app_commands.command(name="idremove", description="remove a user to manual ID list")
-<<<<<<< Updated upstream
-    @adefs.check_slash_db_roles()
-    async def addverify(self, interaction: discord.Interaction, userid: str):
-        await interaction.response.defer(ephemeral=True)
-=======
     @adefs.check_slash_admin_roles()
     async def remverify(self, interaction: discord.Interaction, userid: str):
         await interaction.response.defer(ephemeral=False)
->>>>>>> Stashed changes
         dblookup.idcheckerremove(self, userid)
         await interaction.followup.send(f"Removed user {userid} to the ID list")
 

@@ -39,13 +39,11 @@ class Events(commands.Cog):
             if message.channel.id == c.lobby:
                 # Checks if message matches the regex
                 if match:
-<<<<<<< Updated upstream
-=======
                     waitmessage = f"{message.author.mention} Thank you for submitting your age! " \
                                   f"One of our staff members will let you through into the main server once they are available. " \
                                   f"Please be patient, as our lobby is handled manually."
->>>>>>> Stashed changes
                     channel = bot.get_channel(c.modlobby)
+                    lobby = bot.get_channel(c.lobby)
                     await message.add_reaction("🤖")
                     # Checks the ages in the message, and acts based upon it.
                     if int(match.group(1)) < 18:
@@ -67,12 +65,15 @@ class Events(commands.Cog):
                     if int(match.group(1)) >= 18 and not int(match.group(1)) > 20:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?18a {message.author.mention} {message.content}`")
+                        await lobby.send(waitmessage)
                     elif int(match.group(1)) >= 21 and not int(match.group(1)) > 24:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?21a {message.author.mention} {message.content}`")
+                        await lobby.send(waitmessage)
                     elif int(match.group(1)) >= 25:
                         await channel.send(
                             f"<@&{p.lobbystaff}> user has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
+                        await lobby.send(waitmessage)
                     return
                 else:
                     await message.channel.send(
@@ -83,6 +84,14 @@ class Events(commands.Cog):
                     return
         else:
             pass
+    @commands.Cog.listener()
+    async def on_command(self, ctx):
+        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+    @commands.Cog.listener()
+    async def on_app_command(self, ctx):
+        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
 
 async def setup(bot):
     await bot.add_cog(Events(bot))

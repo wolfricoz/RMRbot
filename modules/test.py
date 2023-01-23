@@ -97,49 +97,56 @@ class Test(commands.Cog, name="test"):
     @commands.command(aliases=['purgetest', 'pt'])
     @commands.is_owner()
     async def purge(self, ctx: discord.Interaction):
-        with open('config/purge.json', 'r') as f:
-             purgechannels = json.load(f)
-        newchans = []
-        old = discord.utils.get(ctx.guild.categories, name="Pending Removal")
-        load_dotenv("../main.env")
-        channels72 = os.getenv('channels72')
-        spec = os.getenv('spec')
-        channels24 = os.getenv('channels24')
-        single = os.getenv('single')
-        new72 = []
-        new24 = []
-        newsingle = []
-        newspec = []
-        for channel in purgechannels["channels"]:
-            try:
-                chan = self.bot.get_channel(channel)
-                print(chan)
-                newchan = await chan.clone()
-                await chan.edit(category=old, name=f"old {chan.name}")
-                if str(channel) in channels72:
-                    new72.append(newchan.id)
-                elif str(channel) in channels24:
-                    new24.append(newchan.id)
-                elif str(channel) in single:
-                    newsingle.append(newchan.id)
-                elif str(channel) in spec:
-                    newspec.append(newchan.id)
-                else:
-                    newchans.append(newchan.id)
-            except:
-                print(f"{channel} failed")
-        await ctx.channel.send(f"channel72: {new72}\n"
-                               f"channel24: {new24}\n"
-                               f"single: {newsingle}\n"
-                               f"spec: {newspec}\n"
-                               f"other: {newchans}")
+        if ctx.author.id == 188647277181665280:
+            with open('config/purge.json', 'r') as f:
+                 purgechannels = json.load(f)
+            newchans = []
+            old = discord.utils.get(ctx.guild.categories, name="Pending Removal")
+            load_dotenv("../main.env")
+            channels72 = os.getenv('channels72')
+            spec = os.getenv('spec')
+            channels24 = os.getenv('channels24')
+            single = os.getenv('single')
+            new72 = []
+            new24 = []
+            newsingle = []
+            newspec = []
+            for channel in purgechannels["channels"]:
+                try:
+                    chan = self.bot.get_channel(channel)
+                    print(chan)
+                    newchan = await chan.clone()
+                    await chan.edit(category=old, name=f"old {chan.name}")
+                    if str(channel) in channels72:
+                        new72.append(newchan.id)
+                    elif str(channel) in channels24:
+                        new24.append(newchan.id)
+                    elif str(channel) in single:
+                        newsingle.append(newchan.id)
+                    elif str(channel) in spec:
+                        newspec.append(newchan.id)
+                    else:
+                        newchans.append(newchan.id)
+                except:
+                    print(f"{channel} failed")
+            await ctx.channel.send(f"channel72: {new72}\n"
+                                   f"channel24: {new24}\n"
+                                   f"single: {newsingle}\n"
+                                   f"spec: {newspec}\n"
+                                   f"other: {newchans}")
+        else:
+            await ctx.send("Dev command.")
 
     @commands.command()
     @commands.is_owner()
     async def empty(self, ctx: discord.Interaction):
-        old = discord.utils.get(ctx.guild.categories, name="Pending Removal")
-        for channel in old.channels:
-            await channel.delete(reason=f"empty command used by {ctx.author}")
+        if ctx.author.id == 188647277181665280:
+            old = discord.utils.get(ctx.guild.categories, name="Pending Removal")
+            for channel in old.channels:
+                await channel.delete(reason=f"empty command used by {ctx.author}")
+        else:
+            await ctx.send("Dev command.")
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Test(bot))
