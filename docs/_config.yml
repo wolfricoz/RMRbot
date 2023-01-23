@@ -1,0 +1,3 @@
+# build settings
+markdown: kramdown
+remote_theme: Documentation
