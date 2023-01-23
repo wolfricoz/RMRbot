@@ -158,7 +158,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.3: Multiple choice questions!.")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.4: Now with more documents!.")
     session.close()
     print("Commands synced, start up _done_")
     return guilds
