@@ -4,6 +4,9 @@ Prefix: ?<br>
 Build: 2.3<br>
 Devs: Rico Stryker#6666
 
+Required = ()<br>
+optional = []
+
 ### legend
 
 1. [slash guide](slash.md)
@@ -12,7 +15,8 @@ Devs: Rico Stryker#6666
 4. [advert commands](advert.md)
 5. [warning commands](warning.md)
 6. [Moderation commands](moderation.md)
-6. [partnership commands](partner.md)
-7. [setup commands](setup.md)
-8. [developer commands](developer.md)
+7. [partnership commands](partner.md)
+8. [setup commands](setup.md)
+9. [developer commands](developer.md)
+
 
