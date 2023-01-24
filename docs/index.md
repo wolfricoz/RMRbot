@@ -1,3 +1,8 @@
+---
+layout: default
+title: Home
+nav_order: 1
+---
 <h1 align="center">Roleplay Meets: Reborn bot.</h1>
 
 Prefix: ?<br>
