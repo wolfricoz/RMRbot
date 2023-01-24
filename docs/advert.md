@@ -1,3 +1,8 @@
+---
+layout: default
+title: Advert Commands
+nav_order: 5
+---
 <h1 align="center">Search Commands</h1>
 The search commands are used to warn users when they make a mistake in the search channels, the commands remove the post,
 send a message to the user, and increase the warning counter in the database.

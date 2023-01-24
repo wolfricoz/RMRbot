@@ -1,3 +1,8 @@
+---
+layout: default
+title: Partnership commands
+nav_order: 8
+---
 <h1 align="center">partnerships</h1>
 RMRbot also supports our sister server Roleplay Meets: Network which specializes in partnerships, currently
 there is a single command for this server, as it uses all of RMR's tools too (except for advert commands)

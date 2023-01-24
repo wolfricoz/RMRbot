@@ -1,3 +1,8 @@
+---
+layout: default
+title: Moderation Commands
+nav_order: 7
+---
 <h1 align="center">Moderation</h1>
 The moderation commands are built to help the staff enforce the rules in the server, as well as a toolkit. 
 

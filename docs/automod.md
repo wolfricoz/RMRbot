@@ -1,3 +1,8 @@
+---
+layout: default
+title: Automod Info
+nav_order: 4
+---
 <h1 align="center">Auto Moderation</h1>
 Auto moderation is currently a beta feature which is still being refined. Auto moderation was created to lessen the burden
 on the staff, by having the bot flag rule breakers and sometimes outright taking action.

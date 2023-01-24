@@ -1,3 +1,8 @@
+---
+layout: default
+title: Lobby guide
+nav_order: 3
+---
 <h1 align="center">Lobby Commands & info </h1>
 The lobby is the area where users enter our server, this area is incredibly important and to ensure the
 safety of our users, we check their dobs and ages with previous entries in our database. 

@@ -1,3 +1,8 @@
+---
+layout: default
+title: Slash Guide
+nav_order: 2
+---
 <h1 align="center">Slash guide</h1>
 
 RMRbot 2.0 has slowly been moving towards more and more slash (/) commands as these are easier to use, as well as the 

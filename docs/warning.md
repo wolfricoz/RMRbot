@@ -1,3 +1,8 @@
+---
+layout: default
+title: Warning commands
+nav_order: 6
+---
 <h1 align="center">Warning commands</h1>
 The warning commands are the commands which allow staff to warn users, edit search warnings and view warnings. The warning
 system is scheduled to be overhauled in the future, but for now we will start with the old system!
