@@ -1,0 +1,6 @@
+# build settings
+markdown: kramdown
+remote_theme: just-the-docs/just-the-docs
+layout: default
+title: Slash Guide
+nav_order: 1
