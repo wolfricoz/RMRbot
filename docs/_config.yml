@@ -2,3 +2,5 @@
 markdown: gfm
 remote_theme: just-the-docs/just-the-docs
 layout: default
+title: Index
+nav_order: 1
