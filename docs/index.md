@@ -6,22 +6,18 @@ nav_order: 1
 <h1 align="center">Roleplay Meets: Reborn bot.</h1>
 
 Prefix: ?<br>
-Build: 2.3<br>
+Build: 2.4<br>
 Devs: Rico Stryker#6666
 
 Required = ()<br>
 optional = []
 
-### legend
+### about
+Roleplay Meets: Reborn Bot (RMRbot, also known as dumpster dud named by our local void) is an utility bot
+for Roleplay Meets: Reborn and Roleplay meets: Network. It was started last year in augustus and uploaded to
+github in september 2022. 
 
-1. [slash guide](slash.md)
-2. [lobby commands](lobby.md)
-3. [automod info](automod.md)
-4. [advert commands](advert.md)
-5. [warning commands](warning.md)
-6. [Moderation commands](moderation.md)
-7. [partnership commands](partner.md)
-8. [setup commands](setup.md)
-9. [developer commands](developer.md)
-
+The bot is meant to be the backbone of the server and thus handles a lot of the day-to-day. It runs next to 
+YAGPDB to ensure full coverage of all the tools my staff would need. RMRbot provides auto moderation
+for our advert channels and lobby; while also having a whole suite of commands for other sections in the server
 
