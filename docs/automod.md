@@ -22,6 +22,9 @@ reduce the stress of the advert team. The following rules are being moderated:
 The bot checks if the advert is under 10 list items by looking for messages shorter than 50, with -, *, •, • >, ★, ☆, ♡ (More to be added when needed!).
 When an user does post a list over 10 items, the advert team is notified.
 
+<br>if: ❌ potentially has more than 10 list points
+<br>if: 🤖 its good
+
 #### List checking
 The bot checks for more than 2 spaces in a row, if such an instance is found the advert is removed and the user is notified.
 
@@ -37,8 +40,12 @@ The bot is using regex to look through adverts to see if the user has included t
 * 18+ character's 
 note: the age checker will look for any age over 18, so it could be 27+ and still work!
 
-#### cooldown (final testing phase)
+
+if: ❓ it didn't find the age, this doesn;t mean the advert is immediately bad but they just used different wording
+<br>if:  🆗 age disclaimer is found
+
+#### cooldown 
 The cooldown checker checks the date of the previous message sent in the channel, this however can be circumvented if the user
 removes their previous message. If a previous message was in the time period set for the channel (70 for normal search, 22 for quick)
 
-The bot currently informs the staff but the goal is to implement this to automatically remove the post and inform the user.
+When a user posts too early, the bot will automatically remove and inform the user.
