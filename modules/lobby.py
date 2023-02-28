@@ -1,17 +1,16 @@
-import logging
-import traceback
-
-from discord import app_commands
-import discord
-from discord.ext import commands
-from abc import ABC, abstractmethod
-import db
-import adefs
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
-from datetime import datetime, timedelta
 import re
-import typing
+import traceback
+from abc import ABC, abstractmethod
+from datetime import datetime
+
+import discord
+from dateutil.relativedelta import relativedelta
+from discord import app_commands
+from discord.ext import commands
+from sqlalchemy.orm import sessionmaker
+
+import adefs
+import db
 import logging
 
 Session = sessionmaker(bind=db.engine)
@@ -19,21 +18,30 @@ session = Session()
 
 class agecalc(ABC):
     @abstractmethod
-    def agechecker(self, arg1, arg2):
+    def agechecker(self, arg1: int, arg2: str):
         age = arg1
         dob = str(arg2)
         dob_object = datetime.strptime(dob, "%m/%d/%Y")
         today = datetime.now()
-        leapyear = ((today - dob_object) / 365.25) / 4
-        deltad = leapyear - timedelta(days=1)
-        agechecker = ((today - dob_object) - deltad) / 365
-        age_output = str(agechecker).split()[0]
-        age_calculate = int(age_output) - int(age)
-        print(age_calculate)
+        a = relativedelta(today, dob_object)
+        age_calculate = a.years - int(age)
         return age_calculate
+
+    # def agetester(self, arg1, arg2):
+    #     age = arg1
+    #     dob = str(arg2)
+    #     dob_object = datetime.strptime(dob, "%m/%d/%Y")
+    #     today = datetime.now()
+    #     leapyear = ((today - dob_object) / 365.25) / 4
+    #     deltad = leapyear - timedelta(days=1)
+    #     agechecker = ((today - dob_object) - deltad) / 365
+    #     age_output = str(agechecker).split()[0]
+    #     age_calculate = int(age_output) - int(age)
+    #     print(age_calculate)
+    #     return age_calculate
     def regex(arg2):
         dob = str(arg2)
-        dob_object = re.search(r"([0-1]?[0-9])\/([0-3]?[0-9])\/([0-2][0-9][0-9][0-9])", dob)
+        dob_object = re.search(r"([0-1]?[0-9])/([0-3]?[0-9])/([0-2][0-9][0-9][0-9])", dob)
         month = dob_object.group(1).zfill(2)
         day = dob_object.group(2).zfill(2)
         year = dob_object.group(3)
@@ -76,7 +84,7 @@ class dblookup(ABC):
                 session.add(tr)
                 session.commit()
             except:
-                logging.exception("Database error, rolled back")
+                logging.error("Database error, rolled back")
                 session.rollback()
                 session.close()
     @abstractmethod
@@ -105,8 +113,10 @@ class dblookup(ABC):
         exists = session.query(db.idcheck).filter_by(uid=userid.id).first()
         if exists is not None:
             if exists.check == True:
+                print("idcheck: true")
                 return True
             else:
+                print("idcheck: False")
                 return False
         else:
             return False
@@ -233,7 +243,7 @@ DOB: {exists.dob}""")
                         exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
                         if exists.guild == 395614061393477632:
                             await general.send(
-                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!\n<@&925127216726163476>")
                         elif exists.guild == 780622396297183252:
                             await general.send(
                                 f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
@@ -319,7 +329,7 @@ DOB: {exists.dob}""")
                         exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
                         if exists.guild == 395614061393477632:
                             await general.send(
-                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!\n<@&925127216726163476>")
                         elif exists.guild == 780622396297183252:
                             await general.send(
                                 f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
@@ -375,8 +385,8 @@ DOB: {exists.dob}""")
             await ctx.send(f"<@&{a.admin}> user {user.mention} was flagged for manual ID check.")
         else:
             if agecalc.agechecker(self, arg1, regdob) == 0:
-                dblookup.dobsave(self, user, regdob)
-                print(dblookup.dobcheck(self, user, regdob))
+                dobl = dblookup.dobsave(self, user, regdob)
+                print(dobl)
                 if dblookup.dobcheck(self, user, regdob) is True:
                     # Role adding
                     # await ctx.send('This user\'s age is correct')
@@ -409,7 +419,7 @@ DOB: {exists.dob}""")
                         exists = session.query(db.config).filter_by(guild=ctx.guild.id).first()
                         if exists.guild == 395614061393477632:
                             await general.send(
-                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. We hope you have a wonderful time!")
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!\n<@&925127216726163476>")
                         elif exists.guild == 780622396297183252:
                             await general.send(
                                 f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. We hope you have a wonderful time!")
@@ -451,7 +461,6 @@ DOB: {exists.dob}""")
         """Command sends users back to the lobby and removes roles"""
         bot = self.bot
         await ctx.message.delete()
-        from datetime import datetime, timedelta
         agerole18 = discord.utils.get(ctx.guild.roles, name="18+")
         agerole21 = discord.utils.get(ctx.guild.roles, name="21+")
         agerole25 = discord.utils.get(ctx.guild.roles, name="25+")
@@ -485,6 +494,18 @@ DOB: {exists.dob}""")
         print(agechecker)
         age_output = str(agechecker).split()[0]
         await ctx.send('this users age is: {}'.format(age_output) + " years.")
+
+    @commands.command()
+    @adefs.check_db_roles()
+    async def agetest(self, ctx, arg1: str):
+        bot = self.bot
+        from datetime import datetime
+        from dateutil.relativedelta import relativedelta
+        dob = str(arg1)
+        dob_object = datetime.strptime(dob, "%m/%d/%Y")
+        today = datetime.now()
+        age_output = relativedelta(today, dob_object)
+        await ctx.send('this users age is: {}'.format(age_output.years) + " years.")
 
     @commands.command()
     @adefs.check_admin_roles()

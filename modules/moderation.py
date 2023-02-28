@@ -1,4 +1,4 @@
-import logging
+from modules import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from datetime import timedelta
@@ -39,8 +39,8 @@ class ModUser(ABC):
                 user = guild.get_member(member.id)
                 user2 = await bot.fetch_user(member.id)
                 try:
-                    # await guild.ban(user2, reason=reason, delete_message_days=0)
-                    await ctx.channel.send("BAN DISABLED: TESTING MODE ON.")
+                    await guild.ban(user2, reason=reason, delete_message_days=0)
+                    # await ctx.channel.send("BAN DISABLED: TESTING MODE ON.")
                     await ModUser.banlog(ctx, member, reason, guild)
                     rguilds.append(guild.name)
                 except:

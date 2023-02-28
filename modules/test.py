@@ -1,21 +1,11 @@
 import json
-import logging
-import traceback
-from time import sleep
 
 from discord import app_commands
 import discord
-from discord import Button, ButtonStyle
+from discord import Button
 from discord.ext import commands
-from abc import ABC, abstractmethod
 import db
-import adefs
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
-from datetime import datetime, timedelta
-import re
-import typing
-import logging
 from dotenv import load_dotenv
 import os
 Session = sessionmaker(bind=db.engine)
@@ -146,6 +136,16 @@ class Test(commands.Cog, name="test"):
                 await channel.delete(reason=f"empty command used by {ctx.author}")
         else:
             await ctx.send("Dev command.")
+
+    @commands.command()
+    @commands.is_owner()
+    async def err(self, ctx: discord.Interaction):
+            await ctx.channel.send("Dev command.", a)
+
+    @app_commands.command(name="errortest")
+    async def err2(self, ctx: discord.Interaction):
+        await ctx.response.defer(ephemeral=True)
+        await ctx.channel.send("Dev command.", a)
 
 
 async def setup(bot: commands.Bot):

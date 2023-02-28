@@ -66,6 +66,7 @@ class config(commands.Cog, name="config"):
 • mod @role
 • trial @role
 • lobbystaff @role""")
+        session.close()
     @app_commands.command(name="updater", description="Updates all user configs")
     @app_commands.checks.has_permissions(manage_guild=True)
     async def ageadd(self, interaction: discord.Interaction):

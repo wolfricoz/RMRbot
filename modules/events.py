@@ -1,15 +1,9 @@
 import logging
 
-import discord
 from discord.ext import commands
-from abc import ABC, abstractmethod
 import db
-import adefs
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
-from datetime import datetime, timedelta
 import re
-import typing
 
 Session = sessionmaker(bind=db.engine)
 session = Session()
@@ -76,6 +70,8 @@ class Events(commands.Cog):
                         await lobby.send(waitmessage)
                     return
                 else:
+                    channel = bot.get_channel(c.modlobby)
+                    await channel.send(f"{message.author.mention} failed to follow the format: {message.content}")
                     await message.channel.send(
                         f"{message.author.mention} Please use format age mm/dd/yyyy "
                         f"\n Example: `122 01/01/1900` "
@@ -84,14 +80,6 @@ class Events(commands.Cog):
                     return
         else:
             pass
-    @commands.Cog.listener()
-    async def on_command(self, ctx):
-        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
-        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
-    @commands.Cog.listener()
-    async def on_app_command(self, ctx):
-        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
-        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
 
 async def setup(bot):
     await bot.add_cog(Events(bot))

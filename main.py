@@ -19,16 +19,16 @@ import adefs
 import db
 import jsonmaker
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-alogger = logging.getLogger('sqlalchemy')
-alogger.setLevel(logging.WARN)
-handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='r+')
-handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-alogger.addHandler(handler2)
+# logger = logging.getLogger('discord')
+# logger.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
+# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# logger.addHandler(handler)
+# alogger = logging.getLogger('sqlalchemy')
+# alogger.setLevel(logging.WARN)
+# handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='r+')
+# handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# alogger.addHandler(handler2)
 # LOADS THE .ENV FILE THAT RESIDES ON THE SAME LEVEL AS THE SCRIPT.
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
@@ -45,7 +45,8 @@ timetoken = os.getenv("timetoken")
 intents = discord.Intents.default()
 intents.message_content= True
 intents.members= True
-bot = commands.Bot(command_prefix=PREFIX, case_insensitive=False, intents=intents)
+activity = discord.Activity(type=discord.ActivityType.watching, name="over RMR")
+bot = commands.Bot(command_prefix=PREFIX, case_insensitive=False, intents=intents, activity=activity)
 
 
 exec(open("db.py").read())
@@ -82,37 +83,37 @@ async def on_message(message):
 Session = sessionmaker(bind=db.engine)
 session = Session()
 #error logging for regular commands
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please fill in the required arguments")
-    elif isinstance(error, commands.CommandNotFound):
-        pass
-    elif isinstance(error, commands.CheckFailure):
-        await ctx.send("You do not have permission")
-    elif isinstance(error, commands.MemberNotFound):
-        await ctx.send("User not found")
-    elif isinstance(error, commands.CommandInvokeError):
-        await ctx.send("Command failed: See log.")
-        await ctx.send(error)
-        raise error
-    else:
-        session.rollback()
-        session.close()
-        db.engine.dispose()
-        await ctx.send(error)
-        raise error
-#error logging for app commands (slash commands)
-@bot.tree.error
-async def on_app_command_error(
-        interaction: Interaction,
-        error: AppCommandError
-):
-    await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
-    logger.error(traceback.format_exc())
-    channel = bot.get_channel(1033787967929589831)
-    await channel.send(traceback.format_exc())
-    raise error
+# @bot.event
+# async def on_command_error(ctx, error):
+#     if isinstance(error, commands.MissingRequiredArgument):
+#         await ctx.send("Please fill in the required arguments")
+#     elif isinstance(error, commands.CommandNotFound):
+#         pass
+#     elif isinstance(error, commands.CheckFailure):
+#         await ctx.send("You do not have permission")
+#     elif isinstance(error, commands.MemberNotFound):
+#         await ctx.send("User not found")
+#     elif isinstance(error, commands.CommandInvokeError):
+#         await ctx.send("Command failed: See log.")
+#         await ctx.send(error)
+#         raise error
+#     else:
+#         session.rollback()
+#         session.close()
+#         db.engine.dispose()
+#         await ctx.send(error)
+#         raise error
+# #error logging for app commands (slash commands)
+# @bot.tree.error
+# async def on_app_command_error(
+#         interaction: Interaction,
+#         error: AppCommandError
+# ):
+#     await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
+#     logger.error(traceback.format_exc())
+#     channel = bot.get_channel(1033787967929589831)
+#     await channel.send(traceback.format_exc())
+#     raise error
 
 
 # EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
@@ -158,7 +159,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.4: Now with more documents!.")
+    # await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.4: Now with more documents!.")
     session.close()
     print("Commands synced, start up _done_")
     return guilds
