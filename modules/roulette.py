@@ -23,15 +23,28 @@ class RoomMate(ABC):
     @abstractmethod
     def pairing(p, u1, u2):
         """Checks if the pairings match, if they do not match then will return a -1 to signal the loop to stop"""
+        user1pref = str(u1.get("I want my partner to play as")).replace(" ", "").split(',')
         user1 = str(u1.get(p)).replace(" ", "").split(',')
-        user2 = str(u2.get("I want my partner to play as")).replace(" ", "").split(',')
+        user2pref = str(u2.get("I want my partner to play as")).replace(" ", "").split(',')
+        user2 = str(u2.get(p)).replace(" ", "").split(',')
         sc = 0
-        for u in user1:
-            if u in user2:
-                sc += 1
-        if sc == 0:
+        psc = 0
+        for up in user1pref:
+            for u in user2:
+                if up == "" or u == "":
+                    pass
+                elif up.lower() in u.lower():
+                    sc += 1
+        for up in user2pref:
+            for u in user1:
+                if up == "" or u == "":
+                    pass
+                elif up.lower() in u.lower():
+                    psc += 1
+        if sc == 0 or psc == 0:
+            print(f"{u2['Username']} was not a match for {u1['Username']}(pairing)")
             sc = -1
-        return sc
+        return sc + psc
 
     @abstractmethod
     def nsfw(p, u1, u2):
@@ -40,6 +53,7 @@ class RoomMate(ABC):
         sc = 0
         if u1.get(p) == "SFW" and u2.get(p) == "NSFW" or u1.get(p) == "NSFW" and u2.get(p) == "SFW":
             sc = -1
+            print(f"{u2['Username']} was not a match for {u1['Username']}(nsfw)")
         elif u1.get(p) == u2.get(p):
             sc += 2
         else:
@@ -53,12 +67,18 @@ class RoomMate(ABC):
         userex1 = str(u1.get("Excluded Genres")).replace(" ", "").split(',')
         user2 = str(u2.get(p)).replace(" ", "").split(',')
         sc = 0
-        for u in user1:
-            if u in user2:
-                sc += 1
-        for ex in userex1:
-            if ex in user2:
-                sc -= 1
+        for up in user1:
+            for u in user2:
+                if up == "" or u == "":
+                    pass
+                elif up.lower() in u.lower():
+                    sc += 1
+        for up in userex1:
+            for u in user2:
+                if up == "" or u == "":
+                    pass
+                elif up.lower() in u.lower():
+                    sc -= 1
         return sc
 
     @abstractmethod
@@ -67,9 +87,12 @@ class RoomMate(ABC):
         user1 = str(u1.get(p)).replace(" ", "").split(',')
         user2 = str(u2.get(p)).replace(" ", "").split(',')
         sc = 0
-        for u in user1:
-            if u in user2:
-                sc += 1
+        for up in user1:
+            for u in user2:
+                if up == "" or u == "":
+                    pass
+                elif up.lower() in u.lower():
+                    sc += 1
         return sc
 
     @abstractmethod
@@ -85,10 +108,8 @@ class RoomMate(ABC):
         sheet = client.open('New RR  (Responses)').sheet1
         python_sheet = sheet.get_all_records()
 
-        with open('logs/roulette.json', 'w') as f:
+        with open('roulette.json', 'w') as f:
             json.dump(python_sheet, f, indent=4)
-        with open('roulette/rr.txt', 'w', encoding='utf-16') as f:
-            f.write("Roleplay Roulette winners:")
         return python_sheet
 
 
@@ -102,6 +123,7 @@ class roulette(commands.GroupCog, name="roulette"):
         await interaction.response.defer(ephemeral=False, thinking=False)
         python_sheet = RoomMate.api()
         for u1 in python_sheet:
+            print(u1['Username'], " being matched")
             userchecked = {}
             gcount = 0
             for p in u1.keys():
@@ -163,8 +185,9 @@ class roulette(commands.GroupCog, name="roulette"):
                 f.write(f"\nUsername: {u1.get('Username')} ({u1.get('Uid')})\n"
                         f"Recommended partner(s): {winner}\n"
                         f"Extra info from user: {u1.get('Other information')}\n"
-                        f"debug: {userchecked}\n")
+                        f"\ndebug: {userchecked}\n")
         await interaction.channel.send("Roleplay Roulette results", file=discord.File(f.name, "RRresults.txt"))
+        os.remove("roulette/rr.txt")
 
 
 async def setup(bot):

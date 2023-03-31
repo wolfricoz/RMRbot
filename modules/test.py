@@ -136,16 +136,37 @@ class Test(commands.Cog, name="test"):
                 await channel.delete(reason=f"empty command used by {ctx.author}")
         else:
             await ctx.send("Dev command.")
-
     @commands.command()
     @commands.is_owner()
-    async def err(self, ctx: discord.Interaction):
-            await ctx.channel.send("Dev command.", a)
+    async def empty(self, ctx: discord.Interaction):
+        if ctx.author.id == 188647277181665280:
+            old = discord.utils.get(ctx.guild.categories, name="Pending Removal")
+            for channel in old.channels:
+                await channel.delete(reason=f"empty command used by {ctx.author}")
+        else:
+            await ctx.send("Dev command.")
+    @commands.command()
+    @commands.is_owner()
+    async def emptyforum(self, ctx: discord.Interaction, forum: discord.ForumChannel):
+        if ctx.author.id == 188647277181665280:
+            for x in forum.threads:
+                print(f"deleting {x}")
+                await x.delete()
+            async for x in forum.archived_threads(limit=1000):
+                print(f"deleting {x}")
+                await x.delete()
+        else:
+            await ctx.send("Dev command.")
+    @commands.command()
+    @commands.is_owner()
+    async def gtest(self, ctx: discord.Interaction):
+        if ctx.author.id == 188647277181665280:
+            for x in ctx.guild.roles:
+                print(f"role: {x}")
+        else:
+            await ctx.send("Dev command.")
 
-    @app_commands.command(name="errortest")
-    async def err2(self, ctx: discord.Interaction):
-        await ctx.response.defer(ephemeral=True)
-        await ctx.channel.send("Dev command.", a)
+
 
 
 async def setup(bot: commands.Bot):

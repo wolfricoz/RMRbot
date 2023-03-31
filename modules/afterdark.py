@@ -20,6 +20,7 @@ class moderation(commands.GroupCog, name="dark"):
         reason = "Your kinks don't apply to After Dark. Please use our NSFW search channels to suit your RP needs. Good luck!"
         await user.send(f"{interaction.guild.name} **__After Dark Application denied__**: {reason} ")
         await interaction.followup.send(f"{user.mention} has been denied with reason {reason}")
+        await interaction.channel.send(f"{interaction.user.mention} has denied {user.mention}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(moderation(bot))

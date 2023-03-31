@@ -73,11 +73,6 @@ class AutoModeration(ABC):
                     lm = m.jump_url
                     pm = m.created_at
                     timeincrement += 2
-                    # await modchannel.send(
-                    #     f"{message.author.mention} has posted too early in {message.channel.mention}. \n"
-                    #     f"Last post: {discord.utils.format_dt(pm, style='f')}, Current post: {discord.utils.format_dt(message.created_at, style='f')} timediff: {discord.utils.format_dt(pm, style='R')}\n"
-                    #     f"previous message: {lm}")
-                    # await message.add_reaction("⛔")
                     await message.author.send(f"Your advert was posted within the {timeincrement} hour cooldown period in {message.channel.mention} and was removed."
                                               f"\nLast post: {discord.utils.format_dt(pm, style='f')}, Current post: {discord.utils.format_dt(message.created_at, style='f')} timediff: {discord.utils.format_dt(pm, style='R')}")
                     await message.delete()
