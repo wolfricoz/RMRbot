@@ -55,15 +55,21 @@ class Logging(commands.Cog):
             await ctx.send("You do not have permission")
         elif isinstance(error, commands.MemberNotFound):
             await ctx.send("User not found")
-        elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("Command failed: See log.")
-            await ctx.send(error)
-            logging.warning(error)
-            raise error
+        # elif isinstance(error, commands.CommandInvokeError):
+        #     await ctx.send("Command failed: See log.")
+        #     await ctx.send(error)
+        #     logging.warning(error)
+        #     raise error
         else:
             await ctx.send(error)
-            logging.warning(f"\n{ctx.guild.name} {ctx.guild.id}: {error}")
-            raise error
+            logger.warning(f"\n{ctx.guild.name} {ctx.guild.id} {ctx.command.name}: {error}")
+            channel = self.bot.get_channel(1033787967929589831)
+            with open('error.txt', 'w', encoding='utf-8') as f:
+                f.write(str(error))
+            await channel.send(
+                f"{ctx.guild.name} {ctx.guild.id}: {ctx.author}: {ctx.command.name}",
+                file=discord.File(f.name, "error.txt"))
+            print('error logged')
 
     def cog_load(self):
         tree = self.bot.tree
@@ -80,13 +86,12 @@ class Logging(commands.Cog):
         error: AppCommandError
     ):
         await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
-        logger.error(traceback.format_exc())
         channel = self.bot.get_channel(1033787967929589831)
         with open('error.txt', 'w', encoding='utf-8') as f:
             f.write(traceback.format_exc())
-        await channel.send(f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: ", file=discord.File(f.name, "error.txt"))
-        logging.warning(f"\n{interaction.guild.name} {interaction.guild.id}: {error}")
-        raise error
+        await channel.send(f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}", file=discord.File(f.name, "error.txt"))
+        logger.warning(f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
+        # raise error
 
     @commands.Cog.listener(name='on_command')
     async def print(self, ctx):

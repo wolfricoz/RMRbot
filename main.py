@@ -1,5 +1,6 @@
 # IMPORT DISCORD.PY. ALLOWS ACCESS TO DISCORD'S API.
 # IMPORT THE OS MODULE.
+import json
 import logging
 import os
 import sys
@@ -82,39 +83,6 @@ async def on_message(message):
 #database sessionmaker
 Session = sessionmaker(bind=db.engine)
 session = Session()
-#error logging for regular commands
-# @bot.event
-# async def on_command_error(ctx, error):
-#     if isinstance(error, commands.MissingRequiredArgument):
-#         await ctx.send("Please fill in the required arguments")
-#     elif isinstance(error, commands.CommandNotFound):
-#         pass
-#     elif isinstance(error, commands.CheckFailure):
-#         await ctx.send("You do not have permission")
-#     elif isinstance(error, commands.MemberNotFound):
-#         await ctx.send("User not found")
-#     elif isinstance(error, commands.CommandInvokeError):
-#         await ctx.send("Command failed: See log.")
-#         await ctx.send(error)
-#         raise error
-#     else:
-#         session.rollback()
-#         session.close()
-#         db.engine.dispose()
-#         await ctx.send(error)
-#         raise error
-# #error logging for app commands (slash commands)
-# @bot.tree.error
-# async def on_app_command_error(
-#         interaction: Interaction,
-#         error: AppCommandError
-# ):
-#     await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
-#     logger.error(traceback.format_exc())
-#     channel = bot.get_channel(1033787967929589831)
-#     await channel.send(traceback.format_exc())
-#     raise error
-
 
 # EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
 @bot.event
@@ -160,7 +128,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    # await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.4: Now with more documents!.")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 3.0: You shall be matched.")
     session.close()
     print("Commands synced, start up _done_")
     return guilds
@@ -302,6 +270,7 @@ Member joined at {datetime.now().strftime("%m/%d/%Y")}
 #cogloader
 @bot.event
 async def setup_hook():
+    bot.lobbyages = bot.get_channel(454425835064262657)
     for filename in os.listdir("modules"):
 
         if filename.endswith('.py'):
@@ -330,6 +299,31 @@ async def cogreload(ctx):
     session.close()
     db.engine.dispose()
     await bot.tree.sync()
+
+@tasks.loop(hours=24)
+async def printer(self):
+    """Updates banlist when user is unbanned"""
+    count = 0
+    historydict = {}
+    channel = self.bot.get_channel(454425835064262657)
+    print(channel)
+    print('creating cache...')
+    time = datetime.datetime.now()
+    async for h in channel.history(limit=None, oldest_first=True, before=time):
+        historydict[h.id] = {}
+        historydict[h.id]["author"] = h.author.id
+        historydict[h.id]["created"] = h.created_at.strftime('%m/%d/%Y')
+        historydict[h.id]["content"] = h.content
+        count += 1
+    else:
+        print(f'Cached {count} message(s).')
+    try:
+        os.mkdir('config')
+    except:
+        pass
+    with open('config/history.json', 'w') as f:
+        json.dump(historydict, f, indent=4)
+    print("[auto refresh]List updated")
 
 
 

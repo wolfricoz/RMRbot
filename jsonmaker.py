@@ -196,6 +196,7 @@ class guildconfiger(ABC):
             "welcomeusers": True,
             "welcome": "This can be changed with /config welcome",
             "waitingrole": [],
+            "forums": []
         }
         json_object = json.dumps(dictionary, indent=4)
         if os.path.exists(f"jsons/{guildid}.json"):
@@ -229,6 +230,28 @@ class guildconfiger(ABC):
             with open(f"jsons/{guildid}.json", 'w') as f:
                 json.dump(data, f, indent=4)
     @abstractmethod
+    async def addforum(guildid, interaction, roleid, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                for x in data[key]:
+                    if x == roleid:
+                        await interaction.followup.send("Failed to add forum! forum already in config")
+                        break
+                else:
+                    data[key].append(roleid)
+                    await interaction.followup.send(f"forum added to {key}")
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
+    async def remforum(guildid: int, channelid: int, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key].remove(channelid)
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
     async def welcome(guildid, interaction,key, welcome):
         if os.path.exists(f"jsons/{guildid}.json"):
             with open(f"jsons/{guildid}.json") as f:
@@ -237,6 +260,15 @@ class guildconfiger(ABC):
             with open(f"jsons/{guildid}.json", 'w') as f:
                 json.dump(data, f, indent=4)
             await interaction.followup.send(f"welcome updated to '{welcome}'")
+
+    @abstractmethod
+    async def roulette(guildid: int, channelid: int, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key] = channelid
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
     @abstractmethod
     async def updateconfig(guildid):
         with open(f'jsons/{guildid}.json', 'r+') as file:
@@ -245,9 +277,11 @@ class guildconfiger(ABC):
                 "Name": data['Name'],
                 "addrole": data['addrole'],
                 "remrole": data['remrole'],
-                "welcomeusers": True,
+                "welcomeusers": data["welcomeusers"],
                 "welcome": data['welcome'],
-                "waitingrole": ['waitingrole'],
+                "waitingrole": data['waitingrole'],
+                "forums": data['forums'],
+                "roulette": 0,
             }
             print(newdictionary)
 

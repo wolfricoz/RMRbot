@@ -242,13 +242,21 @@ reason {reason}""")
         await ModUser.kicklog(interaction, user, reason, interaction.guild)
 
     @app_commands.command(name="warn")
+    @app_commands.choices(notify=[
+        Choice(name="Yes", value="yes"),
+        Choice(name="No", value="no")
+    ])
     @adefs.check_slash_db_roles()
-    async def warn(self, interaction: discord.Interaction, user: discord.Member, *, reason: str):
+    async def warn(self, interaction: discord.Interaction, user: discord.Member, notify: Choice['str'], *, reason: str):
         await interaction.response.defer(ephemeral=True)
-        await user.send(f"{interaction.guild.name} **__WARNING__**: You've been warned for: {reason} ")
+        if notify.value == "yes":
+            await user.send(f"{interaction.guild.name} **__WARNING__**: You've been warned for: {reason} ")
         await jsonmaker.Configer.addwarning(self, user, interaction, reason)
         await ModUser.warnlog(interaction, user, reason, interaction.guild)
-        await interaction.followup.send(f"{user.mention} has been warned about {reason}")
+        if notify.value == "yes":
+            await interaction.followup.send(f"{user.mention} has been warned about {reason}")
+        else:
+            await interaction.followup.send(f"{user.mention}'s warning has been logged with reason: {reason}")
 
     @app_commands.command(name="notify")
     @adefs.check_slash_db_roles()

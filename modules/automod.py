@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import discord.utils
 import pytz
+from Levenshtein import ratio
 from discord.ext import commands
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
@@ -73,8 +74,9 @@ class AutoModeration(ABC):
                     lm = m.jump_url
                     pm = m.created_at
                     timeincrement += 2
-                    await message.author.send(f"Your advert was posted within the {timeincrement} hour cooldown period in {message.channel.mention} and was removed."
-                                              f"\nLast post: {discord.utils.format_dt(pm, style='f')}, Current post: {discord.utils.format_dt(message.created_at, style='f')} timediff: {discord.utils.format_dt(pm, style='R')}")
+                    await message.author.send(
+                        f"Your advert was posted within the {timeincrement} hour cooldown period in {message.channel.mention} and was removed."
+                        f"\nLast post: {discord.utils.format_dt(pm, style='f')}, Current post: {discord.utils.format_dt(message.created_at, style='f')} timediff: {discord.utils.format_dt(pm, style='R')}")
                     await message.delete()
                     break
         print("cooldown checked")
@@ -115,6 +117,27 @@ class AutoModeration(ABC):
                 "{}: You can repost in {} after the next purge.".format(message.author.mention,
                                                                         message.channel.mention) + "\nBy posting in this channel, you are agreeing to our search rules")
 
+    async def duplicate(self, message, bot, timeincrement, mod):
+        channels = channels72 + "," + channels24 + "," + spec + "," + single
+        lc = channels.replace('[', '').replace(']', '').replace("'", '').replace(" ", "").split(',')
+        print("starting check now")
+        for c in lc:
+            if message.channel.id == int(c):
+                print("current channel")
+                continue
+            else:
+                channel = bot.get_channel(int(c))
+                bcheck = datetime.utcnow() + timedelta(hours=-timeincrement)
+                messages = channel.history(limit=300, after=bcheck, oldest_first=False)
+                async for m in messages:
+                    if message.author == m.author:
+                        r = ratio(message.content, m.content)
+                        if r >= 0.7:
+                            r = r * 100
+                            await message.author.send(
+                                f"{message.author.mention} you have posted a similar advert in {message.jump_url} and the original is in {m.jump_url}. Roleplay meet's Reborn does not allow identical posts within 3 days of the original post, to post in other channels please make sure the advert is different enough. We have removed the message for you automatically and **no** warning has been recorded. \n\nmatch: {r} ")
+                            await message.delete()
+
 
 class Automod(commands.Cog):
     def __init__(self, bot):
@@ -123,9 +146,10 @@ class Automod(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         # Enforces lobby format
-        bot = self.bot
+        bot: commands.Bot = self.bot
         modchannel = bot.get_channel(763058339088957548)
         messlength = len(message.content)
+
         if message.author.bot:
             return
         # length counters
@@ -145,6 +169,7 @@ Please repost in the appropriate channel or shorten your advert.""")
                     await AutoModeration().age(message)
                     await AutoModeration().cooldown(message, 22, modchannel)
                     await AutoModeration().repost(message)
+                    await AutoModeration().duplicate(message, bot, 24, modchannel)
                 except discord.NotFound:
                     pass
         # regular search
@@ -163,6 +188,7 @@ Please repost in the appropriate channel or shorten your advert.""")
                     await AutoModeration().age(message)
                     await AutoModeration().cooldown(message, 70, modchannel)
                     await AutoModeration().repost(message)
+                    await AutoModeration().duplicate(message, bot, 72, modchannel)
                 except discord.NotFound:
                     pass
         # other channels
@@ -173,15 +199,17 @@ Please repost in the appropriate channel or shorten your advert.""")
                 await AutoModeration().age(message)
                 await AutoModeration().cooldown(message, 70, modchannel)
                 await AutoModeration().repost(message)
+                await AutoModeration().duplicate(message, bot, 72, modchannel)
             except discord.NotFound:
                 pass
         elif str(message.channel.id) in test:
             try:
-                await AutoModeration().list(message, modchannel)
-                await AutoModeration().spacing(message, modchannel)
-                await AutoModeration().age(message)
-                await AutoModeration().cooldown(message, 70, modchannel)
-                await AutoModeration().repost(message)
+                # await AutoModeration().list(message, modchannel)
+                # await AutoModeration().spacing(message, modchannel)
+                # await AutoModeration().age(message)
+                # await AutoModeration().cooldown(message, 70, modchannel)
+                # await AutoModeration().repost(message)
+                await AutoModeration().duplicate(message, bot, 72, modchannel)
             except discord.NotFound:
                 pass
         else:

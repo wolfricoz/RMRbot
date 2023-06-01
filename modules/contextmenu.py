@@ -136,28 +136,24 @@ If you have any more questions, our staff team is always available to help you.
         elif message.channel.type is discord.ChannelType.public_thread:
             thread = message.channel
         tags = [x.name for x in thread.applied_tags]
+        forum = bot.get_channel(thread.parent_id)
         if "New" in tags:
-            forum = bot.get_channel(thread.parent_id)
+            c = 0
             for a in forum.available_tags:
-                if a.name == "Approved":
-                    print("tag added")
-                    await thread.add_tags(a)
                 if a.name == "New":
                     await thread.remove_tags(a)
             await interaction.followup.send("Post successfully approved")
         elif "Bump" in tags:
-            forum = bot.get_channel(thread.parent_id)
+
             for a in forum.available_tags:
-                if a.name == "Approved":
-                    print("tag added")
-                    await thread.add_tags(a)
                 if a.name == "Bump":
                     await thread.remove_tags(a)
-            await thread.send(
-                "Thank you for bumping (this message will be removed)")
+
             await interaction.followup.send("bump successfully approved")
-        else:
-            print("Missing tags")
+        for a in forum.available_tags:
+            if a.name == "Approved":
+                await thread.add_tags(a)
+
 
         # forum = bot.get_channel(thread.parent_id)
         # for a in forum.available_tags:
