@@ -1,15 +1,11 @@
 # IMPORT DISCORD.PY. ALLOWS ACCESS TO DISCORD'S API.
 # IMPORT THE OS MODULE.
-import logging
+import json
 import os
 import sys
-import traceback
 from datetime import datetime
 
 import discord
-import pytz
-from discord import Interaction
-from discord.app_commands import AppCommandError
 from discord.ext import commands, tasks
 # IMPORT LOAD_DOTENV FUNCTION FROM DOTENV MODULE.
 from dotenv import load_dotenv
@@ -17,18 +13,18 @@ from sqlalchemy.orm import sessionmaker
 
 import adefs
 import db
-import jsonmaker
+from classes import jsonmaker
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-alogger = logging.getLogger('sqlalchemy')
-alogger.setLevel(logging.WARN)
-handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='r+')
-handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-alogger.addHandler(handler2)
+# logger = logging.getLogger('discord')
+# logger.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
+# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# logger.addHandler(handler)
+# alogger = logging.getLogger('sqlalchemy')
+# alogger.setLevel(logging.WARN)
+# handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='r+')
+# handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# alogger.addHandler(handler2)
 # LOADS THE .ENV FILE THAT RESIDES ON THE SAME LEVEL AS THE SCRIPT.
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
@@ -45,7 +41,8 @@ timetoken = os.getenv("timetoken")
 intents = discord.Intents.default()
 intents.message_content= True
 intents.members= True
-bot = commands.Bot(command_prefix=PREFIX, case_insensitive=False, intents=intents)
+activity = discord.Activity(type=discord.ActivityType.watching, name="over RMR")
+bot = commands.Bot(command_prefix=PREFIX, case_insensitive=False, intents=intents, activity=activity)
 
 
 exec(open("db.py").read())
@@ -74,36 +71,6 @@ async def sher(ctx):
 # events
 @bot.event
 async def on_message(message):
-    status = True
-    tz = pytz.timezone("US/Eastern")
-    from datetime import datetime, timedelta
-    if message.author.bot:
-        return
-    #72h Version
-    if str(message.channel.id) in channels72 and status == True:
-        current = datetime.now(tz)
-        cooldown = current + timedelta(hours=72)
-        await message.author.send(
-            f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
-            f"\nBy posting in this channel, you are agreeing to our search rules")
-    if str(message.channel.id) in spec and status == True:
-        current = datetime.now(tz)
-        cooldown = current + timedelta(hours=72)
-        await message.author.send(
-            f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
-            f"\nBy posting in this channel, you are agreeing to our search rules")
-    #24h Version
-    if str(message.channel.id) in channels24 and status == True:
-        current = datetime.now(tz)
-        cooldown = current + timedelta(hours=24)
-        await message.author.send(
-            f"{message.author.mention}: You can repost in {message.channel.mention} at: {discord.utils.format_dt(cooldown)} ({discord.utils.format_dt(cooldown, 'R')})"
-            f"\nBy posting in this channel, you are agreeing to our search rules")
-    #single post version
-    if str(message.channel.id) in single and status == True:
-        current = datetime.now(tz)
-        await message.author.send(
-            "{}: You can repost in {} after the next purge.".format(message.author.mention, message.channel.mention) + "\nBy posting in this channel, you are agreeing to our search rules")
     await bot.process_commands(message)
 
 
@@ -111,39 +78,6 @@ async def on_message(message):
 #database sessionmaker
 Session = sessionmaker(bind=db.engine)
 session = Session()
-#error logging for regular commands
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please fill in the required arguments")
-    elif isinstance(error, commands.CommandNotFound):
-        pass
-    elif isinstance(error, commands.CheckFailure):
-        await ctx.send("You do not have permission")
-    elif isinstance(error, commands.MemberNotFound):
-        await ctx.send("User not found")
-    elif isinstance(error, commands.CommandInvokeError):
-        await ctx.send("Command failed: See log.")
-        await ctx.send(error)
-        raise error
-    else:
-        session.rollback()
-        session.close()
-        db.engine.dispose()
-        await ctx.send(error)
-        raise error
-#error logging for app commands (slash commands)
-@bot.tree.error
-async def on_app_command_error(
-        interaction: Interaction,
-        error: AppCommandError
-):
-    await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
-    logger.error(traceback.format_exc())
-    channel = bot.get_channel(1033787967929589831)
-    await channel.send(traceback.format_exc())
-    raise error
-
 
 # EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
 @bot.event
@@ -154,6 +88,7 @@ async def on_ready():
     guilds = []
     # LOOPS THROUGH ALL THE GUILD / SERVERS THAT THE BOT IS ASSOCIATED WITH.
     for guild in bot.guilds:
+        await jsonmaker.guildconfiger.create(guild.id, guild.name)
         #add invites
         invites[guild.id] = await guild.invites()
         # PRINT THE SERVER'S ID AND NAME.
@@ -188,7 +123,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 2.3: Multiple choice questions!.")
+    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 3.0: You shall be matched.")
     session.close()
     print("Commands synced, start up _done_")
     return guilds
@@ -330,6 +265,7 @@ Member joined at {datetime.now().strftime("%m/%d/%Y")}
 #cogloader
 @bot.event
 async def setup_hook():
+    bot.lobbyages = bot.get_channel(454425835064262657)
     for filename in os.listdir("modules"):
 
         if filename.endswith('.py'):
@@ -358,6 +294,31 @@ async def cogreload(ctx):
     session.close()
     db.engine.dispose()
     await bot.tree.sync()
+
+@tasks.loop(hours=24)
+async def printer(self):
+    """Updates banlist when user is unbanned"""
+    count = 0
+    historydict = {}
+    channel = self.bot.get_channel(454425835064262657)
+    print(channel)
+    print('creating cache...')
+    time = datetime.datetime.now()
+    async for h in channel.history(limit=None, oldest_first=True, before=time):
+        historydict[h.id] = {}
+        historydict[h.id]["author"] = h.author.id
+        historydict[h.id]["created"] = h.created_at.strftime('%m/%d/%Y')
+        historydict[h.id]["content"] = h.content
+        count += 1
+    else:
+        print(f'Cached {count} message(s).')
+    try:
+        os.mkdir('config')
+    except:
+        pass
+    with open('config/history.json', 'w') as f:
+        json.dump(historydict, f, indent=4)
+    print("[auto refresh]List updated")
 
 
 
