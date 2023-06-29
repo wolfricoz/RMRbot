@@ -1,15 +1,10 @@
 import logging
-import jsonmaker
+from classes import jsonmaker
 import discord
 from discord import app_commands
 from discord.ext import commands
-from datetime import datetime
-import adefs
 from abc import ABC, abstractmethod
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
-import typing
-from discord.app_commands import Choice
 from datetime import datetime, timedelta
 import pytz
 import db
@@ -93,24 +88,18 @@ class contextmenus(commands.Cog, name="contextmenus"):
         self.bot = bot
         self.adages = app_commands.ContextMenu(name="adages", callback=self.madages,)
         self.bot.tree.add_command(self.adages)
-        # self.adtl = app_commands.ContextMenu(name="adtoolongs", callback=self.madtl,)
-        # self.bot.tree.add_command(self.adtl)
-        # self.adts = app_commands.ContextMenu(name="adtooshort", callback=self.madts,)
-        # self.bot.tree.add_command(self.adts)
         self.adformat = app_commands.ContextMenu(name="adformat", callback=self.madformat,)
         self.bot.tree.add_command(self.adformat)
-        self.ad24 = app_commands.ContextMenu(name="adearly24", callback=self.made24,)
-        self.bot.tree.add_command(self.ad24)
         self.adweb = app_commands.ContextMenu(name="adwebsite", callback=self.madweb, )
         self.bot.tree.add_command(self.adweb)
+        self.appr = app_commands.ContextMenu(name="approve", callback=self.approve,)
+        self.bot.tree.add_command(self.appr)
 
 #Max 5 per Message, Max 5 per Member
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(self.adages.name, type=self.adages.type)
-        # self.bot.tree.remove_command(self.adtl.name, type=self.adtl.type)
-        # self.bot.tree.remove_command(self.adts.name, type=self.adts.type)
         self.bot.tree.remove_command(self.adformat.name, type=self.adformat.type)
-        self.bot.tree.remove_command(self.ad24.name, type=self.ad24.type)
+        self.bot.tree.remove_command(self.appr.name, type=self.appr.type)
         #self.bot.tree.remove_command(self.ad.name, type=self.ad.type)
 
 
@@ -135,6 +124,49 @@ If you have any more questions, our staff team is always available to help you.
         await advert.csendadvertuser(interaction, message, warning)
 
         await interaction.followup.send("Success!")
+
+    async def approve(self, interaction: discord.Interaction,
+                      message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command
+        await interaction.response.defer(ephemeral=True)
+        bot = self.bot
+        thread: discord.Thread = None
+
+        if message.channel.type is discord.ChannelType.text:
+            await interaction.followup.send("You can't approve outside of forums.")
+        elif message.channel.type is discord.ChannelType.public_thread:
+            thread = message.channel
+        tags = [x.name for x in thread.applied_tags]
+        forum = bot.get_channel(thread.parent_id)
+        if "New" in tags:
+            c = 0
+            for a in forum.available_tags:
+                if a.name == "New":
+                    await thread.remove_tags(a)
+            await interaction.followup.send("Post successfully approved")
+        elif "Bump" in tags:
+
+            for a in forum.available_tags:
+                if a.name == "Bump":
+                    await thread.remove_tags(a)
+
+            await interaction.followup.send("bump successfully approved")
+        for a in forum.available_tags:
+            if a.name == "Approved":
+                await thread.add_tags(a)
+
+
+        # forum = bot.get_channel(thread.parent_id)
+        # for a in forum.available_tags:
+        #     if a.name == "Approved":
+        #         print("tag added")
+        #         await thread.add_tags(a)
+        #     if a.name == "New":
+        #         await thread.remove_tags(a)
+        # await thread.send("Thank you for posting, you may bump every 3 days and users can request to DM in your comments.")
+        # await interaction.followup.send("Post successfully approved")
+
+
+
 # This code is deprecated.
 #     async def madtl(self, interaction: discord.Interaction,
 #                     message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command

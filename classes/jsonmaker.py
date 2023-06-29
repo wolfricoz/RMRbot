@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 #makes dir for ban logging
 try:
-    os.mkdir('../bans/')
+    os.mkdir('../../bans/')
 except:
     pass
 
@@ -152,7 +152,7 @@ class Cooldown():
 class Updater:
     async def update(self):
         count = 0
-        for x in os.listdir('./users'):
+        for x in os.listdir('../users'):
             print(x)
             with open(f'./users/{x}', 'r+') as f:
                 data = json.load(f)
@@ -180,3 +180,135 @@ class Datechecker:
             print("time has passed" )
         else:
             print("on cooldown")
+
+class guildconfiger(ABC):
+    @abstractmethod
+    async def create(guildid, guildname):
+        try:
+            os.mkdir("../jsons")
+        except:
+            pass
+        "Creates the config"
+        dictionary = {
+            "Name": guildname,
+            "addrole": [],
+            "remrole": [],
+            "welcomeusers": True,
+            "welcome": "This can be changed with /config welcome",
+            "waitingrole": [],
+            "forums": []
+        }
+        json_object = json.dumps(dictionary, indent=4)
+        if os.path.exists(f"jsons/{guildid}.json"):
+            print(f"{guildid} already has a config")
+            with open(f"../jsons/template.json", "w") as outfile:
+                outfile.write(json_object)
+        else:
+            with open(f"jsons/{guildid}.json", "w") as outfile:
+                outfile.write(json_object)
+                print(f"config created for {guildid}")
+
+    @abstractmethod
+    async def edit_string(guildid, newstr, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key] = newstr
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+
+    @abstractmethod
+    async def addrole(guildid, interaction, roleid, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                for x in data[key]:
+                    if x == roleid:
+                        await interaction.followup.send("Failed to add role! Role already in config")
+                        break
+                else:
+                    data[key].append(roleid)
+                    await interaction.followup.send(f"Role added to {key}")
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
+    async def remrole(guildid, roleid, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key].remove(roleid)
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
+    async def addforum(guildid, interaction, roleid, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                for x in data[key]:
+                    if x == roleid:
+                        await interaction.followup.send("Failed to add forum! forum already in config")
+                        break
+                else:
+                    data[key].append(roleid)
+                    await interaction.followup.send(f"forum added to {key}")
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
+    async def remforum(guildid: int, channelid: int, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key].remove(channelid)
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
+    async def welcome(guildid, interaction,key, welcome):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key] = welcome
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+            await interaction.followup.send(f"welcome updated to '{welcome}'")
+
+    @abstractmethod
+    async def roulette(guildid: int, channelid: int, key):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                data[key] = channelid
+            with open(f"jsons/{guildid}.json", 'w') as f:
+                json.dump(data, f, indent=4)
+    @abstractmethod
+    async def updateconfig(guildid):
+        with open(f'jsons/{guildid}.json', 'r+') as file:
+            data = json.load(file)
+            newdictionary = {
+                "Name": data.get('Name', None),
+                "addrole": data.get('addrole', []),
+                "remrole": data.get('remrole', []),
+                "welcomeusers": data.get("welcomeusers", False),
+                "welcome": data.get('welcome', "This can be changed with /config welcome"),
+                "waitingrole": data.get('waitingrole', []),
+                "forums": data.get('forums', []),
+                "roulette": data.get('roulette', None),
+                "reminder": data.get('reminder', "")
+            }
+            print(newdictionary)
+
+        with open(f'jsons/{guildid}.json', 'w') as f:
+            json.dump(newdictionary, f, indent=4)
+    @abstractmethod
+    async def viewconfig(interaction, guildid):
+        if os.path.exists(f"jsons/{guildid}.json"):
+            with open(f"jsons/{guildid}.json") as f:
+                data = json.load(f)
+                vdict = f"""
+Name: {data['Name']}
+addrole: {data['addrole']}
+remrole: {data['remrole']}
+welcomeusers: {data['welcomeusers']},
+welcome: {data['welcome']}
+waitingrole: {data['waitingrole']}
+                """
+                return vdict

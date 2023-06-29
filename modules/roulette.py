@@ -23,10 +23,14 @@ no = ["I want my partner to play as", "Other information", "Timestamp", "Email a
       "Participate?", "age", "Rematch"]
 
 
+# Future:
+# - double check point accuracy, maybe add breaks to the loops
+
+
 class RoomMate(ABC):
     @abstractmethod
-    def pairing(p, u1, u2):
-        """Checks if the pairings match, if they do not match then will return a -1 to signal the loop to stop"""
+    def genders(p, u1, u2):
+        """Checks if the genders match, if they do not match then will return a -1 to signal the loop to stop"""
         user1pref = str(u1.get("I want my partner to play as")).replace(" ", "").split(',')
         user1 = str(u1.get(p)).replace(" ", "").split(',')
         user2pref = str(u2.get("I want my partner to play as")).replace(" ", "").split(',')
@@ -35,26 +39,68 @@ class RoomMate(ABC):
         psc = 0
         for up in user1pref:
             for u in user2:
+                up = up.lower()
+                u = u.lower()
                 if up == "" or u == "":
                     pass
-                elif up.lower() in u.lower():
-                    # print(up)
-                    # print(u)
+                elif up == u:
                     sc += 1
-                elif u.lower() == "any" or up.lower() == "any":
+                elif u == "any" or up == "any":
                     sc += 1
         for up in user2pref:
             for u in user1:
+                up = up.lower()
+                u = u.lower()
                 if up == "" or u == "":
                     pass
-                elif up.lower() in u.lower():
-                    # print(up)
-                    # print(u)
+                elif up == u:
                     psc += 1
-                elif up.lower() == "any":
+                elif u == "any" or up == "any":
                     psc += 1
-                elif u.lower() == "any" or up.lower() == "any":
+        if sc == 0:
+            print(f"{u2['Username']} was not a match for {u1['Username']}(pairing)")
+            sc = -1
+            psc = 0
+
+        if psc == 0:
+            print(f"{u2['Username']} was not a match for {u1['Username']}(pairing)")
+            sc = -1
+            psc = 0
+        return sc + psc
+
+    def pairings(p, u1, u2):
+        """Checks if the pairings match, if they do not match then will return a -1 to signal the loop to stop"""
+        user1 = str(u1.get("Pairings")).lower().replace(" ", "").split(',')
+        user2 = str(u2.get("Pairings")).lower().replace(" ", "").split(',')
+        sc = 0
+        psc = 0
+        for up in user1:
+            if up == "anyxany":
+                sc += 5
+                break
+            for u in user2:
+                if up == "" or u == "":
+                    pass
+                elif up == "malexfemale" and "femalexmale" in user2 or up == "femalexmale" and "malexfemale" in user2:
+                    sc += 1
+                    break
+                elif up == u:
+                    sc += 1
+
+                    break
+        for up in user2:
+            if up == "anyxany":
+                psc += 5
+                break
+            for u in user1:
+                if up == "" or u == "":
+                    pass
+                elif u == "malexfemale" and "femalexmale" in user1 or up == "femalexmale" and "malexfemale" in user1:
                     psc += 1
+                    break
+                elif up == u:
+                    psc += 1
+                    break
         if sc == 0:
             print(f"{u2['Username']} was not a match for {u1['Username']}(pairing)")
             sc = -1
@@ -125,7 +171,8 @@ class RoomMate(ABC):
         file_name = 'client_key.json'
         creds = ServiceAccountCredentials.from_json_keyfile_name(file_name, scope)
         client = gspread.authorize(creds)
-        sheet = client.open('New RR  (Responses)').sheet1
+        sheet = client.open('RR TEST SHEET 11423').sheet1
+        # sheet = client.open('New RR  (Responses)').sheet1
         python_sheet = sheet.get_all_records()
         shuffle(python_sheet)
         with open('roulette.json', 'w') as f:
@@ -156,21 +203,30 @@ class RoomMate(ABC):
             sc = -1
         return sc
 
+    @abstractmethod
+    def prevmatch(p, u1, u2):
+        count = 0
+        prevmatch = str(u1.get('101Matches101')).split(",")
+        prevmatch2 = str(u2.get('101Matches101')).split(",")
+        if str(u1.get('Uid')) in prevmatch2:
+            count = -1
+        elif str(u2.get('Uid')) in prevmatch:
+            count = -1
+        return count
+
 
 class RouletteUser(ABC):
     @abstractmethod
     async def check(interaction: discord.Interaction, u1):
         user = interaction.guild.get_member(u1["Uid"])
+        err = []
         if user is None:
-            await interaction.channel.send(f"{u1['Username']} has invalid user ID: {u1['Uid']}")
-        else:
-            if str(user).lower() == u1['Username'].lower():
-                pass
-            else:
-                await interaction.channel.send(f"{u1['Username']} name doesn't match: {user}")
+            err.append(f"{u1['Username']} has invalid user ID or has left: {u1['Uid']}")
+            return err
+        return err
 
     @abstractmethod
-    async def send(userinfo, user):
+    async def send(userinfo, user, interaction):
         with open("match.txt", 'w', encoding='utf-16') as f:
             f.write(f"{userinfo.get('Username')}'s preferences"
                     f"\n\n----Genres----\n"
@@ -179,6 +235,7 @@ class RouletteUser(ABC):
                     f"\n\n----Pairings----"
                     f"\nI want to play as: {userinfo.get('I want to play as')}"
                     f"\nI want my partner to play as: {userinfo.get('I want my partner to play as')}"
+                    f"\nPairings: {userinfo.get('Pairings')}"
                     f"\n\n----fandoms----"
                     f"\n{userinfo.get('fandom')}"
                     f"\n\n----Roleplay Info----"
@@ -192,10 +249,12 @@ class RouletteUser(ABC):
                     f"\nKinks: {userinfo.get('Kinks')}")
         embed = discord.Embed(title=f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**",
                               description=f"If you wish to no longer be matched, please visit https://forms.gle/xFwY79vD6iMryFhcA and turn off participation"
-                                          f"\nYou have been matched with **{userinfo.get('Username')}**, here are their preferences:")
-        await user.send(embed=embed,
-                        file=discord.File(f.name, 'result.txt'))
-
+                                          f"\nYou have been matched with <@{userinfo.get('Uid')}>, here are their preferences:")
+        try:
+            await user.send(embed=embed,
+                            file=discord.File(f.name, 'result.txt'))
+        except discord.Forbidden:
+            await interaction.channel.send(f"{userinfo.get('Username')} Couldn't DM.")
         os.remove(f.name)
 
 
@@ -208,13 +267,19 @@ class roulette(commands.GroupCog, name="roulette"):
     async def rrcheck(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=False, thinking=False)
         python_sheet, sheet = RoomMate.api()
+        fails = []
         for u1 in python_sheet:
-            await RouletteUser.check(interaction, u1)
+            f = list(await RouletteUser.check(interaction, u1))
+            fails.extend(f)
+        fails = list(filter(None, fails))
+        print(fails)
+        failed = "\n".join(fails)
+        await interaction.followup.send(f"User checks failed:\n{failed}")
 
     @app_commands.command(name="id")
-    @adefs.check_slash_db_roles()
     async def rrid(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f"Your username is {interaction.user} and your user is is {interaction.user.id}", ephemeral=True)
+        await interaction.response.send_message(
+            f"Your username is {interaction.user} and your user is is {interaction.user.id}", ephemeral=True)
 
     @app_commands.command(name="results")
     @adefs.check_slash_db_roles()
@@ -228,6 +293,7 @@ class roulette(commands.GroupCog, name="roulette"):
         matched = {}
         matchedid = {}
         matchcounter = {}
+        matchresultid = {}
         matchresult = {}
         for mc in python_sheet:
             matchcounter[mc.get('Username')] = 0
@@ -236,8 +302,8 @@ class roulette(commands.GroupCog, name="roulette"):
             userchecked = {}
             gcount = 0
             oldcount = 0
-            if matchcounter[u1.get('Username')] >= 3:
-                print(f"{u2.get('Username')} already has the max amount of matches")
+            if matchcounter[u1.get('Username')] >= 2:
+                print(f"{u1.get('Username')} already has the max amount of matches")
                 continue
             for p in u1.keys():
                 sk = ['Username']
@@ -249,15 +315,30 @@ class roulette(commands.GroupCog, name="roulette"):
                         gcount += 1
             for u2 in python_sheet:
                 count = 0
-                if matchcounter[u2.get('Username')] >= 3:
+                if matchcounter[u2.get('Username')] >= 2:
                     print(f"{u2.get('Username')} is already matched")
                     continue
                 for p in u2.keys():
+
+                    if p == "Uid":
+                        pc = RoomMate.prevmatch(p, u1, u2)
+                        if pc == -1:
+                            count = -1
+                            break
                     if p == "Username" and u1.get(p) == u2.get(p):
                         count = -1
                         break
                     elif p == "I want to play as":
-                        pc = RoomMate.pairing(p, u1, u2)
+                        pc = RoomMate.genders(p, u1, u2)
+                        if pc == -1:
+                            count = -1
+                            break
+                        else:
+                            oldcount = count
+                            count += pc
+
+                    elif p == "Pairings":
+                        pc = RoomMate.pairings(p, u1, u2)
                         if pc == -1:
                             count = -1
                             break
@@ -299,20 +380,24 @@ class roulette(commands.GroupCog, name="roulette"):
             delete = [key for key in userchecked if userchecked.get(key) == -1]
             for w in delete:
                 userchecked.pop(w)
-
             if len(userchecked) == 0:
                 winner = "No partner matched their preferences"
+                matchresultid[u1.get('Uid')] = None
                 matchresult[u1.get('Username')] = None
             else:
                 winner = max(userchecked, key=userchecked.get)
                 matchcounter[winner] += 1
                 matchcounter[u1.get('Username')] += 1
+                matchresultid[u1.get('Uid')] = max(userchecked.values())
                 matchresult[u1.get('Username')] = max(userchecked.values())
             matched[u1.get('Username')] = winner
             for i in python_sheet:
                 if i.get('Username') == winner:
                     winnerid = i.get('Uid')
-            matchedid[u1.get('Uid')] = winnerid
+            try:
+                matchedid[u1.get('Uid')] = winnerid
+            except UnboundLocalError:
+                pass
             with open('roulette/rr.txt', 'a', encoding='utf-16') as f:
                 f.write(f"\nUsername: {u1.get('Username')} ({u1.get('Uid')})\n"
                         f"Recommended partner(s): {winner}\n"
@@ -330,6 +415,7 @@ class roulette(commands.GroupCog, name="roulette"):
 
         def check(m):
             return m.content is not None and m.channel == interaction.channel
+
         confirm = True
         desc = "To send the results to all members and publish to channel, please type **'confirm'**\n After 10m this prompt is invalid"
         embed = discord.Embed(title=f"Roleplay Roulette", description=desc)
@@ -342,35 +428,35 @@ class roulette(commands.GroupCog, name="roulette"):
                 confirm = False
                 await conf.edit(embed=embed)
                 await msg.delete()
-
-        for m, ma in matchedid.items():
-            sleep(2)
-            user1 = interaction.guild.get_member(m)
-            user2 = interaction.guild.get_member(ma)
-            userinfo1 = next(item for item in python_sheet if item["Uid"] == m)
-            userinfo2 = next(item for item in python_sheet if item["Uid"] == ma)
-            if user1 is not None:
-                await RouletteUser.send(userinfo2, user1)
-            else:
-                await user2.send("No match")
-            if user2 is not None:
-                await RouletteUser.send(userinfo1, user2)
-            else:
-                await user1.send("No match")
-        pair = []
-        for m, ma in matched.items():
-            pair.append(f"{m} and {ma}. match rating: {matchresult[m]}")
-        message = "\n".join(pair)
         with open(f'jsons/{interaction.guild.id}.json', 'r') as file:
             data = json.load(file)
         roulschannel = self.bot.get_channel(data['roulette'])
+
+        # Sends users their results, and sends it into the roulette channel.
         await roulschannel.send(f"<@&686535572000473089>\n"
-                                f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**\n\n"
-                                f"{message}")
+                                f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**\n\n")
+        for m, ma in matchedid.items():
+            sleep(1)
+            user1 = interaction.guild.get_member(m)
+            user2 = interaction.guild.get_member(ma)
+            row = sheet.find(f"{m}")
+            column = sheet.find(f"101Matches101")
+            oldcell = sheet.cell(row.row, column.col)
+            sheet.update_cell(row.row, column.col, value=f"{ma},{oldcell.value}")
 
+            userinfo1 = next(item for item in python_sheet if item["Uid"] == m)
+            userinfo2 = next(item for item in python_sheet if item["Uid"] == ma)
+            if user1 is not None:
+                await RouletteUser.send(userinfo2, user1, interaction)
+            else:
+                await user2.send("No match")
+            if user2 is not None:
+                await RouletteUser.send(userinfo1, user2, interaction)
+            else:
+                await user1.send("No match")
+            await roulschannel.send(f"<@{m}> and <@{ma}>. matching rate: {matchresultid[m]}")
+        await roulschannel.send(f"\n\nYou have been messaged with your partners information, if you have any questions, feedback, or run into issues please open a ticket <#992127400664109106>")
 
-
-# TODO: Add a function that sends the data to the users, a function that collects the matches and links them together, and then a function which stores them temporarily to be confirmed by staff
 
 async def setup(bot):
     await bot.add_cog(roulette(bot))

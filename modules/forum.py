@@ -1,19 +1,80 @@
 import json
 import re
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 
 import discord
+from Levenshtein import ratio
 from discord import app_commands
 from discord.ext import commands
 
 import adefs
-import jsonmaker
+from classes import jsonmaker
 
 
 # from main import channels24
 
+class AutomodComponents(ABC):
+    @abstractmethod
+    async def check_duplicate(forum, thread, originalmsg):
+        found = None
+        for a in forum.threads:
+            if found:
+                break
+            if a.id == thread.id:
+                continue
+            if a.owner == thread.owner:
+                msg: discord.Message = await a.fetch_message(a.id)
+                r = ratio(originalmsg.content, msg.content)
+                if r >= 0.7:
+                    found = msg
+                    break
+        async for x in forum.archived_threads(limit=1000):
+            if found is not None:
+                break
+            if x.id == thread.id:
+                continue
+            if x.owner == thread.owner:
+                msg: discord.Message = await x.fetch_message(x.id)
+                r = ratio(originalmsg.content, msg.content)
+                if r >= 0.7:
+                    found = msg
+                    break
+        return found
+    @abstractmethod
+    async def tags(thread, forum, message):
+        skip = ['New', 'Approved', 'Bump']
+        matched = []
+        count = 0
+        for r in forum.available_tags:
+
+            print(count)
+            limitreg = re.compile(fr"(limit.*?{r}|no.*?{r}|dont.*?{r}|don\'t.*?{r})", flags=re.I)
+            limitmatch = limitreg.search(message.content)
+            if limitmatch:
+                continue
+            if r.name in skip:
+                pass
+            if count == 3:
+                break
+            tagreg = re.compile(rf"{r.name}", flags=re.I)
+            match = tagreg.search(message.content)
+            matcht = tagreg.search(thread.name)
+            if match:
+                matched.append(r)
+                count += 1
+            if matcht:
+                matched.append(r)
+                count += 1
+        return matched
+
 class ForumAutoMod(ABC):
+
+    def config(self, guildid):
+        with open(f'jsons/{guildid}.json') as f:
+            data = json.load(f)
+            return data
+
     async def age(self, message, botmessage):
         check = re.search(
             r"\b(all character(s|'s) ([2-9][0-9]|18|19)|all character(s|'s) are ([2-9][0-9]|18|19)|([2-9][0-9]|18|19)\+ character(s|'s))\b",
@@ -24,30 +85,35 @@ class ForumAutoMod(ABC):
             await botmessage.add_reaction("🆗")
         print("age checked")
 
-    async def tags(self, thread, forum, message):
-        skip = ['New', 'Approved', 'Bump']
-        matched = []
-        count = 0
-        for r in forum.available_tags:
-            limitreg = re.compile(fr"(limit|limit.|no|dont|don't|)(.*?)({r})", flags=re.I)
-            match = limitreg.search(message.content)
-            if match:
-                continue
-            elif r.name in skip:
-                pass
-            elif count == 4:
-                break
-            else:
-                tagreg = re.compile(rf"{r.name}", flags=re.I)
-                match = tagreg.search(message.content)
-                matcht = tagreg.search(thread.name)
-                if match:
-                    matched.append(r)
-                    count += 1
-                if matcht:
-                    matched.append(r)
-                    count += 1
-        return matched
+
+    async def info(self, forum, thread, msg):
+
+        botmessage = None
+        matched = await AutomodComponents.tags(thread, forum, msg)
+        if matched:
+            fm = ', '.join([x.name for x in matched])
+            for a in forum.available_tags:
+                if a.name == "New":
+                    print("tag added")
+                    matched.append(a)
+            await thread.add_tags(*matched, reason=f"Automod applied {fm}")
+            botmessage = await thread.send(
+                f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
+                "\n\n"
+                f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"
+                f"\n\n"
+                f"To close the advert, please use /forum close")
+        else:
+            for a in forum.available_tags:
+                if a.name == "New":
+                    print("tag added")
+                    await thread.add_tags(a, reason="new post")
+            botmessage = await thread.send(
+                f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
+                f"\n\n"
+                f"To close the advert, please use /forum close")
+        return botmessage
+
 
     async def bump(self, interaction):
         bot = self.bot
@@ -83,6 +149,28 @@ class ForumAutoMod(ABC):
         else:
             await interaction.followup.send("You can't bump another's post.")
 
+    async def duplicate(self, thread: discord.Thread, bot):
+        forums = ForumAutoMod().config(thread.guild.id)
+        originalmsg = await thread.fetch_message(thread.id)
+        for c in forums['forums']:
+            forum = bot.get_channel(c)
+            checkdup = await AutomodComponents.check_duplicate(forum, thread, originalmsg)
+            if checkdup:
+                await thread.owner.send(f"Hi, I am a bot of {thread.guild.name}. Your latest advertisement is too similar to {checkdup.channel.mention}; since 07/01/2023 you're only allowed to have the same advert up once. \n\n"
+                                        f"If you wish to bump your advert, do /forum bump on your advert, if you wish to move then please use /forum close")
+                await thread.delete()
+                return True
+
+
+    async def reminder(self, thread: discord.Thread, guildid):
+        with open(f'jsons/{guildid}.json', 'r') as f:
+            conf = json.load(f)
+
+        embed = discord.Embed(title="Rule Reminder", description=conf['reminder'])
+        await thread.send(embed=embed)
+
+
+
 
 class forum(commands.GroupCog, name="forum"):
 
@@ -95,34 +183,16 @@ class forum(commands.GroupCog, name="forum"):
             data = json.load(f)
         forums = data['forums']
         bot = self.bot
-        forum = bot.get_channel(thread.parent_id)
-        tag = None
         msg: discord.Message = await thread.fetch_message(thread.id)
-        matched = await ForumAutoMod.tags(self, thread, forum, msg)
-        if forum.id in forums:
-            if matched:
-                fm = ', '.join([x.name for x in matched])
-                for a in forum.available_tags:
-                    if a.name == "New":
-                        print("tag added")
-                        matched.append(a)
-                await thread.add_tags(*matched, reason=f"Automod applied {fm}")
-                botmessage = await thread.send(
-                    f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
-                    "\n\n"
-                    f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"
-                    f"\n\n"
-                    f"To close the advert, please use /forum close")
-            else:
-                for a in forum.available_tags:
-                    if a.name == "New":
-                        print("tag added")
-                        await thread.add_tags(a, reason="new post")
-                botmessage = await thread.send(
-                    f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
-                    f"\n\n"
-                    f"To close the advert, please use /forum close")
-            await ForumAutoMod().age(msg, botmessage)
+        forum = bot.get_channel(thread.parent_id)
+        if forum.id not in forums:
+            return
+        duplicate = await ForumAutoMod().duplicate(thread, bot)
+        if duplicate is True:
+            return
+        await ForumAutoMod().reminder(thread, thread.guild.id)
+        botmsg = await ForumAutoMod().info(forum, thread, msg)
+        await ForumAutoMod().age(msg, botmsg)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -179,7 +249,6 @@ class forum(commands.GroupCog, name="forum"):
 
                     else:
                         await message.channel.send(f"{message.author} You can't bump another's post.")
-
 
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):

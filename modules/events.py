@@ -1,23 +1,64 @@
+import datetime
+import json
 import logging
-
-import discord
-from discord.ext import commands
-from abc import ABC, abstractmethod
-import db
-import adefs
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
-from datetime import datetime, timedelta
+import os
 import re
-import typing
+from abc import ABC, abstractmethod
+
+from discord.ext import commands, tasks
+from sqlalchemy.orm import sessionmaker
+
+import db
 
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
 
+class Lobby(ABC):
+    @abstractmethod
+    async def check(user, channel):
+        count = 0
+        hf = []
+        with open('config/history.json', 'r') as f:
+            history = json.load(f)
+        for a in history:
+            if count > 5:
+                await channel.send(f"{user.mention} More than 5 messages, search the user for the rest.")
+                break
+            if history[a]['author'] == user.id:
+                hf.append(f"{user.mention}({user.id}) `{history[a]['created']}`\n"
+                          f"{history[a]['content']}")
+                count += 1
+        if count > 0:
+            lh = "\n".join(hf)
+            await channel.send(f"[Lobby History] {lh}")
+
+    @abstractmethod
+    async def idcheck(user, channel):
+        count = 0
+        print("checking")
+        verification = re.compile(r"\*\*USER ID VERIFICATION\*\*", flags=re.IGNORECASE)
+        uuid = re.compile(fr"\b{user.id}\b", flags=re.MULTILINE)
+        with open('config/history.json', 'r') as f:
+            history = json.load(f)
+        for a in history:
+            if history[a]['author'] == 987662623187288094:
+                vmatch = bool(verification.search(history[a]['content']))
+                umatch = bool(uuid.search(history[a]['content']))
+                if vmatch is True:
+                    if umatch is True:
+                        await channel.send(f"[USER ID CHECK]{user.mention} `{history[a]['created']}`\n"
+                                           f"{history[a]['content']}")
+
+
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.index = 0
+        self.printer.start()
+
+    def cog_unload(self):
+        self.printer.cancel()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -64,18 +105,26 @@ class Events(commands.Cog):
                                 logging.exception("failed to  log to database")
                     if int(match.group(1)) >= 18 and not int(match.group(1)) > 20:
                         await channel.send(
-                            f"<@&{p.lobbystaff}> user has given age. You can let them through with `?18a {message.author.mention} {message.content}`")
+                            f"<@&{p.lobbystaff}> {message.author.mention} has given age. You can let them through with `?18a {message.author.mention} {message.content}`")
                         await lobby.send(waitmessage)
+                        await Lobby.check(message.author, channel)
+                        await Lobby.idcheck(message.author, channel)
                     elif int(match.group(1)) >= 21 and not int(match.group(1)) > 24:
                         await channel.send(
-                            f"<@&{p.lobbystaff}> user has given age. You can let them through with `?21a {message.author.mention} {message.content}`")
+                            f"<@&{p.lobbystaff}> {message.author.mention} has given age. You can let them through with `?21a {message.author.mention} {message.content}`")
                         await lobby.send(waitmessage)
+                        await Lobby.check(message.author, channel)
+                        await Lobby.idcheck(message.author, channel)
                     elif int(match.group(1)) >= 25:
                         await channel.send(
-                            f"<@&{p.lobbystaff}> user has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
+                            f"<@&{p.lobbystaff}> {message.author.mention} has given age. You can let them through with `?25a {message.author.mention} {message.content}`")
                         await lobby.send(waitmessage)
+                        await Lobby.check(message.author, channel)
+                        await Lobby.idcheck(message.author, channel)
                     return
                 else:
+                    channel = bot.get_channel(c.modlobby)
+                    await channel.send(f"{message.author.mention} failed to follow the format: {message.content}")
                     await message.channel.send(
                         f"{message.author.mention} Please use format age mm/dd/yyyy "
                         f"\n Example: `122 01/01/1900` "
@@ -84,14 +133,36 @@ class Events(commands.Cog):
                     return
         else:
             pass
-    @commands.Cog.listener()
-    async def on_command(self, ctx):
-        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
-        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
-    @commands.Cog.listener()
-    async def on_app_command(self, ctx):
-        logging.info(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
-        print(f"{ctx.guild.name}:{ctx.author} issued {ctx.command}")
+
+    @tasks.loop(hours=4)
+    async def printer(self):
+        """Updates banlist when user is unbanned"""
+        count = 0
+        historydict = {}
+        channel = self.bot.get_channel(454425835064262657)
+        print(channel)
+        print('creating cache...')
+        time = datetime.datetime.now()
+        async for h in channel.history(limit=None, oldest_first=True, before=time):
+            historydict[h.id] = {}
+            historydict[h.id]["author"] = h.author.id
+            historydict[h.id]["created"] = h.created_at.strftime('%m/%d/%Y')
+            historydict[h.id]["content"] = h.content
+            count += 1
+        else:
+            print(f'Cached {count} message(s).')
+        try:
+            os.mkdir('config')
+        except:
+            pass
+        with open('config/history.json', 'w') as f:
+            json.dump(historydict, f, indent=4)
+        print("[auto refresh]List updated")
+
+    @printer.before_loop  # it's called before the actual task runs
+    async def before_checkactiv(self):
+        await self.bot.wait_until_ready()
+
 
 async def setup(bot):
     await bot.add_cog(Events(bot))

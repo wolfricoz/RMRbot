@@ -1,13 +1,9 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
-from abc import ABC, abstractmethod
 import db
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, column
-import typing
 from discord import app_commands
-from jsonmaker import guildconfiger
+from classes.jsonmaker import guildconfiger
 import adefs
 Session = sessionmaker(bind=db.engine)
 session = Session()
