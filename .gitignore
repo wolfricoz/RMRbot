@@ -11,3 +11,11 @@ test files/codetest.py
 /logs/
 /test files/
 /config/
+/client_key.json
+/.idea/discord.xml
+/error.txt
+/history.json
+/.idea/misc.xml
+/purge.json
+/roulette.json
+/.idea/vcs.xml
