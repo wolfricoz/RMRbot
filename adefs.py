@@ -11,7 +11,6 @@ from functools import lru_cache
 import db
 Session = sessionmaker(bind=db.engine)
 session = Session()
-@lru_cache(maxsize=2)
 def check_db_roles():
     async def pred(ctx):
         modrole = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
@@ -28,7 +27,7 @@ def check_db_roles():
             return False
 
     return commands.check(pred)
-@lru_cache(maxsize=2)
+
 def check_admin_roles():
     async def pred(ctx):
         modrole = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
@@ -39,7 +38,7 @@ def check_admin_roles():
             return False
 
     return commands.check(pred)
-@lru_cache(maxsize=2)
+
 def check_slash_db_roles():
     async def pred(interaction):
         modrole = session.query(db.permissions).filter_by(guild=interaction.guild.id).first()
@@ -55,7 +54,7 @@ def check_slash_db_roles():
         else:
             return False
     return app_commands.check(pred)
-@lru_cache(maxsize=2)
+
 def check_slash_admin_roles():
     async def pred(interaction):
         modrole = session.query(db.permissions).filter_by(guild=interaction.guild.id).first()
