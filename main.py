@@ -89,6 +89,7 @@ async def on_ready():
     # LOOPS THROUGH ALL THE GUILD / SERVERS THAT THE BOT IS ASSOCIATED WITH.
     for guild in bot.guilds:
         await jsonmaker.guildconfiger.create(guild.id, guild.name)
+        await jsonmaker.guildconfiger.updateconfig(guild.id)
         #add invites
         invites[guild.id] = await guild.invites()
         # PRINT THE SERVER'S ID AND NAME.
