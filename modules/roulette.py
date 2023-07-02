@@ -427,14 +427,13 @@ class roulette(commands.GroupCog, name="roulette"):
                 embed = discord.Embed(title=f"Roleplay Roulette", description=desc)
                 confirm = False
                 await conf.edit(embed=embed)
-                await msg.delete()
+                # await msg.delete()
         with open(f'jsons/{interaction.guild.id}.json', 'r') as file:
             data = json.load(file)
         roulschannel = self.bot.get_channel(data['roulette'])
 
         # Sends users their results, and sends it into the roulette channel.
-        await roulschannel.send(f"<@&686535572000473089>\n"
-                                f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**\n\n")
+        await roulschannel.send(f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**\n\n")
         for m, ma in matchedid.items():
             sleep(1)
             user1 = interaction.guild.get_member(m)
@@ -455,7 +454,7 @@ class roulette(commands.GroupCog, name="roulette"):
             else:
                 await user1.send("No match")
             await roulschannel.send(f"<@{m}> and <@{ma}>. matching rate: {matchresultid[m]}")
-        await roulschannel.send(f"\n\nYou have been messaged with your partners information, if you have any questions, feedback, or run into issues please open a ticket <#992127400664109106>")
+        await roulschannel.send(f"\n\nYou have been messaged with your partners information, if you have any questions, feedback, or run into issues please open a ticket <#992127400664109106>\n<@&686535572000473089>")
 
 
 async def setup(bot):
