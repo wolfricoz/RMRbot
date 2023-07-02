@@ -128,7 +128,8 @@ class Events(commands.Cog):
                     await message.channel.send(
                         f"{message.author.mention} Please use format age mm/dd/yyyy "
                         f"\n Example: `122 01/01/1900` "
-                        f"\n __**Do not round up your age**__ ")
+                        f"\n __**Do not round up your age**__ "
+                        f"\nhttps://cdn.discordapp.com/attachments/523343470362886154/1118851484197605396/image.png")
                     await message.delete()
                     return
         else:
