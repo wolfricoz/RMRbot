@@ -1,16 +1,17 @@
-import discord
 from discord import app_commands
 from discord.ext import commands
-from abc import ABC, abstractmethod
-from sqlalchemy import create_engine
-from sqlalchemy import Column, String, Integer
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
-from functools import lru_cache
 import db
+from discord import app_commands
+from discord.ext import commands
+from sqlalchemy.orm import sessionmaker
+
+import db
+
 Session = sessionmaker(bind=db.engine)
 session = Session()
+
+
 def check_db_roles():
     async def pred(ctx):
         modrole = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
@@ -28,6 +29,7 @@ def check_db_roles():
 
     return commands.check(pred)
 
+
 def check_admin_roles():
     async def pred(ctx):
         modrole = session.query(db.permissions).filter_by(guild=ctx.guild.id).first()
@@ -38,6 +40,7 @@ def check_admin_roles():
             return False
 
     return commands.check(pred)
+
 
 def check_slash_db_roles():
     async def pred(interaction):
@@ -53,7 +56,9 @@ def check_slash_db_roles():
             return False
         else:
             return False
+
     return app_commands.check(pred)
+
 
 def check_slash_admin_roles():
     async def pred(interaction):
@@ -63,4 +68,5 @@ def check_slash_admin_roles():
             return True
         else:
             return False
+
     return app_commands.check(pred)

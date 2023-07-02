@@ -171,8 +171,8 @@ class RoomMate(ABC):
         file_name = 'client_key.json'
         creds = ServiceAccountCredentials.from_json_keyfile_name(file_name, scope)
         client = gspread.authorize(creds)
-        sheet = client.open('RR TEST SHEET 11423').sheet1
-        # sheet = client.open('New RR  (Responses)').sheet1
+        # sheet = client.open('RR TEST SHEET 11423').sheet1
+        sheet = client.open('New RR  (Responses)').sheet1
         python_sheet = sheet.get_all_records()
         shuffle(python_sheet)
         with open('roulette.json', 'w') as f:
