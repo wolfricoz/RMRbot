@@ -98,7 +98,7 @@ class RoomMate(ABC):
                 elif u == "malexfemale" and "femalexmale" in user1 or up == "femalexmale" and "malexfemale" in user1:
                     psc += 1
                     break
-                elif up == u:
+                elif up == u and up != "malexfemale" and up != "femalexmale":
                     psc += 1
                     break
         if sc == 0:
@@ -302,6 +302,7 @@ class roulette(commands.GroupCog, name="roulette"):
             userchecked = {}
             gcount = 0
             oldcount = 0
+
             if matchcounter[u1.get('Username')] >= 2:
                 print(f"{u1.get('Username')} already has the max amount of matches")
                 continue
@@ -313,13 +314,20 @@ class roulette(commands.GroupCog, name="roulette"):
                     user1 = str(u1.get(p)).replace(" ", "").split(',')
                     for _ in user1:
                         gcount += 1
+                if p == "Participate?":
+                    if u1.get(p) == "No":
+                        print(f"{u1.get('Username')} participate: no")
+                        break
             for u2 in python_sheet:
                 count = 0
                 if matchcounter[u2.get('Username')] >= 2:
                     print(f"{u2.get('Username')} is already matched")
                     continue
                 for p in u2.keys():
-
+                    if p == "Participate?":
+                        if u2.get(p) == "No":
+                            print(f"{u2.get('Username')} participate: no")
+                            break
                     if p == "Uid":
                         pc = RoomMate.prevmatch(p, u1, u2)
                         if pc == -1:
@@ -370,7 +378,7 @@ class roulette(commands.GroupCog, name="roulette"):
                         pc = RoomMate.other(p, u1, u2)
                         oldcount = count
                         count += pc
-                    print(f"{u1['Username']} + {u2['Username']}: {p}: {count}/{gcount} ({count - oldcount})")
+                    # print(f"{u1['Username']} + {u2['Username']}: {p}: {count}/{gcount} ({count - oldcount})")
                 # Final count checker, if -1, its skipped. otherwise its converted to percentages.
                 if count == -1:
                     pass
@@ -454,7 +462,9 @@ class roulette(commands.GroupCog, name="roulette"):
             else:
                 await user1.send("No match")
             await roulschannel.send(f"<@{m}> and <@{ma}>. matching rate: {matchresultid[m]}")
-        await roulschannel.send(f"\n\nYou have been messaged with your partners information, if you have any questions, feedback, or run into issues please open a ticket <#992127400664109106>\n<@&686535572000473089>")
+        await roulschannel.send(f"\n\nYou have been messaged with your partners information, if you have any questions, feedback, or run into issues please open a ticket <#992127400664109106>"
+                                f"\nTo join the next round: https://docs.google.com/forms/d/e/1FAIpQLSet3G_qxOwAuN4s_VruzTi6VFP-xwGeu8J09tfYRxzuz1J7jg/viewform?usp=sf_link"
+                                f"\n<@&686535572000473089>")
 
 
 async def setup(bot):
