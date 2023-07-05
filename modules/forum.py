@@ -1,7 +1,9 @@
 import json
+import os
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
+from time import sleep
 
 import discord
 from Levenshtein import ratio
@@ -47,8 +49,6 @@ class AutomodComponents(ABC):
         matched = []
         count = 0
         for r in forum.available_tags:
-
-            print(count)
             limitreg = re.compile(fr"(limit.*?{r}|no.*?{r}|dont.*?{r}|don\'t.*?{r})", flags=re.I)
             limitmatch = limitreg.search(message.content)
             if limitmatch:
@@ -90,6 +90,7 @@ class ForumAutoMod(ABC):
 
         botmessage = None
         matched = await AutomodComponents.tags(thread, forum, msg)
+
         if matched:
             fm = ', '.join([x.name for x in matched])
             for a in forum.available_tags:
@@ -169,6 +170,17 @@ class ForumAutoMod(ABC):
         embed = discord.Embed(title="Rule Reminder", description=conf['reminder'])
         await thread.send(embed=embed)
 
+    async def checktags(self, thread):
+        tags = thread.applied_tags
+        remove = ["New", "Approved", "Bump"]
+        found = False
+        if len(tags) == 5:
+            for tag in tags:
+                if tag.name in remove:
+                    await thread.remove_tags(tag)
+                    found = True
+            if not found:
+                await thread.remove_tags(tags[0])
 
 
 
@@ -183,6 +195,7 @@ class forum(commands.GroupCog, name="forum"):
             data = json.load(f)
         forums = data['forums']
         bot = self.bot
+        await ForumAutoMod().checktags(thread)
         msg: discord.Message = await thread.fetch_message(thread.id)
         forum = bot.get_channel(thread.parent_id)
         if forum.id not in forums:
@@ -222,6 +235,7 @@ class forum(commands.GroupCog, name="forum"):
                     messages = thread.history(limit=300, after=bcheck, oldest_first=False)
                     forum = bot.get_channel(thread.parent_id)
                     count = 0
+                    await ForumAutoMod().checktags(thread)
                     if thread.owner_id == message.author.id:
                         async for m in messages:
                             if m.author.id == bot.application_id:
@@ -257,32 +271,34 @@ class forum(commands.GroupCog, name="forum"):
         forums = data['forums']
         thread: discord.Thread = interaction.guild.get_thread(interaction.channel.id)
         forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
-        print(forum.id)
-        print(forums)
+        await ForumAutoMod().checktags(thread)
         if forum.id in forums:
             await interaction.response.defer(ephemeral=True)
             await ForumAutoMod.bump(self, interaction)
         else:
             print('not in list')
 
+
     @app_commands.command(name="close", description="Removes your post from the forum and sends you a copy.")
     async def close(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        bot = self.bot
         thread: discord.Thread = interaction.channel
-        count = 0
-        # modchannel = bot.get_channel(763058339088957548)
-        if interaction.channel.type == discord.ChannelType.public_thread:
-            if thread.owner_id == interaction.user.id:
-                async for m in thread.history(limit=1, oldest_first=True):
-                    await interaction.user.send(f"{m.channel}"
-                                                f"\n{m.content}"
-                                                f"\n\nYour post has successfully been closed.")
-                await thread.delete()
-            else:
-                await interaction.followup.send("[ERROR] You do not own this thread.")
-        else:
+        if interaction.channel.type != discord.ChannelType.public_thread:
             await interaction.followup.send("[ERROR] This channel is not a thread.")
+            return
+        if thread.owner_id != interaction.user.id:
+            await interaction.followup.send("[ERROR] You do not own this thread.")
+            return
+
+        async for m in thread.history(limit=1, oldest_first=True):
+            with open('advert.txt', 'w', encoding='utf-16') as f:
+                f.write(m.content)
+            await interaction.user.send(f"Your post {m.channel} has successfully been closed. The contents of your adverts:", file=discord.File(f.name, f"{m.channel}.txt"))
+        await thread.delete()
+        os.remove(f.name)
+
+
+
 
     @app_commands.command(name="add", description="ADMIN: adds forum to the list to be moderated")
     @adefs.check_slash_admin_roles()

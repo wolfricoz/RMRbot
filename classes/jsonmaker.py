@@ -200,7 +200,6 @@ class guildconfiger(ABC):
         }
         json_object = json.dumps(dictionary, indent=4)
         if os.path.exists(f"jsons/{guildid}.json"):
-            print(f"{guildid} already has a config")
             with open(f"../jsons/template.json", "w") as outfile:
                 outfile.write(json_object)
         else:
@@ -294,8 +293,6 @@ class guildconfiger(ABC):
                 "roulette": data.get('roulette', None),
                 "reminder": data.get('reminder', "")
             }
-            print(newdictionary)
-
         with open(f'jsons/{guildid}.json', 'w') as f:
             json.dump(newdictionary, f, indent=4)
     @abstractmethod
