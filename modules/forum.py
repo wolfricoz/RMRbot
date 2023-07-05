@@ -293,7 +293,7 @@ class forum(commands.GroupCog, name="forum"):
         async for m in thread.history(limit=1, oldest_first=True):
             with open('advert.txt', 'w', encoding='utf-16') as f:
                 f.write(m.content)
-            await interaction.user.send(f"Your post {m.channel} has successfully been closed. The contents of your adverts:", file=discord.File(f.name, f"{m.channel}.txt"))
+            await interaction.user.send(f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:", file=discord.File(f.name, f"{m.channel}.txt"))
         await thread.delete()
         os.remove(f.name)
 
