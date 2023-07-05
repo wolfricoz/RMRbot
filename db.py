@@ -12,8 +12,8 @@ load_dotenv('main.env')
 DBTOKEN = os.getenv("DB")
 
 # sqlalchemy
-engine = create_engine(DBTOKEN, echo=False, echo_pool=True, pool_pre_ping=True, poolclass=QueuePool, pool_size=256,
-                       max_overflow=100, pool_timeout=100, pool_recycle=120, )  # connects to the database
+engine = create_engine(DBTOKEN, echo=False, echo_pool=True, pool_pre_ping=True, poolclass=QueuePool, pool_size=100,
+                       max_overflow=100, pool_timeout=30, pool_recycle=120, )  # connects to the database
 base = declarative_base()
 engine.echo = False
 
