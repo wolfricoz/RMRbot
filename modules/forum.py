@@ -153,6 +153,8 @@ class ForumAutoMod(ABC):
     async def duplicate(self, thread: discord.Thread, bot):
         forums = ForumAutoMod().config(thread.guild.id)
         originalmsg = await thread.fetch_message(thread.id)
+        if thread.owner_id == 188647277181665280:
+            return
         for c in forums['forums']:
             forum = bot.get_channel(c)
             checkdup = await AutomodComponents.check_duplicate(forum, thread, originalmsg)
