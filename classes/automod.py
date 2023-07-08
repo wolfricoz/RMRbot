@@ -1,4 +1,5 @@
 import json
+import os.path
 import re
 from abc import ABC
 from datetime import datetime
@@ -121,3 +122,10 @@ class ForumAutoMod(ABC):
                     found = True
             if not found:
                 await thread.remove_tags(tags[0])
+
+    def approval_log(self, interaction):
+        if os.path.isfile('config/approvals.txt') is False:
+            with open('config/approvals.txt', 'w') as f:
+                f.write('Advert Approvals')
+        with open('config/approvals.txt', 'a') as f:
+            f.write(f"\n{datetime.now().strftime('%m/%d/%Y %S:%M:%I %p')}: {interaction.user} has approved post '{interaction.channel}'")

@@ -140,7 +140,6 @@ If you have any more questions, our staff team is always available to help you.
         forum = bot.get_channel(thread.parent_id)
         await ForumAutoMod().checktags(thread)
         if "New" in tags:
-            c = 0
             for a in forum.available_tags:
                 if a.name == "New":
                     await thread.remove_tags(a)
@@ -152,9 +151,12 @@ If you have any more questions, our staff team is always available to help you.
                     await thread.remove_tags(a)
 
             await interaction.followup.send("bump successfully approved")
+        else:
+            await interaction.followup.send("Post successfully approved")
         for a in forum.available_tags:
             if a.name == "Approved":
                 await thread.add_tags(a)
+        ForumAutoMod().approval_log(interaction)
 
     async def madformat(self, interaction: discord.Interaction,
                     message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command
