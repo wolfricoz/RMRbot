@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 import pytz
 import db
+from classes.automod import ForumAutoMod
 Session = sessionmaker(bind=db.engine)
 session = Session()
 
@@ -137,6 +138,7 @@ If you have any more questions, our staff team is always available to help you.
             thread = message.channel
         tags = [x.name for x in thread.applied_tags]
         forum = bot.get_channel(thread.parent_id)
+        await ForumAutoMod().checktags(thread)
         if "New" in tags:
             c = 0
             for a in forum.available_tags:
@@ -153,60 +155,6 @@ If you have any more questions, our staff team is always available to help you.
         for a in forum.available_tags:
             if a.name == "Approved":
                 await thread.add_tags(a)
-
-
-        # forum = bot.get_channel(thread.parent_id)
-        # for a in forum.available_tags:
-        #     if a.name == "Approved":
-        #         print("tag added")
-        #         await thread.add_tags(a)
-        #     if a.name == "New":
-        #         await thread.remove_tags(a)
-        # await thread.send("Thank you for posting, you may bump every 3 days and users can request to DM in your comments.")
-        # await interaction.followup.send("Post successfully approved")
-
-
-
-# This code is deprecated.
-#     async def madtl(self, interaction: discord.Interaction,
-#                     message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command
-#         await interaction.response.defer(ephemeral=True)
-#         bot = self.bot
-#         loggingchannel = bot.get_channel(997282508523704350)
-#         adchannel = bot.get_channel(763058339088957548)
-#         user = message.author
-#         # adds warning to database
-#         swarnings = await advert.cincreasewarnings(interaction, user)
-#         warning = """Hello, I'm a staff member of **Roleplay Meets: Reborn**. I'm reaching out to you regarding your ad in {}. It's been removed because: **your advert was over 600 characters (your advert: {})**. Please repost it in the appropriate channel.
-#
-# If you have any questions regarding adverts or the rules, don't hesitate to ask. Thank you for your cooperation!
-# <#977720278396305418>""".format(message.channel.mention, len(message.content))
-#         await adchannel.send(
-#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too long  in {message.channel.mention}\n userId: {user.id}\nCharacter Count: {len(message.content)} Warning Count: {swarnings}")
-#         # Logs the advert and sends it to the user.
-#         await advert.clogadvert(interaction, message, warning, loggingchannel)
-#         await advert.csendadvertuser(interaction, message, warning)
-#         await interaction.followup.send("Success!")
-
-#     async def madts(self, interaction: discord.Interaction,
-#                     message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command
-#         await interaction.response.defer(ephemeral=True)
-#         bot = self.bot
-#         loggingchannel = bot.get_channel(997282508523704350)
-#         adchannel = bot.get_channel(763058339088957548)
-#         user = message.author
-#         # adds warning to database
-#         swarnings = await advert.cincreasewarnings(interaction, user)
-#         warning = """Hello, I'm a staff member of **Roleplay Meets: Reborn**. I'm reaching out to you regarding your ad in {}. It's been removed because: **your advert was under 600 characters (your advert: {})**. Please repost it in the appropriate channel.
-#
-# If you have any questions regarding adverts or the rules, don't hesitate to ask. Thank you for your cooperation!
-# <#977720278396305418>""".format(message.channel.mention, len(message.content))
-#         await adchannel.send(
-#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too short in  {message.channel.mention}\n userId: {user.id} Character Count: {len(message.content)} Warning Count: {swarnings}")
-#         # Logs the advert and sends it to the user.
-#         await advert.clogadvert(interaction, message, warning, loggingchannel)
-#         await advert.csendadvertuser(interaction, message, warning)
-#         await interaction.followup.send("Success!")
 
     async def madformat(self, interaction: discord.Interaction,
                     message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command
