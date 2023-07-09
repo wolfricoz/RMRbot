@@ -2,7 +2,7 @@ import json
 import os.path
 import re
 from abc import ABC
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import discord
 
@@ -58,7 +58,7 @@ class ForumAutoMod(ABC):
     async def bump(self, interaction):
         bot = self.bot
         thread: discord.Thread = interaction.channel
-        bcheck = datetime.utcnow() + datetime.timedelta(hours=-70)
+        bcheck = datetime.utcnow() + timedelta(hours=-70)
         messages = thread.history(limit=300, after=bcheck, oldest_first=False)
         count = 0
         modchannel = bot.get_channel(763058339088957548)
