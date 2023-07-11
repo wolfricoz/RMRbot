@@ -233,6 +233,19 @@ class Test(commands.Cog, name="test"):
         await jsonmaker.guildconfiger.updateconfig(ctx.guild.id)
         await ctx.send('Guild config updated to latest version')
 
+    @commands.command()
+    @commands.is_owner()
+    async def raidkick(self, ctx: commands.Context, channel: discord.TextChannel, limit = 100):
+        count = 0
+        async for x in channel.history(limit=limit):
+            for a in x.mentions:
+                try:
+                    await a.kick()
+                    count += 1
+                except:
+                    print(f"unable to kick {a}")
+            await x.delete()
 
+        await ctx.send(f"Kicked {count}")
 async def setup(bot: commands.Bot):
     await bot.add_cog(Test(bot))

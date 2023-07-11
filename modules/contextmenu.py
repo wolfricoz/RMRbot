@@ -89,7 +89,7 @@ class contextmenus(commands.Cog, name="contextmenus"):
         self.bot = bot
         self.adages = app_commands.ContextMenu(name="adages", callback=self.madages,)
         self.bot.tree.add_command(self.adages)
-        self.adformat = app_commands.ContextMenu(name="adformat", callback=self.madformat,)
+        self.adformat = app_commands.ContextMenu(name="adchatter", callback=self.madformat,)
         self.bot.tree.add_command(self.adformat)
         self.adweb = app_commands.ContextMenu(name="adwebsite", callback=self.madweb, )
         self.bot.tree.add_command(self.adweb)
@@ -162,26 +162,17 @@ If you have any more questions, our staff team is always available to help you.
                     message: discord.Message) -> None:  # An annotation of discord.Message makes this a message command
         await interaction.response.defer(ephemeral=True)
         bot = self.bot
-        loggingchannel = bot.get_channel(997282508523704350)
         adchannel = bot.get_channel(763058339088957548)
         user = message.author
-        # adds warning to database
-        swarnings = await advert.cincreasewarnings(interaction, user)
-        warning = """Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {}. It has been removed due to **improper formatting.** Please review our Search Rules, specifically S8: Excessive Adverts and repost your ad with the appropriate fixes. 
+        warning = """Hello, I am a staff member of **Roleplay Meets: Reborn**. We _do not_ allow users to discuss roleplays or talking within the search channels, please request a dm with the user if you wish to roleplay with them. You may request a dm with the user in the forum comments or in <#607686794971971645>. 
 
-Reasons your advert may have been removed include:
-- Spacing between each list item
-- Double spaces between paragraphs and/or sentences
-- Having more than 10 items **total** in your lists. Lists **are** counted cumulatively or having an excessively long list
-- Using a font that is not Discord's default font
-
-If your advert has excessive lists, we do recommend using forums in order to share your lists, be they fandoms, potential pairings, genres, or other items you may want to list. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through <#977720278396305418>. Thank you for your cooperation!""".format(message.channel.mention)
+If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
+Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow formatting guidelines in {message.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for discussing/talking in forum comments\n userId: {user.id} (No warning added)")
         # Logs the advert and sends it to the user.
-        await advert.clogadvert(interaction, message, warning, loggingchannel)
-        await advert.csendadvertuser(interaction, message, warning)
-
+        await user.send(warning)
+        await message.delete()
         await interaction.followup.send("Success!")
 
     async def madweb(self, interaction: discord.Interaction,

@@ -128,4 +128,4 @@ class ForumAutoMod(ABC):
             with open('config/approvals.txt', 'w') as f:
                 f.write('Advert Approvals')
         with open('config/approvals.txt', 'a') as f:
-            f.write(f"\n{datetime.now().strftime('%m/%d/%Y %S:%M:%I %p')}: {interaction.user} has approved post '{interaction.channel}'")
+            f.write(f"\n{datetime.now().strftime('%m/%d/%Y %I:%M %p')}: {interaction.user} has approved post '{interaction.channel}'")

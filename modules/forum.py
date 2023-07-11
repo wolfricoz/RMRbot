@@ -1,12 +1,9 @@
 import json
 import os
 import re
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from time import sleep
 
 import discord
-from Levenshtein import ratio
 from discord import app_commands
 from discord.ext import commands
 
@@ -15,11 +12,7 @@ from classes import jsonmaker
 from classes.automod import ForumAutoMod
 
 
-# from main import channels24
-
-
-
-
+# noinspection PyUnresolvedReferences
 class forum(commands.GroupCog, name="forum"):
 
     def __init__(self, bot: commands.Bot):
@@ -80,13 +73,13 @@ class forum(commands.GroupCog, name="forum"):
                                     lm = m.jump_url
                                     pm = m.created_at
                                     await message.author.send(
-                                        f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
-                                        f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
-                                        f"\nRepeated early bumps will result in your advert being taken down.")
+                                            f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
+                                            f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
+                                            f"\nRepeated early bumps will result in your advert being taken down.")
                                     await message.delete()
                                     await modchannel.send(
-                                        f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
-                                        f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+                                            f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
+                                            f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
                                     return
 
                         if message.channel.type == discord.ChannelType.public_thread:
@@ -114,7 +107,6 @@ class forum(commands.GroupCog, name="forum"):
         else:
             print('not in list')
 
-
     @app_commands.command(name="close", description="Removes your post from the forum and sends you a copy.")
     async def close(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -129,12 +121,11 @@ class forum(commands.GroupCog, name="forum"):
         async for m in thread.history(limit=1, oldest_first=True):
             with open('advert.txt', 'w', encoding='utf-16') as f:
                 f.write(m.content)
-            await interaction.user.send(f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:", file=discord.File(f.name, f"{m.channel}.txt"))
+            await interaction.user.send(
+                    f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
+                    file=discord.File(f.name, f"{m.channel}.txt"))
         await thread.delete()
         os.remove(f.name)
-
-
-
 
     @app_commands.command(name="add", description="ADMIN: adds forum to the list to be moderated")
     @adefs.check_slash_admin_roles()
