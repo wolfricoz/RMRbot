@@ -26,12 +26,12 @@ class Lobby(ABC):
                 await channel.send(f"{user.mention} More than 5 messages, search the user for the rest.")
                 break
             if history[a]['author'] == user.id:
-                hf.append(f"{user.mention}({user.id}) `{history[a]['created']}`\n"
+                hf.append(f"{user.mention}({user.id}) Posted at: `{history[a]['created']}`\n"
                           f"{history[a]['content']}")
                 count += 1
         if count > 0:
             lh = "\n".join(hf)
-            await channel.send(f"[Lobby History] {lh}")
+            await channel.send(f"```[Lobby History]``` {lh}")
 
     @abstractmethod
     async def idcheck(user, channel):
