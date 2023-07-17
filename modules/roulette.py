@@ -175,6 +175,7 @@ class RoomMate(ABC):
         sheet = client.open('New RR  (Responses)').sheet1
         python_sheet = sheet.get_all_records()
         shuffle(python_sheet)
+        print(python_sheet)
         with open('roulette.json', 'w') as f:
             json.dump(python_sheet, f, indent=4)
 
@@ -302,7 +303,9 @@ class roulette(commands.GroupCog, name="roulette"):
             userchecked = {}
             gcount = 0
             oldcount = 0
-
+            if u1.get("Participate?") == "No":
+                print(f"{u1.get('Username')} participate: no")
+                continue
             if matchcounter[u1.get('Username')] >= 2:
                 print(f"{u1.get('Username')} already has the max amount of matches")
                 continue
@@ -314,20 +317,17 @@ class roulette(commands.GroupCog, name="roulette"):
                     user1 = str(u1.get(p)).replace(" ", "").split(',')
                     for _ in user1:
                         gcount += 1
-                if p == "Participate?":
-                    if u1.get(p) == "No":
-                        print(f"{u1.get('Username')} participate: no")
-                        break
+
             for u2 in python_sheet:
                 count = 0
                 if matchcounter[u2.get('Username')] >= 2:
                     print(f"{u2.get('Username')} is already matched")
                     continue
                 for p in u2.keys():
-                    if p == "Participate?":
-                        if u2.get(p) == "No":
-                            print(f"{u2.get('Username')} participate: no")
-                            break
+                    if u2.get("Participate?") == "No":
+                        print(f"{u2.get('Username')} participate: no")
+                        count = -1
+                        break
                     if p == "Uid":
                         pc = RoomMate.prevmatch(p, u1, u2)
                         if pc == -1:
@@ -425,7 +425,7 @@ class roulette(commands.GroupCog, name="roulette"):
             return m.content is not None and m.channel == interaction.channel
 
         confirm = True
-        desc = "To send the results to all members and publish to channel, please type **'confirm'**\n After 10m this prompt is invalid"
+        desc = "To send the results to all members and publish to channel, please type **'confirm'** to confirm or **cancel** to cancel\n After 10m this prompt is invalid"
         embed = discord.Embed(title=f"Roleplay Roulette", description=desc)
         conf = await interaction.channel.send(embed=embed)
         while confirm is True:
@@ -436,6 +436,11 @@ class roulette(commands.GroupCog, name="roulette"):
                 confirm = False
                 await conf.edit(embed=embed)
                 # await msg.delete()
+            elif "cancel" in msg.content.lower():
+                desc = "Cancelled!"
+                embed = discord.Embed(title=f"Roleplay Roulette", description=desc)
+                await conf.edit(embed=embed)
+                return
         with open(f'jsons/{interaction.guild.id}.json', 'r') as file:
             data = json.load(file)
         roulschannel = self.bot.get_channel(data['roulette'])
