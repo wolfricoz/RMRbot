@@ -72,7 +72,7 @@ class agecalc(ABC):
                     notify_match = notify.search(message.content)
                     if format_match is not None:
                         pass
-                    if notify_match is not None:
+                    elif notify_match is not None:
                         pass
                     else:
                         count += 1
