@@ -229,7 +229,8 @@ class RouletteUser(ABC):
     @abstractmethod
     async def send(userinfo, user, interaction):
         with open("match.txt", 'w', encoding='utf-16') as f:
-            f.write(f"{userinfo.get('Username')}'s preferences"
+            # rewrite it so that this uses roulette.json instead of the google docs due to API restrictions. Ouch.
+            info = (f"{userinfo.get('Username')}'s preferences"
                     f"\n\n----Genres----\n"
                     f"\nLikes: {userinfo.get('Genres')}"
                     f"\ndislikes: {userinfo.get('Excluded Genres')}"
@@ -248,14 +249,18 @@ class RouletteUser(ABC):
                     f"\n\n----NSFW----"
                     f"\nNSFW: {userinfo.get('NSFW')}"
                     f"\nKinks: {userinfo.get('Kinks')}")
-        embed = discord.Embed(title=f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**",
+
+            f.write(info)
+            print(info)
+        embed = discord.Embed(title=f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%d/%Y')}__**",
                               description=f"If you wish to no longer be matched, please visit https://forms.gle/xFwY79vD6iMryFhcA and turn off participation"
                                           f"\nYou have been matched with <@{userinfo.get('Uid')}>, here are their preferences:")
-        try:
-            await user.send(embed=embed,
-                            file=discord.File(f.name, 'result.txt'))
-        except discord.Forbidden:
-            await interaction.channel.send(f"{userinfo.get('Username')} Couldn't DM.")
+
+        # try:
+        #     await user.send(embed=embed,
+        #                     file=discord.File(f.name, 'result.txt'))
+        # except discord.Forbidden:
+        #     await interaction.channel.send(f"{userinfo.get('Username')} Couldn't DM.")
         os.remove(f.name)
 
 
@@ -446,18 +451,18 @@ class roulette(commands.GroupCog, name="roulette"):
         roulschannel = self.bot.get_channel(data['roulette'])
 
         # Sends users their results, and sends it into the roulette channel.
-        await roulschannel.send(f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%m/%Y')}__**\n\n")
+        await roulschannel.send(f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%d/%Y')}__**\n\n")
         for m, ma in matchedid.items():
             sleep(1)
             user1 = interaction.guild.get_member(m)
             user2 = interaction.guild.get_member(ma)
-            row = sheet.find(f"{m}")
-            column = sheet.find(f"101Matches101")
-            oldcell = sheet.cell(row.row, column.col)
-            sheet.update_cell(row.row, column.col, value=f"{ma},{oldcell.value}")
 
-            userinfo1 = next(item for item in python_sheet if item["Uid"] == m)
-            userinfo2 = next(item for item in python_sheet if item["Uid"] == ma)
+
+            with open('roulette.json', 'r') as f:
+                roul_user_data = json.load(f)
+
+            userinfo1 = next(item for item in roul_user_data if item["Uid"] == m)
+            userinfo2 = next(item for item in roul_user_data if item["Uid"] == ma)
             if user1 is not None:
                 await RouletteUser.send(userinfo2, user1, interaction)
             else:
@@ -470,7 +475,11 @@ class roulette(commands.GroupCog, name="roulette"):
         await roulschannel.send(f"\n\nYou have been messaged with your partners information, if you have any questions, feedback, or run into issues please open a ticket <#992127400664109106>"
                                 f"\nTo join the next round: https://docs.google.com/forms/d/e/1FAIpQLSet3G_qxOwAuN4s_VruzTi6VFP-xwGeu8J09tfYRxzuz1J7jg/viewform?usp=sf_link"
                                 f"\n<@&686535572000473089>")
-
-
+        for m, ma in matchedid.items():
+            sleep(15)
+            row = sheet.find(f"{m}")
+            column = sheet.find(f"101Matches101")
+            oldcell = sheet.cell(row.row, column.col)
+            sheet.update_cell(row.row, column.col, value=f"{ma},{oldcell.value}")
 async def setup(bot):
     await bot.add_cog(roulette(bot))

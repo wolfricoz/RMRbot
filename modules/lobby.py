@@ -40,7 +40,6 @@ class agecalc(ABC):
         return fulldob
 
     def agecheckfail(arg1):
-        bot = commands.Bot
         from datetime import datetime, timedelta
         dob = str(arg1)
         dob_object = datetime.strptime(dob, "%m/%d/%Y")
@@ -57,6 +56,7 @@ class agecalc(ABC):
         channel = bot.get_channel(c.lobby)
         messages = channel.history(limit=100)
         format = re.compile(r"failed to follow the format", flags=re.MULTILINE)
+        notify = re.compile(r"has been notified", flags=re.MULTILINE)
         count = 0
         async for message in messages:
             if message.author == user or user in message.mentions and count < 10:
@@ -68,8 +68,11 @@ class agecalc(ABC):
         async for message in messages:
             if user in message.mentions and count < 5:
                 if message.author.bot:
-                    vmatch = format.search(message.content)
-                    if vmatch is not None:
+                    format_match = format.search(message.content)
+                    notify_match = notify.search(message.content)
+                    if format_match is not None:
+                        pass
+                    if notify_match is not None:
                         pass
                     else:
                         count += 1
