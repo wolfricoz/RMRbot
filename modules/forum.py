@@ -93,6 +93,24 @@ class forum(commands.GroupCog, name="forum"):
                     else:
                         await message.channel.send(f"{message.author} You can't bump another's post.")
 
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        forums = ForumAutoMod().config(message.guild.id)
+        forum: discord.ForumChannel = self.bot.get_channel(message.channel.parent_id)
+        if message.author == self.bot:
+            return
+        if message.channel.type != discord.ChannelType.public_thread:
+            print("Not thread")
+            return
+        if forum.id not in forums['forums']:
+            return
+        if message.id != message.channel.id:
+            return
+        modchannel = self.bot.get_channel(1133794446111162439)
+        await modchannel.send(f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
+        await message.channel.delete()
+
+
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):
         with open(f'jsons/{interaction.guild.id}.json') as f:

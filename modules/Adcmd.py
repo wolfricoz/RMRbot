@@ -155,112 +155,112 @@ If you have any more questions, our staff team is always available to help you.
         await Advert.sendadvertuser(interaction, message_link, warning)
         await interaction.followup.send(f"{message_link.author.mention} successfully warned")
 
-    @app_commands.command(name="early24",
-                          description="adcommand: Use this when an advert was posted too early in quick search channels")
-    @adefs.check_slash_db_roles()
-    async def early24(self, interaction: discord.Interaction, message_link: str) -> None:
-        await interaction.response.defer(ephemeral=True)
-        link = message_link.split('/')
-        try:
-            print("channel")
-            server = self.bot.get_guild(int(link[4]))
-            channel = server.get_channel(int(link[5]))
-            msg = await channel.fetch_message(int(link[6]))
-        except:
-            print("thread")
-            server = self.bot.get_guild(int(link[4]))
-            thread = server.get_thread(int(link[5]))
-            msg = await thread.fetch_message(int(link[6]))
-        bot = self.bot
-        loggingchannel = bot.get_channel(997282508523704350)
-        adchannel = bot.get_channel(763058339088957548)
-        user = msg.author
-        # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
-        warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} has been posted too early, please wait 1 day(24 hours) between each posts.
-
-Repeatedly posting too early may lead to a search ban which means you can not post an advert for a certain time.
-
-If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
-Thank you for your cooperation!""".format(msg.channel.mention)
-        await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
-        # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
-        await interaction.followup.send(f"{msg.author.mention} successfully warned")
-
-    @app_commands.command(name="early72",
-                          description="adcommand: Use this when an advert was posted too early in normal search channels")
-    @adefs.check_slash_db_roles()
-    async def early72(self, interaction: discord.Interaction, message_link: str) -> None:
-        await interaction.response.defer(ephemeral=True)
-        link = message_link.split('/')
-        try:
-            print("channel")
-            server = self.bot.get_guild(int(link[4]))
-            channel = server.get_channel(int(link[5]))
-            msg = await channel.fetch_message(int(link[6]))
-
-        except:
-            print("thread")
-            server = self.bot.get_guild(int(link[4]))
-            thread = server.get_thread(int(link[5]))
-            msg = await thread.fetch_message(int(link[6]))
-        bot = self.bot
-        loggingchannel = bot.get_channel(997282508523704350)
-        adchannel = bot.get_channel(763058339088957548)
-        user = msg.author
-        # adds warning to database
-        swarnings = await Advert.increasewarnings(interaction, user)
-        warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} has been posted too early, please wait 3 days(72 hours) between each posts.
-
-Repeatedly posting too early may lead to a search ban which means you can not post an advert for a certain time.
-
-If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
-Thank you for your cooperation!""".format(msg.channel.mention)
-        await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (72h)  {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
-        # Logs the advert and sends it to the user.
-        await Advert.logadvert(interaction, msg, warning, loggingchannel)
-        await Advert.sendadvertuser(interaction, msg, warning)
-        await interaction.followup.send(f"{msg.author.mention} successfully warned")
-
-        @app_commands.command(name="template",
-                              description="adcommand: Use this when an advert fails to follow the template")
-        @adefs.check_slash_db_roles()
-        async def template(self, interaction: discord.Interaction, message_link: str) -> None:
-            await interaction.response.defer(ephemeral=True)
-            link = message_link.split('/')
-            try:
-                print("channel")
-                server = self.bot.get_guild(int(link[4]))
-                channel = server.get_channel(int(link[5]))
-                msg = await channel.fetch_message(int(link[6]))
-
-            except:
-                print("thread")
-                server = self.bot.get_guild(int(link[4]))
-                thread = server.get_thread(int(link[5]))
-                msg = await thread.fetch_message(int(link[6]))
-            bot = self.bot
-            loggingchannel = bot.get_channel(997282508523704350)
-            adchannel = bot.get_channel(763058339088957548)
-            user = msg.author
-            # adds warning to database
-            swarnings = await Advert.increasewarnings(interaction, user)
-            warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} does not match the template within the channel, the template can be found in the **channel pins**. 
-
-    Please be sure to provide all information that the template requests, as failure to abide by the template will result in your post being deleted!
-
-    If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
-    Thank you for your cooperation!""".format(msg.channel.mention)
-            await adchannel.send(
-                f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow the template in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
-            # Logs the advert and sends it to the user.
-            await Advert.logadvert(interaction, msg, warning, loggingchannel)
-            await Advert.sendadvertuser(interaction, msg, warning)
-            await interaction.followup.send(f"{msg.author.mention} successfully warned")
+#     @app_commands.command(name="early24",
+#                           description="adcommand: Use this when an advert was posted too early in quick search channels")
+#     @adefs.check_slash_db_roles()
+#     async def early24(self, interaction: discord.Interaction, message_link: str) -> None:
+#         await interaction.response.defer(ephemeral=True)
+#         link = message_link.split('/')
+#         try:
+#             print("channel")
+#             server = self.bot.get_guild(int(link[4]))
+#             channel = server.get_channel(int(link[5]))
+#             msg = await channel.fetch_message(int(link[6]))
+#         except:
+#             print("thread")
+#             server = self.bot.get_guild(int(link[4]))
+#             thread = server.get_thread(int(link[5]))
+#             msg = await thread.fetch_message(int(link[6]))
+#         bot = self.bot
+#         loggingchannel = bot.get_channel(997282508523704350)
+#         adchannel = bot.get_channel(763058339088957548)
+#         user = msg.author
+#         # adds warning to database
+#         swarnings = await Advert.increasewarnings(interaction, user)
+#         warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} has been posted too early, please wait 1 day(24 hours) between each posts.
+#
+# Repeatedly posting too early may lead to a search ban which means you can not post an advert for a certain time.
+#
+# If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>.
+# Thank you for your cooperation!""".format(msg.channel.mention)
+#         await adchannel.send(
+#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
+#         # Logs the advert and sends it to the user.
+#         await Advert.logadvert(interaction, msg, warning, loggingchannel)
+#         await Advert.sendadvertuser(interaction, msg, warning)
+#         await interaction.followup.send(f"{msg.author.mention} successfully warned")
+#
+#     @app_commands.command(name="early72",
+#                           description="adcommand: Use this when an advert was posted too early in normal search channels")
+#     @adefs.check_slash_db_roles()
+#     async def early72(self, interaction: discord.Interaction, message_link: str) -> None:
+#         await interaction.response.defer(ephemeral=True)
+#         link = message_link.split('/')
+#         try:
+#             print("channel")
+#             server = self.bot.get_guild(int(link[4]))
+#             channel = server.get_channel(int(link[5]))
+#             msg = await channel.fetch_message(int(link[6]))
+#
+#         except:
+#             print("thread")
+#             server = self.bot.get_guild(int(link[4]))
+#             thread = server.get_thread(int(link[5]))
+#             msg = await thread.fetch_message(int(link[6]))
+#         bot = self.bot
+#         loggingchannel = bot.get_channel(997282508523704350)
+#         adchannel = bot.get_channel(763058339088957548)
+#         user = msg.author
+#         # adds warning to database
+#         swarnings = await Advert.increasewarnings(interaction, user)
+#         warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} has been posted too early, please wait 3 days(72 hours) between each posts.
+#
+# Repeatedly posting too early may lead to a search ban which means you can not post an advert for a certain time.
+#
+# If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>.
+# Thank you for your cooperation!""".format(msg.channel.mention)
+#         await adchannel.send(
+#             f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (72h)  {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
+#         # Logs the advert and sends it to the user.
+#         await Advert.logadvert(interaction, msg, warning, loggingchannel)
+#         await Advert.sendadvertuser(interaction, msg, warning)
+#         await interaction.followup.send(f"{msg.author.mention} successfully warned")
+#
+#         @app_commands.command(name="template",
+#                               description="adcommand: Use this when an advert fails to follow the template")
+#         @adefs.check_slash_db_roles()
+#         async def template(self, interaction: discord.Interaction, message_link: str) -> None:
+#             await interaction.response.defer(ephemeral=True)
+#             link = message_link.split('/')
+#             try:
+#                 print("channel")
+#                 server = self.bot.get_guild(int(link[4]))
+#                 channel = server.get_channel(int(link[5]))
+#                 msg = await channel.fetch_message(int(link[6]))
+#
+#             except:
+#                 print("thread")
+#                 server = self.bot.get_guild(int(link[4]))
+#                 thread = server.get_thread(int(link[5]))
+#                 msg = await thread.fetch_message(int(link[6]))
+#             bot = self.bot
+#             loggingchannel = bot.get_channel(997282508523704350)
+#             adchannel = bot.get_channel(763058339088957548)
+#             user = msg.author
+#             # adds warning to database
+#             swarnings = await Advert.increasewarnings(interaction, user)
+#             warning = """Hello, I am a staff member of **Roleplay Meets: Reborn** . The advert you have posted within our {} does not match the template within the channel, the template can be found in the **channel pins**.
+#
+#     Please be sure to provide all information that the template requests, as failure to abide by the template will result in your post being deleted!
+#
+#     If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>.
+#     Thank you for your cooperation!""".format(msg.channel.mention)
+#             await adchannel.send(
+#                 f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow the template in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
+#             # Logs the advert and sends it to the user.
+#             await Advert.logadvert(interaction, msg, warning, loggingchannel)
+#             await Advert.sendadvertuser(interaction, msg, warning)
+#             await interaction.followup.send(f"{msg.author.mention} successfully warned")
 
     @app_commands.command(name="chatter", description="adcommand: for when users chat in forum comments")
     @adefs.check_slash_db_roles()
@@ -303,7 +303,7 @@ Thank you for your cooperation!"""
         # adds warning to database
         swarnings = await Advert.increasewarnings(interaction, user)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} with a custom warning in {msg.channel.mention} with reason: {warning}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} with a custom warning in {msg.channel.mention} ({msg.channel}) with reason: {warning}\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(interaction, msg, warning, loggingchannel)
         await Advert.sendadvertuser(interaction, msg, warning)
@@ -349,12 +349,12 @@ Thank you for your cooperation!"""
         # adds warning to database
         swarnings = await Advert.increasewarnings(interaction, user)
         dupmess = ', '.join(dupchans)
-        warning = f"""Hello, I am a staff member of **Roleplay Meets Reborn**, the advert(s) you have posted in {dupmess} is a duplicate of what you've posted in {msg.channel.mention} and has been removed. Please don't repost the same advert in multiple channels! You can repost every 24 hours in quick search channels and every 72 hours in regular search channels or you can make changes to your advert and post it in **another** channel.
+        warning = f"""Hello, I am a staff member of **Roleplay Meets Reborn**, the advert(s) you have posted in {dupmess} is a duplicate of what you've posted in {msg.channel.mention} ({msg.channel}) and has been removed. Please don't repost the same advert in multiple channels! You can repost every 24 hours in quick search channels and every 72 hours in regular search channels or you can make changes to your advert and post it in **another** channel.
 
 If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>.
 Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posted multiple adverts in: {dupmess} with the original being in  {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posted multiple adverts in: {dupmess} with the original being in  {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # logs all the duplicates
         for a in trash:
             await Advert.logadvert(interaction, a, warning, loggingchannel)
@@ -395,7 +395,7 @@ Reasons your advert may have been removed include:
 If your advert has excessive lists, we do recommend using forums in order to share your lists, be they fandoms, potential pairings, genres, or other items you may want to list. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through <#977720278396305418>. Thank you for your cooperation!""".format(
             msg.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow formatting guidelines in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow formatting guidelines in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(interaction, msg, warning, loggingchannel)
         await Advert.sendadvertuser(interaction, msg, warning)
@@ -423,7 +423,7 @@ If your advert has excessive lists, we do recommend using forums in order to sha
         user = msg.author
         # adds warning to database
         swarnings = await Advert.increasewarnings(interaction, user)
-        warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {msg.channel.mention}. It has been removed due to **dangerous/inappropriate websites.**
+        warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {msg.channel.mention} ({msg.channel}). It has been removed due to **dangerous/inappropriate websites.**
 
 Reasons your advert may have been removed include:
 - You linked a porn website, which often carry dangerous advertisements riddled with viruses.
@@ -432,7 +432,7 @@ Reasons your advert may have been removed include:
 
 The safety of our members is important to us and we appreciate your understanding in this matter. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through #ask-the-staff. Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that has a suspicious/prohibited link in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that has a suspicious/prohibited link in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(interaction, msg, warning, loggingchannel)
         await Advert.sendadvertuser(interaction, msg, warning)
@@ -460,12 +460,12 @@ The safety of our members is important to us and we appreciate your understandin
         user = msg.author
         # adds warning to database
         swarnings = await Advert.increasewarnings(interaction, user)
-        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **having more than 5 images**. Please repost it with the appropriate fixes.
+        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention} ({msg.channel}). It's been removed for **having more than 5 images**. Please repost it with the appropriate fixes.
 
     If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
     Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that had more than 3 images in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that had more than 3 images in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(interaction, msg, warning, loggingchannel)
         await Advert.sendadvertuser(interaction, msg, warning)
@@ -494,14 +494,14 @@ The safety of our members is important to us and we appreciate your understandin
         user = msg.author
         # adds warning to database
         swarnings = await Advert.increasewarnings(interaction, user)
-        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention}. It's been removed for **posting an NSFW picture with a canonically underaged character**. Please repost without these images.
+        warning = f"""Hello, I'm a **bot** of Roleplay Meets: Reborn. I'm reaching out to you regarding your ad in {msg.channel.mention} ({msg.channel}). It's been removed for **posting an NSFW picture with a canonically underaged character**. Please repost without these images.
 
 Roleplay Meets: Reborn no longer tolerates pictures of characters that have been aged up which are NSFW. Failure to comply further with this rule comes with dire consequences.
 
 If you have any questions regarding adverts or the rules, don't hesitate to ask in #ask-the-staff. 
 Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that had more than 3 images in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that had more than 3 images in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(interaction, msg, warning, loggingchannel)
         await Advert.sendadvertuser(interaction, msg, warning)
@@ -567,13 +567,13 @@ Thank you for your cooperation!"""
         user = msg.author
         # adds warning to database
         swarnings = await Advert.increasewarnings(interaction, user)
-        warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {msg.channel.mention}. It has been removed due to **improper formatting.** Please review our Search Rules, specifically S8: Excessive Adverts and repost your ad with the appropriate fixes.
+        warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {msg.channel.mention} ({msg.channel}). It has been removed due to **improper formatting.** Please review our Search Rules, specifically S8: Excessive Adverts and repost your ad with the appropriate fixes.
 
 {urules}
 
 If your advert has excessive lists, we do recommend using forums in order to share your lists, be they fandoms, potential pairings, genres, or other items you may want to list. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through <#977720278396305418>. Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow multiple rules({uvalues}) in {msg.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that failed to follow multiple rules({uvalues}) in {msg.channel.mention} ({msg.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(interaction, msg, warning, loggingchannel)
         await Advert.sendadvertuser(interaction, msg, warning)

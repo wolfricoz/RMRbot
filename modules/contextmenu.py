@@ -119,7 +119,7 @@ The ages must be displayed on the advertisement on discord.
 If you have any more questions, our staff team is always available to help you.
 <#977720278396305418>""".format(message.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for failing to include character ages to their adverts in {message.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for failing to include character ages to their adverts in {message.channel.mention} ({message.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await advert.clogadvert(interaction, message, warning, loggingchannel)
         await advert.csendadvertuser(interaction, message, warning)
@@ -184,7 +184,7 @@ Thank you for your cooperation!"""
         user = message.author
         # adds warning to database
         swarnings = await advert.cincreasewarnings(interaction, user)
-        warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {message.channel.mention}. It has been removed due to **dangerous/inappropriate websites.**
+        warning = f"""Hello, I am a staff member of Roleplay Meets: Reborn. I am reaching out to you regarding your ad in {message.channel.mention} ({message.channel}). It has been removed due to **dangerous/inappropriate websites.**
 
 Reasons your advert may have been removed include:
 - You linked a porn website, which often carry dangerous advertisements riddled with viruses.
@@ -193,7 +193,7 @@ Reasons your advert may have been removed include:
 
 The safety of our members is important to us and we appreciate your understanding in this matter. If you have any questions regarding adverts or the rules, please do not hesitate to open up a ticket through #ask-the-staff. Thank you for your cooperation!"""
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that has a suspicious/prohibited link in {message.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that has a suspicious/prohibited link in {message.channel.mention} ({message.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await advert.clogadvert(interaction, message, warning, loggingchannel)
         await advert.csendadvertuser(interaction, message, warning)
@@ -218,7 +218,7 @@ The safety of our members is important to us and we appreciate your understandin
         If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
         Thank you for your cooperation!""".format(message.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {message.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (24h)  in {message.channel.mention} ({message.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await advert.clogadvert(interaction, message, warning, loggingchannel)
         await advert.csendadvertuser(interaction, message, warning)
@@ -240,7 +240,7 @@ The safety of our members is important to us and we appreciate your understandin
         If you have any questions regarding adverts or the rules, don't hesitate to ask in <#977720278396305418>. 
         Thank you for your cooperation!""".format(message.channel.mention)
         await adchannel.send(
-            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (72h) in {message.channel.mention}\n userId: {user.id} Warning Count: {swarnings}")
+            f"{interaction.user.mention} has warned {user.mention} for posting an advert that was too early (72h) in {message.channel.mention} ({message.channel})\n userId: {user.id} Warning Count: {swarnings}")
         # Logs the advert and sends it to the user.
         await advert.clogadvert(interaction, message, warning, loggingchannel)
         await advert.csendadvertuser(interaction, message, warning)
