@@ -96,14 +96,12 @@ class forum(commands.GroupCog, name="forum"):
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         forums = ForumAutoMod().config(message.guild.id)
-
-        thread: discord.Thread = message.guild.get_thread(message.channel.id)
-        forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
+        if message.channel.type != discord.ChannelType.public_thread:
+            return
+        forum: discord.ForumChannel = self.bot.get_channel(message.channel.parent_id)
         if message.author == self.bot:
             return
-        if message.channel.type != discord.ChannelType.public_thread:
-            print("Not thread")
-            return
+
         if forum.id not in forums['forums']:
             return
         if message.id != message.channel.id:
