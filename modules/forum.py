@@ -96,7 +96,9 @@ class forum(commands.GroupCog, name="forum"):
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         forums = ForumAutoMod().config(message.guild.id)
-        forum: discord.ForumChannel = self.bot.get_channel(message.channel.parent_id)
+
+        thread: discord.Thread = message.guild.get_thread(message.channel.id)
+        forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
         if message.author == self.bot:
             return
         if message.channel.type != discord.ChannelType.public_thread:
@@ -110,7 +112,7 @@ class forum(commands.GroupCog, name="forum"):
         await modchannel.send(f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
         await message.channel.delete()
 
-
+    # Commands start here
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):
         with open(f'jsons/{interaction.guild.id}.json') as f:
