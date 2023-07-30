@@ -5,6 +5,7 @@ from abc import ABC
 from datetime import datetime, timedelta
 
 import discord
+import pytz
 
 from classes.AutomodComponents import AutomodComponents
 
@@ -58,36 +59,53 @@ class ForumAutoMod(ABC):
     async def bump(self, interaction):
         bot = self.bot
         thread: discord.Thread = interaction.channel
-        bcheck = datetime.utcnow() + timedelta(hours=-70)
+        bcheck = datetime.now(pytz.UTC) + timedelta(hours=-70)
         messages = thread.history(limit=300, after=bcheck, oldest_first=False)
         count = 0
+        user_count = 0
         modchannel = bot.get_channel(763058339088957548)
-        if thread.owner_id == interaction.user.id:
-            async for m in messages:
-                if m.author.id == bot.application_id:
-                    count += 1
-                    if count == 2:
-                        lm = m.jump_url
-                        pm = m.created_at
-                        await interaction.user.send(
-                            f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention} and was removed."
-                            f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
-                        await modchannel.send(
-                            f"{interaction.user.mention} tried to bump within the 72 hours cooldown period in {interaction.channel.mention}."
-                            f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
-                        )
-                        return
-            forum = bot.get_channel(thread.parent_id)
-            if interaction.channel.type == discord.ChannelType.public_thread:
-                for a in forum.available_tags:
-                    if a.name == "Bump":
-                        await thread.add_tags(a)
-                        await interaction.channel.send("Post successfully bumped")
-                    if a.name == "Approved":
-                        await thread.remove_tags(a)
-                await interaction.followup.send("You've successfully bumped your post")
-        else:
+        if thread.owner_id != interaction.user.id:
             await interaction.followup.send("You can't bump another's post.")
+            return
+        if interaction.channel.type != discord.ChannelType.public_thread:
+            return
+        async for m in messages:
+            print(m.id)
+            if m.author.id == bot.application_id:
+                count += 1
+            if count == 1:
+                lm = m.jump_url
+                pm = m.created_at
+                await interaction.user.send(
+                    f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention} and was removed."
+                    f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+                await modchannel.send(
+                    f"{interaction.user.mention} tried to bump within the 72 hours cooldown period in {interaction.channel.mention}."
+                    f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
+                )
+                return
+            if m.author.id == interaction.user.id:
+                user_count += 1
+
+        forum = bot.get_channel(thread.parent_id)
+        og = await thread.fetch_message(thread.id)
+        print(user_count)
+        if og.edited_at is not None and og.edited_at <= bcheck and user_count <= 0 or og.edited_at is None and user_count <= 0:
+            for a in forum.available_tags:
+                if a.name == "Approved":
+                    await thread.add_tags(a)
+            await interaction.channel.send("Post successfully bumped and automatically approved")
+            await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
+            return
+        for a in forum.available_tags:
+            if a.name == "Bump":
+                await thread.add_tags(a)
+            if a.name == "Approved":
+                await thread.remove_tags(a)
+                await interaction.channel.send("Post successfully bumped and awaiting manual review")
+
+        await interaction.followup.send("You've successfully bumped your post")
+
 
     async def duplicate(self, thread: discord.Thread, bot):
         forums = ForumAutoMod().config(thread.guild.id)

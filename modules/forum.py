@@ -64,34 +64,43 @@ class forum(commands.GroupCog, name="forum"):
                     messages = thread.history(limit=300, after=bcheck, oldest_first=False)
                     forum = bot.get_channel(thread.parent_id)
                     count = 0
+                    user_count = 0
                     await ForumAutoMod().checktags(thread)
-                    if thread.owner_id == message.author.id:
-                        async for m in messages:
-                            if m.author.id == bot.application_id:
-                                count += 1
-                                if count == 2:
-                                    lm = m.jump_url
-                                    pm = m.created_at
-                                    await message.author.send(
-                                            f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
-                                            f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
-                                            f"\nRepeated early bumps will result in your advert being taken down.")
-                                    await message.delete()
-                                    await modchannel.send(
-                                            f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
-                                            f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
-                                    return
-
-                        if message.channel.type == discord.ChannelType.public_thread:
-                            for a in forum.available_tags:
-                                if a.name == "Bump":
-                                    await thread.add_tags(a)
-                                    await message.channel.send("Post successfully bumped")
-                                if a.name == "Approved":
-                                    await thread.remove_tags(a)
-
-                    else:
+                    if thread.owner_id != message.author.id:
                         await message.channel.send(f"{message.author} You can't bump another's post.")
+                        return
+                    async for m in messages:
+                        if m.author.id == bot.application_id:
+                            count += 1
+                        if count == 1:
+                            lm = m.jump_url
+                            pm = m.created_at
+                            await message.author.send(
+                                    f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
+                                    f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
+                                    f"\nRepeated early bumps will result in your advert being taken down.")
+                            await message.delete()
+                            await modchannel.send(
+                                    f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
+                                    f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+                            return
+                        if m.author.id == message.author.id:
+                            user_count += 1
+                    og = await thread.fetch_message(thread.id)
+                    if og.edited_at is not None and og.edited_at <= bcheck and user_count <= 1 or og.edited_at is None and user_count <= 1:
+                        for a in forum.available_tags:
+                            if a.name == "Approved":
+                                await thread.add_tags(a)
+                        await modchannel.send(
+                                f"`[Experimental]` Automatically approved bump of {message.channel.mention}. Post was not edited in the last 70 hours.")
+                        await message.channel.send("Post successfully bumped and automatically approved")
+                        return
+                    for a in forum.available_tags:
+                        if a.name == "Bump":
+                            await thread.add_tags(a)
+                            await message.channel.send("Post successfully bumped and awaiting manual review")
+                        if a.name == "Approved":
+                            await thread.remove_tags(a)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
@@ -107,7 +116,8 @@ class forum(commands.GroupCog, name="forum"):
         if message.id != message.channel.id:
             return
         modchannel = self.bot.get_channel(1133794446111162439)
-        await modchannel.send(f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
+        await modchannel.send(
+            f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
         await message.channel.delete()
 
     # Commands start here
@@ -122,6 +132,7 @@ class forum(commands.GroupCog, name="forum"):
         if forum.id in forums:
             await interaction.response.defer(ephemeral=True)
             await ForumAutoMod.bump(self, interaction)
+
         else:
             print('not in list')
 
