@@ -186,6 +186,22 @@ user: <@{exists.uid}>
 UID: {exists.uid}
 DOB: {exists.dob}""")
 
+    @commands.command(aliases=['agelookup', 'lookup', 'alu'])
+    @adefs.check_db_roles()
+    async def dblookupid(self, ctx, userid):
+        exists = None
+        try:
+            exists = session.query(db.user).filter_by(uid=userid).first()
+        except:
+            await ctx.send(f"{userid} has not been found")
+        if exists is None:
+            await ctx.send(f"{userid} has not been found")
+        else:
+            await ctx.send(f"""__**DB LOOKUP**__
+user: <@{exists.uid}>
+UID: {exists.uid}
+DOB: {exists.dob}""")
+
     @commands.command()
     @adefs.check_admin_roles()
     async def dbremove(self, ctx, userid: discord.Member):
