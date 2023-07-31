@@ -186,7 +186,7 @@ user: <@{exists.uid}>
 UID: {exists.uid}
 DOB: {exists.dob}""")
 
-    @commands.command(aliases=['agelookup', 'lookup', 'alu'])
+    @commands.command()
     @adefs.check_db_roles()
     async def dblookupid(self, ctx, userid):
         exists = None
