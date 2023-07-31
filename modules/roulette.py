@@ -251,16 +251,15 @@ class RouletteUser(ABC):
                     f"\nKinks: {userinfo.get('Kinks')}")
 
             f.write(info)
-            print(info)
         embed = discord.Embed(title=f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%d/%Y')}__**",
                               description=f"If you wish to no longer be matched, please visit https://forms.gle/xFwY79vD6iMryFhcA and turn off participation"
                                           f"\nYou have been matched with <@{userinfo.get('Uid')}>, here are their preferences:")
 
-        # try:
-        #     await user.send(embed=embed,
-        #                     file=discord.File(f.name, 'result.txt'))
-        # except discord.Forbidden:
-        #     await interaction.channel.send(f"{userinfo.get('Username')} Couldn't DM.")
+        try:
+            await user.send(embed=embed,
+                            file=discord.File(f.name, 'result.txt'))
+        except discord.Forbidden:
+            await interaction.channel.send(f"{userinfo.get('Username')} Couldn't DM.")
         os.remove(f.name)
 
 
@@ -476,10 +475,12 @@ class roulette(commands.GroupCog, name="roulette"):
                                 f"\nTo join the next round: https://docs.google.com/forms/d/e/1FAIpQLSet3G_qxOwAuN4s_VruzTi6VFP-xwGeu8J09tfYRxzuz1J7jg/viewform?usp=sf_link"
                                 f"\n<@&686535572000473089>")
         for m, ma in matchedid.items():
-            sleep(15)
+            sleep(5)
             row = sheet.find(f"{m}")
             column = sheet.find(f"101Matches101")
             oldcell = sheet.cell(row.row, column.col)
             sheet.update_cell(row.row, column.col, value=f"{ma},{oldcell.value}")
+
+        await interaction.channel.send("Roulette Done.")
 async def setup(bot):
     await bot.add_cog(roulette(bot))
