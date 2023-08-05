@@ -95,7 +95,7 @@ class ForumAutoMod(ABC):
                 if a.name == "Approved":
                     await thread.add_tags(a)
             await interaction.channel.send("Post successfully bumped and automatically approved")
-            await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
+            # await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
             return
         for a in forum.available_tags:
             if a.name == "Bump":
