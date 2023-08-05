@@ -91,8 +91,8 @@ class forum(commands.GroupCog, name="forum"):
                         for a in forum.available_tags:
                             if a.name == "Approved":
                                 await thread.add_tags(a)
-                        await modchannel.send(
-                                f"`[Experimental]` Automatically approved bump of {message.channel.mention}. Post was not edited in the last 70 hours.")
+                        # await modchannel.send(
+                        #         f"`[Experimental]` Automatically approved bump of {message.channel.mention}. Post was not edited in the last 70 hours.")
                         await message.channel.send("Post successfully bumped and automatically approved")
                         return
                     for a in forum.available_tags:
