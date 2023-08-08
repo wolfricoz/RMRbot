@@ -5,14 +5,14 @@ from dotenv import load_dotenv
 from sqlalchemy import Column, String, Boolean, BIGINT
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.pool import QueuePool, NullPool
 
 pymysql.install_as_MySQLdb()
 load_dotenv('main.env')
 DBTOKEN = os.getenv("DB")
 
 # sqlalchemy
-engine = create_engine(DBTOKEN, echo=False, echo_pool=True, pool_pre_ping=True, poolclass=QueuePool, pool_size=100,
+engine = create_engine(DBTOKEN, echo=False, echo_pool=True, pool_pre_ping=True, poolclass=NullPool, pool_size=100,
                        max_overflow=100, pool_timeout=30, pool_recycle=120, )  # connects to the database
 base = declarative_base()
 engine.echo = False
