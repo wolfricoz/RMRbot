@@ -278,7 +278,7 @@ DOB: {exists.dob}""")
                                 f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!\n<@&925127216726163476>")
                         elif exists.guild == 780622396297183252:
                             await general.send(
-                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
                         else:
                             await general.send(
                                 f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
@@ -367,7 +367,7 @@ DOB: {exists.dob}""")
                                 f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!\n<@&925127216726163476>")
                         elif exists.guild == 780622396297183252:
                             await general.send(
-                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. we hope you have a wonderful time!")
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!")
                         else:
                             await general.send(
                                 f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
@@ -457,7 +457,7 @@ DOB: {exists.dob}""")
                                 f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#647867587207757864> and introduce yourself in <#973367490581262376>! If you have any questions feel free to ask in <#977720278396305418>. we hope you have a wonderful time!\n<@&925127216726163476>")
                         elif exists.guild == 780622396297183252:
                             await general.send(
-                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#780622397816569888>. We hope you have a wonderful time!")
+                                f"Welcome to {ctx.guild.name}, {user.mention}! To get started, check out <#780622397816569891> and read our <#788116431224569957>! If you have any questions feel free to ask in <#977720278396305418>. We hope you have a wonderful time!")
                         else:
                             await general.send(
                                 f"Welcome to {ctx.guild.name}, {user.mention}! If you have any questions feel free to ask a staff member. We hope you have a wonderful time!")
