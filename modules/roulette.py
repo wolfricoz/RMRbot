@@ -11,7 +11,7 @@ import gspread
 from discord import app_commands
 from discord.ext import commands
 from oauth2client.service_account import ServiceAccountCredentials
-
+import asyncio
 import adefs
 
 if os.path.exists('roulette'):
@@ -372,6 +372,7 @@ class roulette(commands.GroupCog, name="roulette"):
                         count += pc
 
                     elif p == "Minimal partner age":
+                        # needs to be fixed, this should enter "No match" state.
                         pc = RoomMate.agecheck(p, u1, u2)
                         oldcount = count
                         count += pc
@@ -452,7 +453,7 @@ class roulette(commands.GroupCog, name="roulette"):
         # Sends users their results, and sends it into the roulette channel.
         await roulschannel.send(f"**__Roleplay Roulette {datetime.datetime.now().strftime('%m/%d/%Y')}__**\n\n")
         for m, ma in matchedid.items():
-            sleep(1)
+            asyncio.sleep(1)
             user1 = interaction.guild.get_member(m)
             user2 = interaction.guild.get_member(ma)
 
@@ -475,7 +476,7 @@ class roulette(commands.GroupCog, name="roulette"):
                                 f"\nTo join the next round: https://docs.google.com/forms/d/e/1FAIpQLSet3G_qxOwAuN4s_VruzTi6VFP-xwGeu8J09tfYRxzuz1J7jg/viewform?usp=sf_link"
                                 f"\n<@&686535572000473089>")
         for m, ma in matchedid.items():
-            sleep(5)
+            asyncio.sleep(5)
             row = sheet.find(f"{m}")
             column = sheet.find(f"101Matches101")
             oldcell = sheet.cell(row.row, column.col)

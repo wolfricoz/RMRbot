@@ -3,6 +3,13 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/backup" />
+      <excludeFolder url="file://$MODULE_DIR$/disabled" />
+      <excludeFolder url="file://$MODULE_DIR$/jsons" />
+      <excludeFolder url="file://$MODULE_DIR$/logs" />
+      <excludeFolder url="file://$MODULE_DIR$/saved code" />
+      <excludeFolder url="file://$MODULE_DIR$/test files" />
+      <excludeFolder url="file://$MODULE_DIR$/users" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10 (rmrbot)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

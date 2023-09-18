@@ -15,17 +15,6 @@ import adefs
 import db
 from classes import jsonmaker
 
-# logger = logging.getLogger('discord')
-# logger.setLevel(logging.DEBUG)
-# handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='r+')
-# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-# logger.addHandler(handler)
-# alogger = logging.getLogger('sqlalchemy')
-# alogger.setLevel(logging.WARN)
-# handler2 = logging.FileHandler(filename='database.log', encoding='utf-8', mode='r+')
-# handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-# alogger.addHandler(handler2)
-# LOADS THE .ENV FILE THAT RESIDES ON THE SAME LEVEL AS THE SCRIPT.
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
 spec = os.getenv('spec')
@@ -124,7 +113,7 @@ async def on_ready():
     # PRINTS HOW MANY GUILDS / SERVERS THE BOT IS IN.
     formguilds = "\n".join(guilds)
     await bot.tree.sync()
-    await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 3.0: You shall be matched.")
+    # await devroom.send(f"{formguilds} \nRMRbot is in {guild_count} guilds. RMRbot 3.0: You shall be matched.")
     session.close()
     print("Commands synced, start up _done_")
     return guilds
