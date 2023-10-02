@@ -1,15 +1,20 @@
+import os
 from datetime import datetime
 from typing import List, Optional
 
 import pymysql
-from sqlalchemy import create_engine, DateTime, ForeignKey, String, BigInteger
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, DateTime, ForeignKey, String, BigInteger, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
 from sqlalchemy_utils import database_exists, create_database
 
 pymysql.install_as_MySQLdb()
+load_dotenv('.env')
+DB = os.getenv('DB')
 
-engine = create_engine("mariadb://root:@127.0.0.1:3306/rmrbotnew")
+engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False)
 if not database_exists(engine.url):
     create_database(engine.url)
 
@@ -36,15 +41,28 @@ class Warnings(Base):
     uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"))
     reason: Mapped[str] = mapped_column(String(1024))
     type: Mapped[str] = mapped_column(String(20))
+    entry: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Servers(Base):
+    __tablename__ = "servers"
+    guild: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
 
 
 class Config(Base):
     __tablename__ = "config"
-    guild: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    admin: Mapped[int] = mapped_column(BigInteger)
-    mod: Mapped[int] = mapped_column(BigInteger)
-    trial: Mapped[int] = mapped_column(BigInteger)
-    lobbystaff: Mapped[int] = mapped_column(BigInteger)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
+    key: Mapped[str] = mapped_column(String(512), primary_key=True)
+    value: Mapped[str] = mapped_column(String(1980))
+
+
+class Search(Base):
+    __tablename__ = "search"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    value: Mapped[str] = mapped_column(String(1980))
 
 
 class Watchlist(Base):
@@ -60,8 +78,8 @@ class IdVerification(Base):
     uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), primary_key=True,
                                      autoincrement=False)
     reason: Mapped[Optional[str]] = mapped_column(String(1024))
-    idcheck: Mapped[bool] = mapped_column(default=False)
-    idverified: Mapped[bool] = mapped_column(default=False)
+    idcheck: Mapped[bool] = mapped_column(Boolean,default=False)
+    idverified: Mapped[bool] = mapped_column(Boolean, default=False)
     verifieddob: Mapped[Optional[datetime]]
     user: Mapped["Users"] = relationship(back_populates="id")
 
@@ -70,28 +88,3 @@ class database:
     def create(self):
         Base.metadata.create_all(engine)
         print("Database built")
-
-# session = Session(engine)
-# birth = datetime.strptime('06/18/1997', '%m/%d/%Y')
-# rico = Users(uid=188647277181665280, dob=birth)
-# ricowarn = Warnings(uid=188647277181665280, reason="Broke a search rule", type="WARNING")
-# ricoswarn = Warnings(uid=188647277181665280, reason="Broke a search rule", type="SEARCH")
-# ricowatch = Watchlist(uid=188647277181665280, reason="Being a sussy baka")
-# ricoid = IdVerification(uid=188647277181665280)
-#
-#
-# # session.add(rico)
-# session.commit()
-# # session.add_all([ricowarn, ricoswarn, ricowatch])
-# # session.add(ricoid)
-# session.commit()
-#
-# a = session.scalar(select(Users).where(Users.uid == 188647277181665280))
-# for x in a.warnings:
-#     print(x.reason)
-#     print(x.type)
-# for x in a.watchlist:
-#     print(x.reason)
-#
-# print(a.id.idverified)
-# print(f"user has: {len(a.warnings)} warnings")

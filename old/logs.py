@@ -1,13 +1,16 @@
-import logging
 import os
 import traceback
-
+import logging
 import discord.utils
-from discord import Interaction
-from discord.app_commands import AppCommandError, command, CheckFailure
 from discord.ext import commands
 from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker
+import db
+from discord import Interaction
+from discord.app_commands import AppCommandError, command
 
+Session = sessionmaker(bind=db.engine)
+session = Session()
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
 spec = os.getenv('spec')
@@ -38,8 +41,6 @@ handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(m
 logging.basicConfig(filename=f.name, encoding='utf-8', level=logging.DEBUG, filemode='a')
 
 alogger.addHandler(handler2)
-
-
 class Logging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -63,11 +64,11 @@ class Logging(commands.Cog):
             await ctx.send(error)
             logger.warning(f"\n{ctx.guild.name} {ctx.guild.id} {ctx.command.name}: {error}")
             channel = self.bot.get_channel(1033787967929589831)
-            with open('error.txt', 'w', encoding='utf-8') as file:
-                file.write(str(error))
+            with open('error.txt', 'w', encoding='utf-8') as f:
+                f.write(str(error))
             await channel.send(
-                    f"{ctx.guild.name} {ctx.guild.id}: {ctx.author}: {ctx.command.name}",
-                    file=discord.File(file.name, "error.txt"))
+                f"{ctx.guild.name} {ctx.guild.id}: {ctx.author}: {ctx.command.name}",
+                file=discord.File(f.name, "error.txt"))
             print('error logged')
 
     def cog_load(self):
@@ -80,37 +81,30 @@ class Logging(commands.Cog):
         tree.on_error = self._old_tree_error
 
     async def on_app_command_error(
-            self,
-            interaction: Interaction,
-            error: AppCommandError
+        self,
+        interaction: Interaction,
+        error: AppCommandError
     ):
-        if isinstance(error, CheckFailure):
-            await interaction.response.send_message("[PERMERROR] You do not have permission.", ephemeral=True)
-            return
         await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
-        channel = self.bot.get_channel(self.bot.DEV)
-        with open('error.txt', 'w', encoding='utf-8') as file:
-            file.write(traceback.format_exc())
-        await channel.send(
-            f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}",
-            file=discord.File(file.name, "error.txt"))
-        logger.warning(
-            f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
+        channel = self.bot.get_channel(1033787967929589831)
+        with open('error.txt', 'w', encoding='utf-8') as f:
+            f.write(traceback.format_exc())
+        await channel.send(f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}", file=discord.File(f.name, "error.txt"))
+        logger.warning(f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
         # raise error
 
     @commands.Cog.listener(name='on_command')
     async def print(self, ctx):
         server = ctx.guild
         user = ctx.author
-        commandname = ctx.command
-        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued command: {commandname}')
+        command = ctx.command
+        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued command: {command}')
 
     @commands.Cog.listener(name='on_app_command_completion')
-    async def print(self, ctx: Interaction, commandname: command):
+    async def print(self, ctx: Interaction, command: command):
         server = ctx.guild
         user = ctx.user
-        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname.name}')
-
+        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {command.name}')
 
 async def setup(bot):
     await bot.add_cog(Logging(bot))
