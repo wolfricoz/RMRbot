@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 from classes import permissions
-from classes.databaseController import configData
+from classes.databaseController import ConfigData
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
 
@@ -29,15 +29,15 @@ class loopedTasks(commands.Cog):
     @permissions.check_app_roles()
     async def test(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        config = configData().get_config(interaction.guild.id)
+        config = ConfigData().get_config(interaction.guild.id)
         await interaction.followup.send(f"TEST: Config data:\n{config}")
 
     @tasks.loop(minutes=10)
     async def config_reload(self):
         for guild in self.bot.guilds:
-            configData().load_guild(guild.id)
+            ConfigData().load_guild(guild.id)
         print("config reload")
-        configData().output_to_json()
+        ConfigData().output_to_json()
 
     @config_reload.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):

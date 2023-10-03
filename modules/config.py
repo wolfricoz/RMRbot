@@ -1,22 +1,22 @@
+import os
+
 import discord
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
-from classes.databaseController import ConfigTransactions
-
+from classes.databaseController import ConfigTransactions, ConfigData
 
 
 class config(commands.GroupCog, name="config"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-    #this command is used for unique keys. Roles will need their own command due to not being unique.
-    keys = ["dev", 'helpchannel', 'inviteinfo']
-    actions = ['set', 'Remove']
 
-    def check(self, key:str, value:str):
-        intkeys = ["dev", "mod", "admin"]
+    # this command is used for unique keys. Roles will need their own command due to not being unique.
+
+    def check(self, key: str, value: str):
+        intkeys = ["dev", "mod", "admin", 'general', 'helpchannel', ]
         # strkeys = ["welcome"]
         reason = ""
         if value is None:
@@ -30,12 +30,15 @@ class config(commands.GroupCog, name="config"):
         #     return False, reason
         return True, reason
 
+    keys = ['welcomemessage', "lobbywelcome"]
+    actions = ['set', 'Remove']
 
     @app_commands.command()
     @app_commands.choices(key=[Choice(name=x, value=x) for x in keys])
     @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
     @commands.has_permissions(manage_guild=True)
-    async def settings(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str], value: str = None):
+    async def messages(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
+                       value: str = None):
         await interaction.response.defer(ephemeral=True)
         check, reason = self.check(key.value, value)
         match action.value.lower():
@@ -43,7 +46,8 @@ class config(commands.GroupCog, name="config"):
                 if check is False:
                     await interaction.followup.send(reason)
                     return
-                ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=key.value, value=value, overwrite=True)
+                ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=key.value, value=value,
+                                                     overwrite=True)
                 await interaction.followup.send(f"{key.value} has been added to the database with value:\n{value}")
             case 'remove':
                 result = ConfigTransactions.config_unique_remove(guildid=interaction.guild.id, key=key.value)
@@ -54,10 +58,48 @@ class config(commands.GroupCog, name="config"):
             case _:
                 raise NotImplementedError
 
-    rkeys = ["mod", "admin"]
-    ractions = ['add', 'Remove']
+
+
     @app_commands.command()
-    @app_commands.choices(key=[Choice(name=x, value=x) for x in rkeys])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ["enabled", "disabled"]])
+    @commands.has_permissions(manage_guild=True)
+    async def welcometoggle(self, interaction: discord.Interaction, action: Choice[str]):
+        match action.value.upper():
+            case "ENABLED":
+                ConfigTransactions.toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
+            case "DISABLED":
+                ConfigTransactions.toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
+        await interaction.response.send_message(f"Welcome has been set to {action.value}", ephemeral=True)
+
+    @app_commands.command()
+    @app_commands.choices(key=[Choice(name=x, value=x) for x in
+                               ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod", "idlog"]])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
+    @commands.has_permissions(manage_guild=True)
+    async def channels(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
+                       value: discord.TextChannel = None):
+        await interaction.response.defer(ephemeral=True)
+        value = value.id
+        match action.value.lower():
+            case 'set':
+                ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=key.value, value=value,
+                                                     overwrite=True)
+                await interaction.followup.send(f"{key.value} has been added to the database with value:\n{value}")
+            case 'remove':
+                result = ConfigTransactions.config_unique_remove(guildid=interaction.guild.id, key=key.value)
+                if result is False:
+                    await interaction.followup.send(f"{key.value} was not in database")
+                    return
+                await interaction.followup.send(f"{key.value} has been removed from the database")
+            case _:
+                raise NotImplementedError
+
+    rkeys = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem",
+             "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return"}
+    ractions = ['add', 'Remove']
+
+    @app_commands.command()
+    @app_commands.choices(key=[Choice(name=ke, value=val) for ke, val in rkeys.items()])
     @app_commands.choices(action=[Choice(name=x, value=x) for x in ractions])
     @commands.has_permissions(manage_guild=True)
     async def roles(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str], value: discord.Role):
@@ -65,16 +107,33 @@ class config(commands.GroupCog, name="config"):
         value = value.id
         match action.value.lower():
             case 'add':
-                result = ConfigTransactions.config_key_add(guildid=interaction.guild.id, key=key.value, value=value, overwrite=False)
+                result = ConfigTransactions.config_key_add(guildid=interaction.guild.id, key=key.value.upper(),
+                                                           value=value, overwrite=False)
                 if result is False:
-                    await interaction.followup.send(f"{key.value} <@&{value}> already exists")
+                    await interaction.followup.send(f"{key.name} <@&{value}> already exists")
                     return
-                await interaction.followup.send(f"{key.value} <@&{value}> has been added to the database")
+                await interaction.followup.send(f"{key.name} <@&{value}> has been added to the database")
             case 'remove':
-                result = ConfigTransactions.config_key_remove(guildid=interaction.guild.id, key=key.value, value=value)
-                await interaction.followup.send(f"{key.value} <@&{value}> has been removed from the database")
+                result = ConfigTransactions.config_key_remove(guildid=interaction.guild.id, key=key.value.upper(),
+                                                              value=value)
+                if result is False:
+                    await interaction.followup.send(f"{key.name} <@&{value}> could not be found in database")
+                await interaction.followup.send(f"{key.name} <@&{value}> has been removed from the database")
             case _:
                 raise NotImplementedError
+
+    @app_commands.command()
+    @commands.has_permissions(manage_guild=True)
+    async def view(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        config = ConfigData().get_config(interaction.guild.id)
+
+        with open('config.txt', 'w') as file:
+            file.write(f"Config for {interaction.guild.name}: \n\n")
+            for key, value in config.items():
+                file.write(f"{key}: {value}\n")
+        await interaction.followup.send(f"Config for {interaction.guild.name}", file=discord.File(file.name))
+        os.remove(file.name)
     # class Fruits(enum.Enum):
     #     apple = 1
     #     banana = 2
@@ -102,5 +161,3 @@ class config(commands.GroupCog, name="config"):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(config(bot))
-
-

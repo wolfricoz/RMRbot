@@ -10,7 +10,7 @@ import databases.current as currentDB
 import databases.old as olddb
 import time
 
-currentDB.database().create()
+currentDB.database.create()
 olddb.database().create()
 
 oldsession = Session(bind=olddb.engine)

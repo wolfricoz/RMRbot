@@ -30,9 +30,9 @@ class Users(Base):
     uid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     dob: Mapped[Optional[datetime]]
     entry: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    warnings: Mapped[List["Warnings"]] = relationship()
-    watchlist: Mapped[List["Watchlist"]] = relationship()
-    id: Mapped["IdVerification"] = relationship(back_populates="user")
+    warnings: Mapped[List["Warnings"]] = relationship(cascade="save-update, merge, delete, delete-orphan")
+    watchlist: Mapped[List["Watchlist"]] = relationship(cascade="save-update, merge, delete, delete-orphan")
+    id: Mapped["IdVerification"] = relationship(back_populates="user", cascade="save-update, merge, delete, delete-orphan")
 
 
 class Warnings(Base):
@@ -50,18 +50,11 @@ class Servers(Base):
 
 
 class Config(Base):
+    # Reminder to self you can add multiple keys in this database
     __tablename__ = "config"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
     key: Mapped[str] = mapped_column(String(512), primary_key=True)
-    value: Mapped[str] = mapped_column(String(1980))
-
-
-class Search(Base):
-    __tablename__ = "search"
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
-    key: Mapped[str] = mapped_column(String(100), primary_key=True)
     value: Mapped[str] = mapped_column(String(1980))
 
 
@@ -85,6 +78,7 @@ class IdVerification(Base):
 
 
 class database:
-    def create(self):
+    @staticmethod
+    def create():
         Base.metadata.create_all(engine)
         print("Database built")

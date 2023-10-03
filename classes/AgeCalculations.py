@@ -10,6 +10,12 @@ from classes.databaseController import *
 
 class AgeCalculations(ABC):
 
+    @staticmethod
+    @abstractmethod
+    def prefix(age):
+        for n, y in {18: 21, 21: 25, 25: 1000}.items():
+            if n <= int(age) < y:
+                return f"{n}a"
 
     @staticmethod
     @abstractmethod
@@ -39,19 +45,22 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def id_check_or_id_verified(user: discord.Member, channel):
-        userinfo: databases.current.IdVerification = UserTransactions.get_user_id_info(user.id)
+    async def id_check_or_id_verified(user: discord.Member, guild, channel):
+        userinfo: databases.current.IdVerification = VerificationTransactions.get_id_info(user.id)
+        idlog = ConfigData().get_key_int(guild.id, "idlog")
+        idchannel = guild.get_channel(idlog)
         if userinfo is None:
             print("user info none")
             return False
         if userinfo.idverified is True and userinfo.verifieddob is not None:
             print("ID found")
-            await channel.send(f"{user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
+            await channel.send(f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             return False
         if userinfo.idcheck is True:
             print("id check")
-            await channel.send(
-                f"{user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
+            await idchannel.send(
+                f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
+
             return True
         print("None of the above")
         return False
@@ -89,40 +98,37 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
+    def dob_to_age(dob):
+        dob_object = datetime.strptime(dob, "%m/%d/%Y")
+        today = datetime.now()
+        age_output = relativedelta(today, dob_object)
+        return age_output.years
+    @staticmethod
+    @abstractmethod
     def regex(arg2):
-        dob = str(arg2)
-        dob_object = re.search(r"([0-1]?[0-9])/([0-3]?[0-9])/([0-2][0-9][0-9][0-9])", dob)
-        month = dob_object.group(1).zfill(2)
-        day = dob_object.group(2).zfill(2)
-        year = dob_object.group(3)
-        fulldob = f"{month}/{day}/{year}"
-        return fulldob
+        try:
+            datetime.strptime(arg2, "%m/%d/%Y")
+            dob = str(arg2)
+            dob_object = re.search(r"([0-1]?[0-9])/([0-3]?[0-9])/([0-2][0-9][0-9][0-9])", dob)
+            month = dob_object.group(1).zfill(2)
+            day = dob_object.group(2).zfill(2)
+            year = dob_object.group(3)
+            fulldob = f"{month}/{day}/{year}"
+            return fulldob
+        except AttributeError:
+            return "AttributeError"
+        except ValueError:
+            return "ValueError"
 
     @staticmethod
     @abstractmethod
-    async def removemessage(ctx, bot, user):
-        c = session.query(db.config).filter_by(guild=ctx.guild.id).first()
-        channel = bot.get_channel(c.lobby)
-        messages = channel.history(limit=100)
-        format = re.compile(r"failed to follow the format", flags=re.MULTILINE)
-        notify = re.compile(r"has been notified", flags=re.MULTILINE)
-        count = 0
-        async for message in messages:
-            if message.author == user or user in message.mentions and count < 10:
-                count += 1
-                await message.delete()
-        channel = bot.get_channel(c.modlobby)
-        messages = channel.history(limit=100)
-        count = 0
-        async for message in messages:
-            if user in message.mentions and count < 5:
-                if message.author.bot:
-                    format_match = format.search(message.content)
-                    notify_match = notify.search(message.content)
-                    if format_match is not None:
-                        pass
-                    elif notify_match is not None:
-                        pass
-                    else:
-                        count += 1
-                        await message.delete()
+    async def validatedob(arg2, interaction):
+        dob = AgeCalculations.regex(arg2)
+        if dob == "AttributeError":
+            await interaction.followup.send("Please fill in the date of birth field.")
+            return False
+        if dob == "ValueError":
+            await interaction.followup.send("Please fill the dob in with the format: mm/dd/yyyy")
+            return False
+
+

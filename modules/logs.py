@@ -62,13 +62,14 @@ class Logging(commands.Cog):
         else:
             await ctx.send(error)
             logger.warning(f"\n{ctx.guild.name} {ctx.guild.id} {ctx.command.name}: {error}")
-            channel = self.bot.get_channel(1033787967929589831)
-            with open('error.txt', 'w', encoding='utf-8') as file:
+            channel = self.bot.get_channel(self.bot.DEV)
+            with open('error.txt', 'w', encoding='utf-16') as file:
                 file.write(str(error))
             await channel.send(
                     f"{ctx.guild.name} {ctx.guild.id}: {ctx.author}: {ctx.command.name}",
                     file=discord.File(file.name, "error.txt"))
             print('error logged')
+            print(traceback.format_exc())
 
     def cog_load(self):
         tree = self.bot.tree
@@ -96,6 +97,7 @@ class Logging(commands.Cog):
             file=discord.File(file.name, "error.txt"))
         logger.warning(
             f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
+
         # raise error
 
     @commands.Cog.listener(name='on_command')

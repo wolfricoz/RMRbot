@@ -8,11 +8,11 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from classes import permissions
-from classes.databaseController import configData, ConfigTransactions, UserTransactions
+from classes.databaseController import ConfigData, ConfigTransactions, UserTransactions
 from databases import current as db
 
 # Creating database
-db.database().create()
+db.database.create()
 # Declares the bots intent
 
 # Load the data from env
@@ -48,7 +48,7 @@ async def on_ready():
     guilds = []
     for guild in bot.guilds:
         ConfigTransactions.server_add(guild.id)
-        configData().load_guild(guild.id)
+        ConfigData().load_guild(guild.id)
         guilds.append(guild.name)
         bot.invites[guild.id] = await guild.invites()
     formguilds = "\n".join(guilds)
@@ -63,7 +63,7 @@ async def on_ready():
 async def on_guild_join(guild):
     # adds user to database
     ConfigTransactions.server_add(guild.id)
-    configData().load_guild(guild.id)
+    ConfigData().load_guild(guild.id)
 
 
 @bot.event
