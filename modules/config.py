@@ -1,4 +1,6 @@
+import enum
 import os
+import typing
 
 import discord
 from discord import app_commands
@@ -36,7 +38,7 @@ class config(commands.GroupCog, name="config"):
     @app_commands.command()
     @app_commands.choices(key=[Choice(name=x, value=x) for x in keys])
     @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
-    @commands.has_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def messages(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
                        value: str = None):
         await interaction.response.defer(ephemeral=True)
@@ -62,7 +64,7 @@ class config(commands.GroupCog, name="config"):
 
     @app_commands.command()
     @app_commands.choices(action=[Choice(name=x, value=x) for x in ["enabled", "disabled"]])
-    @commands.has_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def welcometoggle(self, interaction: discord.Interaction, action: Choice[str]):
         match action.value.upper():
             case "ENABLED":
@@ -75,7 +77,7 @@ class config(commands.GroupCog, name="config"):
     @app_commands.choices(key=[Choice(name=x, value=x) for x in
                                ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod", "idlog"]])
     @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
-    @commands.has_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def channels(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
                        value: discord.TextChannel = None):
         await interaction.response.defer(ephemeral=True)
@@ -101,7 +103,7 @@ class config(commands.GroupCog, name="config"):
     @app_commands.command()
     @app_commands.choices(key=[Choice(name=ke, value=val) for ke, val in rkeys.items()])
     @app_commands.choices(action=[Choice(name=x, value=x) for x in ractions])
-    @commands.has_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def roles(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str], value: discord.Role):
         await interaction.response.defer(ephemeral=True)
         value = value.id
@@ -123,7 +125,33 @@ class config(commands.GroupCog, name="config"):
                 raise NotImplementedError
 
     @app_commands.command()
-    @commands.has_permissions(manage_guild=True)
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ractions])
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def searchcommands(self, interaction: discord.Interaction, action: Choice[str],name: str, message: str):
+        await interaction.response.defer(ephemeral=True)
+        if len(name) > 10:
+            await interaction.followup.send("Please keep the name under 10 characters")
+            return
+        key = f"SEARCH-{name}"
+        match action.value.lower():
+            case 'add':
+                result = ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=key.upper(),
+                                                           value=message, overwrite=False)
+                if result is False:
+                    await interaction.followup.send(f"{name} already exists")
+                    return
+                await interaction.followup.send(f"{name} <@&{message}> has been added to the database")
+            case 'remove':
+                result = ConfigTransactions.config_key_remove(guildid=interaction.guild.id, key=key.upper(),
+                                                              value=message)
+                if result is False:
+                    await interaction.followup.send(f"{key.name} could not be found in database")
+                await interaction.followup.send(f"{key.name} <@&{message}> has been removed from the database")
+            case _:
+                raise NotImplementedError
+
+    @app_commands.command()
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def view(self, interaction: discord.Interaction):
         await interaction.response.defer()
         config = ConfigData().get_config(interaction.guild.id)
@@ -134,6 +162,23 @@ class config(commands.GroupCog, name="config"):
                 file.write(f"{key}: {value}\n")
         await interaction.followup.send(f"Config for {interaction.guild.name}", file=discord.File(file.name))
         os.remove(file.name)
+
+    async def test_autocompletion(self, interaction: discord.Interaction, current:str) -> typing.List[app_commands.Choice[str]]:
+        data = []
+        search_commands = ConfigData().get_key(interaction.guild.id, "SEARCH")
+        print(search_commands)
+        for x in search_commands:
+            if current.lower() in x:
+                data.append(app_commands.Choice(name=x.lower(), value=x))
+        return data
+    @app_commands.command()
+    @app_commands.checks.has_permissions(manage_guild=True)
+    @app_commands.autocomplete(test=test_autocompletion)
+    async def view_test(self, interaction: discord.Interaction, test: str):
+        print(test)
+
+
+
     # class Fruits(enum.Enum):
     #     apple = 1
     #     banana = 2

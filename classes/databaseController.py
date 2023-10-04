@@ -235,7 +235,6 @@ class ConfigTransactions(ABC):
     def server_config_get(guildid):
         return session.scalars(Select(db.Config).where(db.Config.guild == guildid)).all()
 
-
 class VerificationTransactions(ABC):
 
     @staticmethod
@@ -321,9 +320,12 @@ class ConfigData(ABC):
 
     def load_guild(self, guildid):
         config = ConfigTransactions.server_config_get(guildid)
+
+
         settings = config
         # settings = ConfigTransactions.server_config_get(guildid)
         self.conf[guildid] = {}
+        self.conf[guildid]["SEARCH"] = {}
         add_to_config = ['MOD', 'ADMIN', 'ADD', 'REM', "RETURN"]
         for add in add_to_config:
             self.conf[guildid][add] = []
@@ -332,7 +334,11 @@ class ConfigData(ABC):
             if x.key in ['MOD', 'ADMIN', 'ADD', 'REM', "RETURN"]:
                 self.conf[guildid][x.key].append(int(x.value))
                 continue
+            if x.key.upper().startswith("SEARCH"):
+                self.conf[guildid]["SEARCH"][x.key.replace('SEARCH-', '')] = x.value
+                continue
             self.conf[guildid][x.key] = x.value
+        print(self.conf)
     def get_config(self, guildid):
         try:
             return self.conf[guildid]
