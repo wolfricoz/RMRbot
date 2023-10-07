@@ -1,6 +1,7 @@
+import datetime
 import json
 from abc import ABC, abstractmethod
-from datetime import timezone
+from datetime import timezone, datetime, timedelta
 
 import sqlalchemy.exc
 from sqlalchemy.orm import Session
@@ -8,7 +9,7 @@ from sqlalchemy.sql import Select
 
 import databases.current as db
 from databases.current import *
-from classes.AgeCalculations import AgeCalculations
+
 session = Session(bind=db.engine)
 
 
@@ -61,7 +62,8 @@ class UserTransactions(ABC):
         except ValueError:
             return False
 
-
+    @staticmethod
+    @abstractmethod
     def update_user_dob(userid: int, dob: str):
         userdata: Users = session.scalar(Select(Users).where(Users.uid == userid))
         if userdata is None:
@@ -74,6 +76,7 @@ class UserTransactions(ABC):
         print(datetime.now(tz=timezone.utc))
         session.commit()
         return True
+
     @staticmethod
     @abstractmethod
     def user_delete(userid: int):
@@ -88,19 +91,12 @@ class UserTransactions(ABC):
             session.rollback()
             return False
 
-
-
-
-
     @staticmethod
     @abstractmethod
     def get_user(userid: int):
         userdata = session.scalar(Select(Users).where(Users.uid == userid))
         session.close()
         return userdata
-
-
-
 
     @staticmethod
     @abstractmethod
@@ -151,13 +147,10 @@ class ConfigTransactions(ABC):
         # This function should check if the item already exists, if so it will override it or throw an error.
         value = str(value)
         guilddata = session.scalar(Select(Config).where(Config.guild == guildid, Config.key == key))
-        print(guilddata)
         if guilddata is None:
-            ConfigTransactions.config_unique_add(interaction.guild.id, "WELCOME", action.value.upper(), overwrite=True)
+            ConfigTransactions.config_unique_add(guildid, key, value, overwrite=True)
             return
-        print(guilddata.value)
         guilddata.value = value
-        print(guilddata.value)
         session.commit()
         ConfigData().load_guild(guildid)
         return True
@@ -200,7 +193,18 @@ class ConfigTransactions(ABC):
         exists = session.scalar(
                 Select(db.Config).where(db.Config.guild == guildid, db.Config.key == key, db.Config.value == value))
         session.delete(exists)
-        session.close()
+        session.commit()
+        ConfigData().load_guild(guildid)
+
+    @staticmethod
+    @abstractmethod
+    def config_unique_remove(guildid: int, key: str):
+        if ConfigTransactions.key_exists_check(guildid, key) is False:
+            return False
+        exists = session.scalar(
+                Select(db.Config).where(db.Config.guild == guildid, db.Config.key == key))
+        session.delete(exists)
+        session.commit()
         ConfigData().load_guild(guildid)
 
     @staticmethod
@@ -230,10 +234,12 @@ class ConfigTransactions(ABC):
         welcome = Config(guild=guildid, key="WELCOME", value="ENABLED")
         session.merge(welcome)
         session.commit()
+
     @staticmethod
     @abstractmethod
     def server_config_get(guildid):
         return session.scalars(Select(db.Config).where(db.Config.guild == guildid)).all()
+
 
 class VerificationTransactions(ABC):
 
@@ -249,7 +255,7 @@ class VerificationTransactions(ABC):
     def update_check(userid, reason: str = None, idcheck=True):
         userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
         if userdata is None:
-            VerificationTransactions.add_idcheck(userid, reason, toggle)
+            VerificationTransactions.add_idcheck(userid, reason, idcheck)
             return
         userdata.reason = reason
         userdata.idcheck = idcheck
@@ -262,7 +268,6 @@ class VerificationTransactions(ABC):
         idcheck = IdVerification(uid=userid, reason=reason, idcheck=idcheck)
         session.add(idcheck)
         session.commit()
-
 
     @staticmethod
     @abstractmethod
@@ -280,7 +285,7 @@ class VerificationTransactions(ABC):
     def set_idcheck_to_false(userid: int, ):
         userdata: IdVerification = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
         if userdata is None:
-            VerificationTransactions.add_idcheck(userid, reason, idcheck=False)
+            VerificationTransactions.add_idcheck(userid, idcheck=False)
             return
         userdata.idcheck = False
         userdata.reason = None
@@ -321,17 +326,17 @@ class ConfigData(ABC):
     def load_guild(self, guildid):
         config = ConfigTransactions.server_config_get(guildid)
 
-
         settings = config
         # settings = ConfigTransactions.server_config_get(guildid)
         self.conf[guildid] = {}
         self.conf[guildid]["SEARCH"] = {}
-        add_to_config = ['MOD', 'ADMIN', 'ADD', 'REM', "RETURN"]
+
+        add_to_config = ['MOD', 'ADMIN', 'ADD', 'REM', "RETURN", "FORUM"]
         for add in add_to_config:
             self.conf[guildid][add] = []
 
         for x in settings:
-            if x.key in ['MOD', 'ADMIN', 'ADD', 'REM', "RETURN"]:
+            if x.key in add_to_config:
                 self.conf[guildid][x.key].append(int(x.value))
                 continue
             if x.key.upper().startswith("SEARCH"):
@@ -339,6 +344,7 @@ class ConfigData(ABC):
                 continue
             self.conf[guildid][x.key] = x.value
         print(self.conf)
+
     def get_config(self, guildid):
         try:
             return self.conf[guildid]
@@ -357,9 +363,93 @@ class ConfigData(ABC):
         except KeyError:
             raise KeyNotFound(key)
 
+    def get_key_or_none(self, guildid: int, key: str):
+        return self.conf[guildid].get(key.upper(), None)
+
     def output_to_json(self):
         """This is for debugging only."""
         if os.path.isdir('debug') is False:
             os.mkdir('debug')
         with open('debug/config.json', 'w') as f:
             json.dump(self.conf, f, indent=4)
+
+
+class SearchWarningTransactions(ABC):
+    @staticmethod
+    @abstractmethod
+    def get_total_warnings(userid: int):
+        total = 0
+        active = 0
+        monthsago = datetime.now() - timedelta(days=120)
+        userdata = session.scalars(Select(Warnings).where(Warnings.uid == userid)).all()
+        session.close()
+        for x in userdata:
+            if x.entry > monthsago:
+                active += 1
+            total += 1
+        return total, active
+
+    @staticmethod
+    @abstractmethod
+    def update_check(userid, reason: str = None, idcheck=True):
+        userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
+        if userdata is None:
+            VerificationTransactions.add_idcheck(userid, reason, idcheck)
+            return
+        userdata.reason = reason
+        userdata.idcheck = idcheck
+        session.commit()
+
+    @staticmethod
+    @abstractmethod
+    def add_warning(userid: int, reason: str = None):
+        UserTransactions.add_user_empty(userid)
+        search_warning = Warnings(uid=userid, reason=reason, type="SEARCH")
+        session.add(search_warning)
+        session.commit()
+        total_warnings, active_warnings = SearchWarningTransactions.get_total_warnings(userid)
+        return total_warnings, active_warnings
+
+    @staticmethod
+    @abstractmethod
+    def set_idcheck_to_true(userid: int, reason):
+        userdata: IdVerification = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
+        if userdata is None:
+            VerificationTransactions.add_idcheck(userid, reason)
+            return
+        userdata.idcheck = True
+        userdata.reason = reason
+        session.commit()
+
+    @staticmethod
+    @abstractmethod
+    def set_idcheck_to_false(userid: int, ):
+        userdata: IdVerification = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
+        if userdata is None:
+            VerificationTransactions.add_idcheck(userid, idcheck=False)
+            return
+        userdata.idcheck = False
+        userdata.reason = None
+        session.commit()
+
+    @staticmethod
+    @abstractmethod
+    def idverify_add(userid: int, dob: str, idcheck=True):
+        UserTransactions.add_user_empty(userid, True)
+        idcheck = IdVerification(uid=userid, verifieddob=datetime.strptime(dob, "%m/%d/%Y"), idverified=idcheck)
+        session.add(idcheck)
+        session.commit()
+        UserTransactions.update_user_dob(userid, dob)
+
+    @staticmethod
+    @abstractmethod
+    def idverify_update(userid, dob: str, idcheck=True):
+
+        userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
+        if userdata is None:
+            VerificationTransactions.add_idcheck(userid, dob)
+            return
+        userdata.verifieddob = datetime.strptime(dob, "%m/%d/%Y")
+        userdata.idverified = idcheck
+        session.commit()
+        UserTransactions.update_user_dob(userid, dob)

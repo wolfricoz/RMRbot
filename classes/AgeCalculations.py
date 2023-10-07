@@ -70,7 +70,7 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def infocheck(interaction, age, dateofbirth, channel):
+    async def infocheck(interaction, age, dateofbirth, channel, location="Lobby"):
         agevalid = re.match(r'[0-9]*$', age)
         if agevalid is None:
             await interaction.response.send_message('Please fill in your age in numbers.', ephemeral=True)
@@ -83,7 +83,7 @@ class AgeCalculations(ABC):
             await interaction.response.send_message(
                     'Please fill in your date of birth as with the format: mm/dd/yyyy.', ephemeral=True)
             await channel.send(
-                    f"{interaction.user.mention} failed in verification at date of birth: {age} {dateofbirth}")
+                    f"[{location} info] {interaction.user.mention} failed in verification at date of birth: {age} {dateofbirth}")
             return False
         return True
 

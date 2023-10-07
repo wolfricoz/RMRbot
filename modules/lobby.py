@@ -162,7 +162,7 @@ class Lobby(commands.GroupCog):
             if int(age) < 18:
                 await channel.send(
                         f"[Info] User {interaction.user.mention}\'s gave an age below 18 and was added to the ID list.\n"
-                        f"[Debug] Age: {age} dob {dob}")
+                        f"[Lobby Debug] Age: {age} dob {dob}")
                 await interaction.response.send_message(
                         f'Unfortunately you are too young for our server. If you are 17 you may wait in the lobby.',
                         ephemeral=True)
@@ -174,7 +174,7 @@ class Lobby(commands.GroupCog):
             if agechecked != 0:
                 await channel.send(
                         f"[Info] User {interaction.user.mention}\'s age does not match and has been timed out. User gave {age} but dob indicates {years}\n"
-                        f"[Debug] Age: {age} dob {dob}")
+                        f"[Lobby Debug] Age: {age} dob {dob}")
                 await interaction.response.send_message(
                         f'A staff member will contact you within 24 hours, please wait patiently.',
                         ephemeral=True)
@@ -183,7 +183,7 @@ class Lobby(commands.GroupCog):
             if AgeCalculations.check_date_of_birth(userdata, dob) is False:
                 await channel.send(
                         f"[Info] User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {userdata.dob.strftime('%m/%d/%Y')}\n"
-                        f"[Debug] Age: {age} dob {dob}")
+                        f"[Lobby Debug] Age: {age} dob {dob}")
                 await interaction.response.send_message(
                         f'A staff member will contact you within 24 hours, please wait patiently.',
                         ephemeral=True)
@@ -202,7 +202,7 @@ class Lobby(commands.GroupCog):
             await channel.send(
                     f"\n{interaction.user.mention} has given {age} {dob}. You can let them through with the buttons below"
                     f"\n"
-                    f"[DEBUG] `?{command_prefix} {interaction.user.mention} {age} {dob}`",
+                    f"[LOBBY DEBUG] `?{command_prefix} {interaction.user.mention} {age} {dob}`",
                     view=Lobby.AgeButtons(age=age, dob=dob, user=interaction.user))
 
             await interaction.response.send_message(
