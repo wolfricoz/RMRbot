@@ -1,20 +1,11 @@
-import datetime
-import re
-from abc import ABC, abstractmethod
-
 import discord
-from discord import app_commands
-from discord.app_commands import Choice
-from discord.ext import commands
 
-import classes.permissions as permissions
-import databases.current
-from classes.AgeCalculations import AgeCalculations
-from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions, SearchWarningTransactions
-from classes.Advert import Advert
+from classes.databaseController import UserTransactions
 
-class Warning(discord.ui.Modal, title='Official Warning'):
+
+class WarningModal(discord.ui.Modal, title='Official Warning'):
     custom_id = "warning"
+
     def __init__(self, user, notify, warnlog):
         super().__init__(timeout=None)  # Set a timeout for the modal
         self.user = user
@@ -25,7 +16,6 @@ class Warning(discord.ui.Modal, title='Official Warning'):
             label='What is the reason?',
             style=discord.TextStyle.long,
             placeholder='Type your waning here...',
-            required=True,
             max_length=1000,
     )
 
@@ -43,4 +33,3 @@ class Warning(discord.ui.Modal, title='Official Warning'):
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         print(error)
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
-

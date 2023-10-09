@@ -362,6 +362,7 @@ class ConfigData(ABC):
         # settings = ConfigTransactions.server_config_get(guildid)
         self.conf[guildid] = {}
         self.conf[guildid]["SEARCH"] = {}
+        self.conf[guildid]["BAN"] = {}
 
         add_to_config = ['MOD', 'ADMIN', 'ADD', 'REM', "RETURN", "FORUM"]
         for add in add_to_config:
@@ -373,6 +374,9 @@ class ConfigData(ABC):
                 continue
             if x.key.upper().startswith("SEARCH"):
                 self.conf[guildid]["SEARCH"][x.key.replace('SEARCH-', '')] = x.value
+                continue
+            if x.key.upper().startswith("BAN"):
+                self.conf[guildid]["BAN"][x.key.replace('BAN-', '')] = x.value
                 continue
             self.conf[guildid][x.key] = x.value
     def get_config(self, guildid):

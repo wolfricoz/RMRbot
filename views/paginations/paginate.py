@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 
 import discord
-from discord import app_commands
-from discord.ext import commands
 
-from classes.databaseController import UserTransactions, ConfigData
 import classes.permissions as permissions
+from classes.databaseController import UserTransactions, ConfigData
+
+
+# noinspection PyUnresolvedReferences
 class PaginationView(discord.ui.View):
     current_page: int = 1
     sep: int = 1
-    data:list = []
-    warndict:dict = {}
+    data: list = []
+    warndict: dict = {}
     username = None
+
     def __init__(self):
         super().__init__(timeout=300)
 
@@ -107,7 +109,7 @@ class PaginationView(discord.ui.View):
 class paginate(ABC):
     @staticmethod
     @abstractmethod
-    async def create_pagination(interaction,user, wtype, warningtype="official"):
+    async def create_pagination(interaction, user, wtype, warningtype="official"):
         data, warndict = UserTransactions.user_get_warnings(user.id, wtype)
         pagination_view = PaginationView()
         pagination_view.data = data

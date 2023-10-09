@@ -5,17 +5,15 @@ from classes.databaseController import ConfigTransactions
 
 
 class ConfigInputUnique(discord.ui.Modal, title='set config message'):
-    custom_id = "ConfigInputUnique"
 
     def __init__(self, key):
         super().__init__(timeout=None)  # Set a timeout for the modal
         self.key = key
-
     text = discord.ui.TextInput(
             label='What is the message?',
             style=discord.TextStyle.long,
             placeholder='Type the message here',
-            max_length=1024,
+            max_length=512
     )
 
     async def on_submit(self, interaction: discord.Interaction):
