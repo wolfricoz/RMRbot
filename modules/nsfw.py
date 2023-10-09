@@ -1,18 +1,9 @@
-import json
-import logging
-import re
-from abc import ABC, abstractmethod
-from datetime import datetime
-
 import discord
-from dateutil.relativedelta import relativedelta
 from discord import app_commands
 from discord.ext import commands
-from sqlalchemy.orm import sessionmaker
 
 from classes import permissions
-from classes.databaseController import ConfigData
-from modals.NsfwModal import NsfwVerifyModal
+from views.modals.NsfwModal import NsfwVerifyModal
 
 
 class nsfw(commands.GroupCog, name="nsfw"):

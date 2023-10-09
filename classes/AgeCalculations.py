@@ -1,12 +1,11 @@
 import re
-from abc import ABC, abstractmethod
-from datetime import datetime
 
 import discord
 from dateutil.relativedelta import relativedelta
 
 import databases.current
 from classes.databaseController import *
+
 
 class AgeCalculations(ABC):
 
@@ -24,6 +23,7 @@ class AgeCalculations(ABC):
             print("None found")
             return True
         return userdata.dob.strftime("%m/%d/%Y") == dob
+
     @staticmethod
     @abstractmethod
     async def check_history(user, channel):
@@ -59,14 +59,11 @@ class AgeCalculations(ABC):
         if userinfo.idcheck is True:
             print("id check")
             await idchannel.send(
-                f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
+                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
 
             return True
         print("None of the above")
         return False
-
-
-
 
     @staticmethod
     @abstractmethod
@@ -103,6 +100,7 @@ class AgeCalculations(ABC):
         today = datetime.now()
         age_output = relativedelta(today, dob_object)
         return age_output.years
+
     @staticmethod
     @abstractmethod
     def regex(arg2):
@@ -130,5 +128,3 @@ class AgeCalculations(ABC):
         if dob == "ValueError":
             await interaction.followup.send("Please fill the dob in with the format: mm/dd/yyyy")
             return False
-
-

@@ -124,6 +124,38 @@ class UserTransactions(ABC):
             return False
         return True, exists
 
+    #Warning related functions
+    @staticmethod
+    @abstractmethod
+    def user_add_warning(userid: int, reason: str):
+        item = db.Warnings(uid=userid, reason=reason, type="WARN")
+        session.add(item)
+        session.commit()
+        return True
+
+    @staticmethod
+    @abstractmethod
+    def user_get_warnings(userid: int, type):
+        warning_dict = {}
+        warning_list = []
+        warnings = session.scalars(Select(Warnings).where(Warnings.uid == userid, Warnings.type == type.upper()).order_by(Warnings.uid)).all()
+        session.close()
+        if len(warnings) == 0 or warnings is None:
+            return False
+        for warnings in warnings:
+            warning_dict[warnings.id] = warnings.reason
+            warning_list.append(warnings.id)
+        return warning_list, warning_dict
+
+    @staticmethod
+    @abstractmethod
+    def user_remove_warning(id : int):
+        warning = session.scalar(Select(Warnings).where(Warnings.id == id))
+        session.delete(warning)
+        session.commit()
+
+
+
 
 # RULE: ALL db transactions have to go through this file. Keep to it dumbass
 class ConfigTransactions(ABC):
@@ -343,8 +375,6 @@ class ConfigData(ABC):
                 self.conf[guildid]["SEARCH"][x.key.replace('SEARCH-', '')] = x.value
                 continue
             self.conf[guildid][x.key] = x.value
-        print(self.conf)
-
     def get_config(self, guildid):
         try:
             return self.conf[guildid]
@@ -389,16 +419,7 @@ class SearchWarningTransactions(ABC):
             total += 1
         return total, active
 
-    @staticmethod
-    @abstractmethod
-    def update_check(userid, reason: str = None, idcheck=True):
-        userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
-        if userdata is None:
-            VerificationTransactions.add_idcheck(userid, reason, idcheck)
-            return
-        userdata.reason = reason
-        userdata.idcheck = idcheck
-        session.commit()
+
 
     @staticmethod
     @abstractmethod
@@ -410,46 +431,3 @@ class SearchWarningTransactions(ABC):
         total_warnings, active_warnings = SearchWarningTransactions.get_total_warnings(userid)
         return total_warnings, active_warnings
 
-    @staticmethod
-    @abstractmethod
-    def set_idcheck_to_true(userid: int, reason):
-        userdata: IdVerification = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
-        if userdata is None:
-            VerificationTransactions.add_idcheck(userid, reason)
-            return
-        userdata.idcheck = True
-        userdata.reason = reason
-        session.commit()
-
-    @staticmethod
-    @abstractmethod
-    def set_idcheck_to_false(userid: int, ):
-        userdata: IdVerification = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
-        if userdata is None:
-            VerificationTransactions.add_idcheck(userid, idcheck=False)
-            return
-        userdata.idcheck = False
-        userdata.reason = None
-        session.commit()
-
-    @staticmethod
-    @abstractmethod
-    def idverify_add(userid: int, dob: str, idcheck=True):
-        UserTransactions.add_user_empty(userid, True)
-        idcheck = IdVerification(uid=userid, verifieddob=datetime.strptime(dob, "%m/%d/%Y"), idverified=idcheck)
-        session.add(idcheck)
-        session.commit()
-        UserTransactions.update_user_dob(userid, dob)
-
-    @staticmethod
-    @abstractmethod
-    def idverify_update(userid, dob: str, idcheck=True):
-
-        userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
-        if userdata is None:
-            VerificationTransactions.add_idcheck(userid, dob)
-            return
-        userdata.verifieddob = datetime.strptime(dob, "%m/%d/%Y")
-        userdata.idverified = idcheck
-        session.commit()
-        UserTransactions.update_user_dob(userid, dob)

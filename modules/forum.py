@@ -6,12 +6,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import modals.custom
 from classes.automod import ForumAutoMod
-from classes.databaseController import ConfigData, SearchWarningTransactions
+from classes.databaseController import ConfigData, SearchWarningTransactions, UserTransactions
 from classes.Advert import Advert
 import classes.permissions as permissions
-from modals.custom import Custom
+from views.modals.custom import Custom
+from views.paginations.paginate import paginate
 
 # noinspection PyUnresolvedReferences
 class forum(commands.GroupCog, name="forum"):
@@ -208,6 +208,11 @@ class forum(commands.GroupCog, name="forum"):
         except discord.NotFound:
             pass
 
+    @app_commands.command()
+    @permissions.check_app_roles()
+    async def history(self, interaction: discord.Interaction, user: discord.Member):
+        """View the user's past warnings"""
+        await paginate.create_pagination(interaction, user, "search", "search")
 
 
 async def setup(bot: commands.Bot):

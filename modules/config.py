@@ -6,7 +6,7 @@ from discord.app_commands import Choice
 from discord.ext import commands
 
 from classes.databaseController import ConfigTransactions, ConfigData
-from modals.configinput import ConfigInputUnique
+from views.modals.configinput import ConfigInputUnique
 
 
 # noinspection PyUnresolvedReferences
@@ -68,7 +68,7 @@ class config(commands.GroupCog, name="config"):
     @app_commands.command()
     @app_commands.choices(key=[Choice(name=x, value=x) for x in
                                ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
-                                "idlog", "advertmod", "advertlog", "nsfwlog"]])
+                                "idlog", "advertmod", "advertlog", "nsfwlog", "warnlog"]])
     @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def channels(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],

@@ -25,6 +25,7 @@ class Base(DeclarativeBase):
     pass
 
 
+# noinspection PyTypeChecker, PydanticTypeChecker
 class Users(Base):
     __tablename__ = "users"
     uid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
@@ -35,6 +36,7 @@ class Users(Base):
     id: Mapped["IdVerification"] = relationship(back_populates="user", cascade="save-update, merge, delete, delete-orphan")
 
 
+# noinspection PyTypeChecker, PydanticTypeChecker
 class Warnings(Base):
     __tablename__ = "warnings"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -44,10 +46,14 @@ class Warnings(Base):
     entry: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+# noinspection PyTypeChecker, PydanticTypeChecker
+
 class Servers(Base):
     __tablename__ = "servers"
     guild: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
 
+
+# noinspection PyTypeChecker, PydanticTypeChecker
 
 class Config(Base):
     # Reminder to self you can add multiple keys in this database
@@ -58,6 +64,7 @@ class Config(Base):
     value: Mapped[str] = mapped_column(String(1980))
 
 
+# noinspection PyTypeChecker, PydanticTypeChecker
 class Watchlist(Base):
     __tablename__ = "watchlist"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -66,12 +73,14 @@ class Watchlist(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+# noinspection PyTypeChecker, PydanticTypeChecker
+
 class IdVerification(Base):
     __tablename__ = "verification"
     uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), primary_key=True,
                                      autoincrement=False)
     reason: Mapped[Optional[str]] = mapped_column(String(1024))
-    idcheck: Mapped[bool] = mapped_column(Boolean,default=False)
+    idcheck: Mapped[bool] = mapped_column(Boolean, default=False)
     idverified: Mapped[bool] = mapped_column(Boolean, default=False)
     verifieddob: Mapped[Optional[datetime]]
     user: Mapped["Users"] = relationship(back_populates="id")

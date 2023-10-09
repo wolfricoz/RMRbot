@@ -3,7 +3,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from classes.databaseController import ConfigTransactions
+from classes.databaseController import ConfigTransactions, ConfigData
 
 
 # the base for a cog.
@@ -22,7 +22,7 @@ class inviteInfo(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         # reads invite dictionary, and outputs user info
-        infochannel = ConfigTransactions.config_unique_get(member.guild.id, 'inviteinfo')
+        infochannel = ConfigData().get_key_int(member.guild.id, 'inviteinfo')
         if infochannel is None:
             return
         invites_before_join = self.bot.invites[member.guild.id]

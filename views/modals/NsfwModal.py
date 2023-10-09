@@ -9,9 +9,11 @@ from classes.databaseController import UserTransactions, ConfigData, Verificatio
 
 
 class NsfwFunctions(ABC):
+    """All functions needed for the NSFW lobby process"""
     @staticmethod
     @abstractmethod
     async def log(user, guild, age, dob):
+        """Logs the user into the nsfwlog"""
         lobbylog = ConfigData().get_key(guild.id, "nsfwlog")
         channel = guild.get_channel(int(lobbylog))
 
@@ -24,13 +26,13 @@ class NsfwFunctions(ABC):
     @staticmethod
     @abstractmethod
     async def add_roles_user(user, guild):
+        """Adds the NSFW role to the user."""
         confrole = ConfigData().get_key_int(guild.id, "NSFW")
         roles = guild.get_role(confrole)
-
-
         await user.add_roles(roles)
 
 
+# noinspection PyUnresolvedReferences
 class NsfwVerifyModal(discord.ui.Modal):
     # Our modal classes MUST subclass `discord.ui.Modal`,
     # but the title can be whatever you want.
@@ -83,7 +85,7 @@ class NsfwVerifyModal(discord.ui.Modal):
                                                          f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18")
             return
         # Checks if user is underaged
-        agechecked, years = AgeCalculations.agechecker(age, dob)
+        agechecked, years = AgeCalculations.agechecker(int(age), dob)
         if agechecked != 0:
             await channel.send(
                     f"[Info] User {interaction.user.mention}\'s age does not match and has been timed out. User gave {age} but dob indicates {years}\n"
