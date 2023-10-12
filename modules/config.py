@@ -113,7 +113,7 @@ class config(commands.GroupCog, name="config"):
             case _:
                 raise NotImplementedError
 
-    rkeys = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW", "Partner role": "partner"}
+    rkeys = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW", "Partner role": "partner", "Searchban role": "posttimeout"}
     ractions = ['add', 'Remove']
 
     @app_commands.command()
@@ -129,15 +129,15 @@ class config(commands.GroupCog, name="config"):
                 result = ConfigTransactions.config_key_add(guildid=interaction.guild.id, key=key.value.upper(),
                                                            value=value, overwrite=False)
                 if result is False:
-                    await interaction.followup.send(f"{key.name} <@&{value}> already exists")
+                    await interaction.followup.send(f"{key.name}: <@&{value}> already exists")
                     return
-                await interaction.followup.send(f"{key.name} <@&{value}> has been added to the database")
+                await interaction.followup.send(f"{key.name}: <@&{value}> has been added to the database")
             case 'remove':
                 result = ConfigTransactions.config_key_remove(guildid=interaction.guild.id, key=key.value.upper(),
                                                               value=value)
                 if result is False:
-                    await interaction.followup.send(f"{key.name} <@&{value}> could not be found in database")
-                await interaction.followup.send(f"{key.name} <@&{value}> has been removed from the database")
+                    await interaction.followup.send(f"{key.name}: <@&{value}> could not be found in database")
+                await interaction.followup.send(f"{key.name}: <@&{value}> has been removed from the database")
             case _:
                 raise NotImplementedError
 

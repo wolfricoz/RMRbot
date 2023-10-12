@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC, abstractmethod
-from datetime import timezone, datetime, timedelta
+from datetime import timezone, timedelta
 
 import sqlalchemy.exc
 from sqlalchemy.orm import Session
@@ -124,7 +124,7 @@ class UserTransactions(ABC):
             return False
         return True, exists
 
-    #Warning related functions
+    # Warning related functions
     @staticmethod
     @abstractmethod
     def user_add_warning(userid: int, reason: str):
@@ -149,12 +149,10 @@ class UserTransactions(ABC):
 
     @staticmethod
     @abstractmethod
-    def user_remove_warning(id : int):
+    def user_remove_warning(id: int):
         warning = session.scalar(Select(Warnings).where(Warnings.id == id))
         session.delete(warning)
         session.commit()
-
-
 
 
 # RULE: ALL db transactions have to go through this file. Keep to it dumbass
@@ -379,6 +377,7 @@ class ConfigData(ABC):
                 self.conf[guildid]["BAN"][x.key.replace('BAN-', '')] = x.value
                 continue
             self.conf[guildid][x.key] = x.value
+
     def get_config(self, guildid):
         try:
             return self.conf[guildid]
@@ -423,8 +422,6 @@ class SearchWarningTransactions(ABC):
             total += 1
         return total, active
 
-
-
     @staticmethod
     @abstractmethod
     def add_warning(userid: int, reason: str = None):
@@ -434,4 +431,35 @@ class SearchWarningTransactions(ABC):
         session.commit()
         total_warnings, active_warnings = SearchWarningTransactions.get_total_warnings(userid)
         return total_warnings, active_warnings
+
+
+class TimersTransactions(ABC):
+    @staticmethod
+    @abstractmethod
+    def add_timer(guildid, userid, time_in_hours, roleid=None, reason=None):
+        """Adds timer to the database"""
+        entry = Timers(uid=userid, guild=guildid, removal=time_in_hours, role=roleid, reason=reason)
+        session.add(entry)
+        session.commit()
+
+    @staticmethod
+    @abstractmethod
+    def get_timer_with_role(userid, guildid, roleid):
+        """Gets the timer from the database with userid, guild and roleid"""
+        timer = session.scalar(Select(Timers).where(Timers.uid == userid, Timers.guild == guildid, Timers.role == roleid))
+        session.close()
+        return timer
+
+    # @staticmethod
+    # @abstractmethod
+    # def get_timers(userid, guild):
+    #     """Gets all timers that a user has with userid and guild."""
+    #     timer = session.scalar(Select(Timers).where(Timers.uid == userid))
+
+    @staticmethod
+    @abstractmethod
+    def remove_timer(id):
+        timer = session.scalar(Select(Timers).where(Timers.id == id))
+        session.delete(timer)
+        session.commit()
 

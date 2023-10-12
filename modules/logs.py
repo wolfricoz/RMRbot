@@ -7,6 +7,8 @@ from discord import Interaction
 from discord.app_commands import AppCommandError, command, CheckFailure
 from discord.ext import commands
 from dotenv import load_dotenv
+from sys import platform
+import time
 
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
@@ -15,27 +17,37 @@ channels24 = os.getenv('channels24')
 single = os.getenv('single')
 test = os.getenv('test')
 count = 0
-if os.path.exists('logs'):
-    d = os.listdir('logs')
-    count = len(d)
-    print(count)
-else:
+os.environ['TZ'] = 'America/New_York'
+if platform == "linux" or platform == "linux2":
+    time.tzset()
+logfile = f"logs/log-{time.strftime('%m-%d-%Y')}"
+
+
+
+
+if os.path.exists('logs') is False:
+    print("Making logd directory")
     os.mkdir('logs')
-    count = 0
-with open(f'logs/log{count}', 'w') as f:
-    f.write("logging started")
-    print(f.name)
+
+if os.path.exists(logfile) is False:
+    with open(logfile, 'w') as f:
+        f.write("logging started")
+
+with open(logfile, 'a') as f:
+    f.write(f"\n\n----------------------------------------------------"
+            f"\nbot started at: {time.strftime('%c %Z')}\n"
+            f"----------------------------------------------------\n\n")
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.WARN)
-handler = logging.FileHandler(filename=f.name, encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename=logfile, encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 alogger = logging.getLogger('sqlalchemy')
 alogger.setLevel(logging.WARN)
-handler2 = logging.FileHandler(filename=f.name, encoding='utf-8', mode='a')
+handler2 = logging.FileHandler(filename=logfile, encoding='utf-8', mode='a')
 handler2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logging.basicConfig(filename=f.name, encoding='utf-8', level=logging.DEBUG, filemode='a')
+logging.basicConfig(filename=logfile, encoding='utf-8', level=logging.DEBUG, filemode='a')
 
 alogger.addHandler(handler2)
 

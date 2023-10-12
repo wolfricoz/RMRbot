@@ -85,6 +85,18 @@ class IdVerification(Base):
     verifieddob: Mapped[Optional[datetime]]
     user: Mapped["Users"] = relationship(back_populates="id")
 
+class Timers(Base):
+    __tablename__ = "timers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"))
+    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
+    role: Mapped[Optional[int]] = mapped_column(BigInteger)
+    reason: Mapped[Optional[str]] = mapped_column(String(1024))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # in hours
+    removal: Mapped[int]
+
+
 
 class database:
     @staticmethod

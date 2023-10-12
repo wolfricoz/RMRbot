@@ -1,16 +1,18 @@
+import datetime
 import typing
 
 import discord
+import pytz
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData
+from classes.databaseController import ConfigData, Timers, TimersTransactions
 from classes.moduser import ModUser
 
 
-# noinspection PyUnresolvedReferences
+
 class moderation(commands.Cog, name="Moderation"):
 
     def __init__(self, bot: commands.Bot) -> None:
@@ -91,46 +93,23 @@ reason {reason}""")
         await user.send(f"{interaction.guild.name} **__Notification__**: {reason} ")
         await interaction.followup.send(f"{user.mention} has been notified about {reason}")
 
-    # @app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
-    # @app_commands.choices(time=[
-    #     Choice(name="one week", value="for **1 Week**"),
-    #     Choice(name="two weeks", value="for **2 Weeks**"),
-    #     Choice(name="1 month", value="for **1 Month**"),
-    #     Choice(name="permanent", value="**permanently**"),
-    #     Choice(name="custom", value=f"custom"),
-    # ])
-    # @adefs.check_slash_admin_roles()
-    # async def searchban(self, interaction: discord.Interaction, member: discord.Member, time: Choice[str],
-    #                     custom: str = None) -> None:
-    #     await interaction.response.defer(ephemeral=True)
-    #     tz = pytz.timezone("US/Eastern")
-    #     bot = self.bot
-    #     searchbanrole = discord.utils.get(interaction.guild.roles, id=538809717808693248)
-    #     await member.add_roles(searchbanrole)
-    #     current = datetime.now(tz)
-    #     cooldown = None
-    #     if time.name == "one week":
-    #         cooldown = current + timedelta(weeks=1)
-    #     elif time.name == "two weeks":
-    #         cooldown = current + timedelta(weeks=2)
-    #     elif time.name == "1 month":
-    #         cooldown = current + timedelta(days=30)
-    #     else:
-    #         pass
-    #     reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban {time.value}. Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban. This search ban expires on {cooldown.strftime('%m/%d/%Y %I:%M:%S %p')} EST."
-    #     customr = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban for {custom}. Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban."
-    #     if time.value == "custom":
-    #         await member.send(customr)
-    #         await jsonmaker.Configer.addwarning(self, member, interaction, customr)
-    #         await ModUser.searchban(interaction, member, customr, interaction.guild, custom)
-    #         await interaction.followup.send(
-    #             f"{member.mention} has been search banned for {custom}\n(Note: the bot currently does not auto remove the role.)")
-    #     else:
-    #         await member.send(reason)
-    #         await jsonmaker.Configer.addwarning(self, member, interaction, reason)
-    #         await ModUser.searchban(interaction, member, customr, interaction.guild, time.value)
-    #         await interaction.followup.send(
-    #             f"{member.mention} has been search banned {time.value} ({cooldown.strftime('%m/%d/%Y %I:%M:%S %p')})\n(Note: the bot currently does not auto remove the role.)")
+    @app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
+    @permissions.check_app_roles_admin()
+    async def searchban(self, interaction: discord.Interaction, member: discord.Member, days: int) -> None:
+        await interaction.response.defer(ephemeral=True)
+        tz = pytz.timezone("US/Eastern")
+        roleid = ConfigData().get_key_int(interaction.guild.id, 'posttimeout')
+        searchbanrole = interaction.guild.get_role(roleid)
+        await member.add_roles(searchbanrole)
+        cooldown = datetime.datetime.now(tz=tz) + datetime.timedelta(days=days)
+        hours = days*24
+        reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban of {days} day(s). Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban.\n\n This search ban expires on:\n {cooldown.strftime('%m/%d/%Y')}"
+        await member.send(reason)
+        TimersTransactions.add_timer(interaction.guild.id, interaction.user.id, hours, reason=reason, roleid=roleid)
+        await ModUser.log(interaction, interaction.user, reason, interaction.guild, typeofaction="searchbanned")
+        await interaction.followup.send(
+            f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
+
 
 
 async def setup(bot: commands.Bot):
