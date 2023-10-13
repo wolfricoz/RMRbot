@@ -132,7 +132,7 @@ class Lobby(commands.GroupCog):
             self.user = user
             super().__init__(timeout=None)
 
-        @discord.ui.button(label="allow", style=discord.ButtonStyle.green, custom_id="allow")
+        @discord.ui.button(label="Allow", style=discord.ButtonStyle.green, custom_id="allow")
         async def allow(self, interaction: discord.Interaction, button: discord.ui.Button):
             """starts approving process"""
             if self.age is None or self.dob is None or self.user is None:
