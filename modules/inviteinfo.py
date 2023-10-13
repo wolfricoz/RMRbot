@@ -1,27 +1,25 @@
+"""Checks the users invite info when they join and logs it"""
 from datetime import datetime
 
 import discord
 from discord.ext import commands
 
-from classes.databaseController import ConfigTransactions, ConfigData
+from classes.databaseController import ConfigData
 
 
-# the base for a cog.
 class inviteInfo(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # Your first app command!
     def find_invite_by_code(self, invite_list, code):
-        # makes an invite dictionary
+        """makes an invite dictionary"""
         for inv in invite_list:
             if inv.code == code:
                 return inv
 
-    # this has to become its own cog, rewrite to become dynamic.
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        # reads invite dictionary, and outputs user info
+        """reads invite dictionary, and outputs user info"""
         infochannel = ConfigData().get_key_int(member.guild.id, 'inviteinfo')
         if infochannel is None:
             return
@@ -50,8 +48,10 @@ Member joined at {datetime.now().strftime("%m/%d/%Y")}
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
+        """removes member's invites"""
         self.bot.invites[member.guild.id] = await member.guild.invites()
 
 
 async def setup(bot):
+    """Adds cog to the bot"""
     await bot.add_cog(inviteInfo(bot))

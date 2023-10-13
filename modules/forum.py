@@ -1,26 +1,30 @@
+"""Handles all forum related actions; such as automod and warnings."""
 import os
 import re
-from datetime import datetime, timedelta
 import typing
+from datetime import datetime, timedelta
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from classes.automod import ForumAutoMod
-from classes.databaseController import ConfigData, SearchWarningTransactions, UserTransactions
-from classes.Advert import Advert
 import classes.permissions as permissions
+from classes.Advert import Advert
+from classes.automod import ForumAutoMod
+from classes.databaseController import ConfigData, SearchWarningTransactions
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
 
+
 # noinspection PyUnresolvedReferences
-class forum(commands.GroupCog, name="forum"):
+class Forum(commands.GroupCog, name="forum"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread: discord.Thread):
+        """Initiates automod to check the thread"""
         # gets the config
         forums = ForumAutoMod.config(guildid=thread.guild.id)
         bot = self.bot
@@ -39,18 +43,19 @@ class forum(commands.GroupCog, name="forum"):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        """Checks if user wants to bump"""
         if message.author.bot:
             return
         if message.channel.type is discord.ChannelType.text:
             return
         forums = ForumAutoMod.config(guildid=message.guild.id)
-        content = message.content
         dobreg = re.compile(r"bump|bumping", flags=re.IGNORECASE)
         match = dobreg.search(message.content)
         try:
             thread: discord.Thread = message.guild.get_thread(message.channel.id)
             forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
-        except:
+        except Exception as e:
+            print(e)
             return
 
         if message.channel.type is discord.ChannelType.public_thread:
@@ -72,7 +77,6 @@ class forum(commands.GroupCog, name="forum"):
                         if m.author.id == bot.application_id:
                             count += 1
                         if count == 1:
-                            lm = m.jump_url
                             pm = m.created_at
                             await message.author.send(
                                     f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
@@ -103,7 +107,7 @@ class forum(commands.GroupCog, name="forum"):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
-        print(message.content)
+        """Removes the thread if the main message is removed."""
         forums = ForumAutoMod.config(message.guild.id)
         if message.channel.type != discord.ChannelType.public_thread:
             return
@@ -115,7 +119,7 @@ class forum(commands.GroupCog, name="forum"):
             return
         if message.id != message.channel.id:
             return
-        mod_channel_id = ConfigData().get_key_int(message.guild.id, 'ADVERTLOG')
+        mod_channel_id = ConfigData().get_key_int(message.guild.id, 'removallog')
         mod_channel = self.bot.get_channel(mod_channel_id)
         await mod_channel.send(
                 f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
@@ -124,7 +128,7 @@ class forum(commands.GroupCog, name="forum"):
     # Commands start here
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):
-        "Allows you to bump your advert every 72 hours."
+        """Allows you to bump your advert every 72 hours."""
         forums = ForumAutoMod.config(interaction.guild.id)
         thread: discord.Thread = interaction.guild.get_thread(interaction.channel.id)
         forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
@@ -135,11 +139,9 @@ class forum(commands.GroupCog, name="forum"):
         await interaction.response.defer(ephemeral=True)
         await ForumAutoMod.bump(self.bot, interaction)
 
-
-
     @app_commands.command(name="close", description="Removes your post from the forum and sends you a copy.")
     async def close(self, interaction: discord.Interaction):
-        "Closes the advert and sends the advert to your dms"
+        """Closes the advert and sends the advert to your dms"""
         await interaction.response.defer(ephemeral=True)
         thread: discord.Thread = interaction.channel
         if interaction.channel.type != discord.ChannelType.public_thread:
@@ -158,9 +160,8 @@ class forum(commands.GroupCog, name="forum"):
         await thread.delete()
         os.remove(f.name)
 
-
-    async def search_commands_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[
-        app_commands.Choice[str]]:
+    async def search_commands_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[str]]:
+        """generates the options for autocomplete."""
         data = []
         search_commands = ConfigData().get_key(interaction.guild.id, "SEARCH")
         data.append(app_commands.Choice(name="custom", value="custom"))
@@ -169,13 +170,12 @@ class forum(commands.GroupCog, name="forum"):
                 data.append(app_commands.Choice(name=x.lower(), value=x))
         return data
 
-
-
     # /forum warn here.
     @app_commands.command()
     @permissions.check_app_roles()
     @app_commands.autocomplete(warning_type=search_commands_autocompletion)
-    async def warn(self, interaction: discord.Interaction, warning_type:str, thread: discord.Thread = None) -> None:
+    async def warn(self, interaction: discord.Interaction, warning_type: str, thread: discord.Thread = None) -> None:
+        """Warns the user and removes the advert; logs the warning in database."""
         warnings: dict = ConfigData().get_key(interaction.guild.id, "SEARCH")
         reason = warnings.get(warning_type)
         if interaction.channel.type != discord.ChannelType.public_thread and thread is None:
@@ -216,4 +216,5 @@ class forum(commands.GroupCog, name="forum"):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(forum(bot))
+    """Adds cog to the bot."""
+    await bot.add_cog(Forum(bot))

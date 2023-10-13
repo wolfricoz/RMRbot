@@ -1,17 +1,11 @@
-import datetime
-import os
-import re
-from abc import ABC, abstractmethod
-
+"""Handles verification of users"""
 import discord
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-import databases.current
-from classes.AgeCalculations import AgeCalculations
-from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
+from classes.databaseController import VerificationTransactions
 
 
 # the base for a cog.
@@ -27,6 +21,7 @@ class verification(commands.GroupCog):
     @permissions.check_app_roles()
     async def idcheck(self, interaction: discord.Interaction, operation: Choice['str'], toggle: Choice['str'],
                       userid: str, reason: str = None):
+        """adds user to id check or removes them"""
         if toggle.value == "True":
             toggle = True
         elif toggle.value == "False":
@@ -39,7 +34,7 @@ class verification(commands.GroupCog):
                     return
                 VerificationTransactions.update_check(userid, reason, toggle)
                 await interaction.followup.send(
-                    f"<@{userid}>'s userid entry has been updated with reason: {reason} and idcheck: {toggle}")
+                        f"<@{userid}>'s userid entry has been updated with reason: {reason} and idcheck: {toggle}")
             case "ADD":
                 if reason is None:
                     await interaction.followup.send(f"Please include a reason")
@@ -60,6 +55,6 @@ class verification(commands.GroupCog):
                                                 f"verifieddob: {user.verifieddob}\n")
 
 
-
 async def setup(bot):
+    """Adds the cog to the bot."""
     await bot.add_cog(verification(bot))

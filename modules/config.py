@@ -1,3 +1,4 @@
+"""Config options for the bot."""
 import os
 
 import discord
@@ -15,32 +16,34 @@ class config(commands.GroupCog, name="config"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # this command is used for unique keys. Roles will need their own command due to not being unique.
+    # Depracated
+    # def check(self, key: str, value: str):
+    #     intkeys = ["dev", "mod", "admin", 'general', 'helpchannel', ]
+    #     # strkeys = ["welcome"]
+    #     reason = ""
+    #     if value is None:
+    #         reason = "Please fill in the 'value' field."
+    #         return False, reason
+    #     if value.isdigit() is False and key.lower() in intkeys:
+    #         reason = "This key only accepts integers (digits)"
+    #         return False, reason
+    #     # elif key.lower() in strkeys:
+    #     #     reason = "This key only accepts strings (Text)"
+    #     #     return False, reason
+    #     return True, reason
 
-    def check(self, key: str, value: str):
-        intkeys = ["dev", "mod", "admin", 'general', 'helpchannel', ]
-        # strkeys = ["welcome"]
-        reason = ""
-        if value is None:
-            reason = "Please fill in the 'value' field."
-            return False, reason
-        if value.isdigit() is False and key.lower() in intkeys:
-            reason = "This key only accepts integers (digits)"
-            return False, reason
-        # elif key.lower() in strkeys:
-        #     reason = "This key only accepts strings (Text)"
-        #     return False, reason
-        return True, reason
-
-    keys = ['welcomemessage', "lobbywelcome", "reminder"]
-    actions = ['set', 'Remove']
+    messagechoices = ['welcomemessage', "lobbywelcome", "reminder"]
+    channelchoices = ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
+                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog"]
+    rolechoices = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW",
+                   "Partner role": "partner", "Searchban role": "posttimeout"}
 
     @app_commands.command()
-    @app_commands.choices(key=[Choice(name=x, value=x) for x in keys])
-    @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
+    @app_commands.choices(key=[Choice(name=x, value=x) for x in messagechoices])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ['set', 'Remove']])
     @app_commands.checks.has_permissions(manage_guild=True)
-    async def messages(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
-                       ):
+    async def messages(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str]):
+        """Sets the messages such as welcome, lobby welcome and reminder messages."""
         match action.value.lower():
             case 'set':
                 await interaction.response.send_modal(ConfigInputUnique(key=key.value))
@@ -58,6 +61,7 @@ class config(commands.GroupCog, name="config"):
     @app_commands.choices(action=[Choice(name=x, value=x) for x in ["enabled", "disabled"]])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def welcometoggle(self, interaction: discord.Interaction, action: Choice[str]):
+        """Enables/Disables the welcome message for the general channel."""
         match action.value.upper():
             case "ENABLED":
                 ConfigTransactions.toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
@@ -66,10 +70,8 @@ class config(commands.GroupCog, name="config"):
         await interaction.response.send_message(f"Welcome has been set to {action.value}", ephemeral=True)
 
     @app_commands.command()
-    @app_commands.choices(key=[Choice(name=x, value=x) for x in
-                               ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
-                                "idlog", "advertmod", "advertlog", "nsfwlog", "warnlog"]])
-    @app_commands.choices(action=[Choice(name=x, value=x) for x in actions])
+    @app_commands.choices(key=[Choice(name=x, value=x) for x in channelchoices])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ["set", "remove"]])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def channels(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
                        value: discord.TextChannel = None):
@@ -113,12 +115,9 @@ class config(commands.GroupCog, name="config"):
             case _:
                 raise NotImplementedError
 
-    rkeys = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW", "Partner role": "partner", "Searchban role": "posttimeout"}
-    ractions = ['add', 'Remove']
-
     @app_commands.command()
-    @app_commands.choices(key=[Choice(name=ke, value=val) for ke, val in rkeys.items()])
-    @app_commands.choices(action=[Choice(name=x, value=x) for x in ractions])
+    @app_commands.choices(key=[Choice(name=ke, value=val) for ke, val in rolechoices.items()])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ['add', 'Remove']])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def roles(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str], value: discord.Role):
         """Add roles to the database, for the bot to use."""
@@ -142,7 +141,7 @@ class config(commands.GroupCog, name="config"):
                 raise NotImplementedError
 
     @app_commands.command()
-    @app_commands.choices(action=[Choice(name=x, value=x) for x in ractions])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ["add", "remove"]])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def searchcommands(self, interaction: discord.Interaction, action: Choice[str], name: str):
         """Adds search command to the /forum warn command"""
@@ -166,7 +165,7 @@ class config(commands.GroupCog, name="config"):
                 raise NotImplementedError
 
     @app_commands.command()
-    @app_commands.choices(action=[Choice(name=x, value=x) for x in ractions])
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ["add", "remove"]])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def banmessages(self, interaction: discord.Interaction, action: Choice[str], name: str):
         """Adds an option to the /ban command."""
@@ -190,16 +189,23 @@ class config(commands.GroupCog, name="config"):
     @app_commands.command()
     @app_commands.checks.has_permissions(manage_guild=True)
     async def view(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        config_data = ConfigData().get_config(interaction.guild.id)
+        """Prints all the config options"""
+        # configoptions = ['welcomemessage', "lobbywelcome", "reminder", "dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
+        #                  "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "FORUM", "mod", "admin", "add", "rem", "18", "21", "25", "return", "nsfw", "partner", "posttimeout", "SEARCH"]
 
+        roles = [x for x in self.rolechoices.values()]
+        other = ["FORUM", "SEARCH"]
+        optionsall = self.messagechoices + self.channelchoices + roles + other
+        await interaction.response.defer()
         with open('config.txt', 'w') as file:
             file.write(f"Config for {interaction.guild.name}: \n\n")
-            for key, value in config_data.items():
-                file.write(f"{key}: {value}\n")
+            for item in optionsall:
+                info = ConfigData().get_key_or_none(interaction.guild.id, item)
+                file.write(f"{item}: {info}\n")
         await interaction.followup.send(f"Config for {interaction.guild.name}", file=discord.File(file.name))
         os.remove(file.name)
 
 
 async def setup(bot: commands.Bot):
+    """Adds the cog to the bot"""
     await bot.add_cog(config(bot))

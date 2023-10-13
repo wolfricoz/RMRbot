@@ -32,7 +32,6 @@ class Users(Base):
     dob: Mapped[Optional[datetime]]
     entry: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     warnings: Mapped[List["Warnings"]] = relationship(cascade="save-update, merge, delete, delete-orphan")
-    watchlist: Mapped[List["Watchlist"]] = relationship(cascade="save-update, merge, delete, delete-orphan")
     id: Mapped["IdVerification"] = relationship(back_populates="user", cascade="save-update, merge, delete, delete-orphan")
 
 
@@ -64,13 +63,7 @@ class Config(Base):
     value: Mapped[str] = mapped_column(String(1980))
 
 
-# noinspection PyTypeChecker, PydanticTypeChecker
-class Watchlist(Base):
-    __tablename__ = "watchlist"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"))
-    reason: Mapped[str] = mapped_column(String(1024))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
 
 
 # noinspection PyTypeChecker, PydanticTypeChecker

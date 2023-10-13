@@ -1,10 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import discord
-import pytz
-
-from classes import jsonmaker
 
 
 class Advert(ABC):
@@ -56,34 +53,3 @@ class Advert(ABC):
         except discord.Forbidden:
             await ctx.followup.send("Can't DM user")
             pass
-
-    @staticmethod
-    @abstractmethod
-    async def resetcooldown(self, message, timeincrement):
-        tz = pytz.timezone('US/Eastern')
-        now = datetime.now(tz)
-        cd = now + timedelta(days=timeincrement)
-        jsonmaker.Cooldown.add(self, message.author.id, message.channel.id, cd)
-
-# Deprecated
-    @abstractmethod
-    async def addreason(self, value):
-        warn = ""
-        match value:
-            case "age":
-                warn = "Your advert failed to include character ages. We require both ages of your characters and your partner. It is recommended to add a general disclaimer."
-            case "e72":
-                warn = "You have posted too early in the channel, this channel has a 72 hour cooldown."
-            case "e24":
-                warn = "You have posted too early in the channel, this channel has a 24 hour cooldown."
-            case "form":
-                warn = "Your advert's format is incorrect. Potential causes: Double spacing, spacing between list items, more than 10 list items, using a font that is not Discord's default font."
-            case "temp":
-                warn = "Your advert did not follow the template."
-            case "dup":
-                warn = "Your advert was posted in other channels, we only allow unique adverts to be posted in multiple channels."
-            case "pic":
-                warn = "You have too many pictures within your advert. We allow up to 5 (FORUMS ONLY)."
-            case _:
-                pass
-        return warn

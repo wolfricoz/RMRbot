@@ -1,14 +1,15 @@
+"""Logs all the happenings of the bot."""
 import logging
 import os
+import time
 import traceback
+from sys import platform
 
 import discord.utils
 from discord import Interaction
 from discord.app_commands import AppCommandError, command, CheckFailure
 from discord.ext import commands
 from dotenv import load_dotenv
-from sys import platform
-import time
 
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
@@ -20,10 +21,7 @@ count = 0
 os.environ['TZ'] = 'America/New_York'
 if platform == "linux" or platform == "linux2":
     time.tzset()
-logfile = f"logs/log-{time.strftime('%m-%d-%Y')}"
-
-
-
+logfile = f"logs/log-{time.strftime('%m-%d-%Y')}.txt"
 
 if os.path.exists('logs') is False:
     print("Making logd directory")
@@ -58,6 +56,7 @@ class Logging(commands.Cog):
 
     @commands.Cog.listener("on_command_error")
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
+        """handles chat-based command errors."""
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please fill in the required arguments")
         elif isinstance(error, commands.CommandNotFound):
@@ -97,6 +96,7 @@ class Logging(commands.Cog):
             interaction: Interaction,
             error: AppCommandError
     ):
+        """app command error handler."""
         if isinstance(error, CheckFailure):
             await interaction.response.send_message("[PERMERROR] You do not have permission.", ephemeral=True)
             return
@@ -105,26 +105,29 @@ class Logging(commands.Cog):
         with open('error.txt', 'w', encoding='utf-8') as file:
             file.write(traceback.format_exc())
         await channel.send(
-            f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}",
-            file=discord.File(file.name, "error.txt"))
+                f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}",
+                file=discord.File(file.name, "error.txt"))
         logger.warning(
-            f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
+                f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
 
         # raise error
 
     @commands.Cog.listener(name='on_command')
     async def print(self, ctx):
+        """logs the chat command when initiated"""
         server = ctx.guild
         user = ctx.author
         commandname = ctx.command
         logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued command: {commandname}')
 
     @commands.Cog.listener(name='on_app_command_completion')
-    async def print(self, ctx: Interaction, commandname: command):
+    async def appprint(self, ctx: Interaction, commandname: command):
+        """logs the app command when finished."""
         server = ctx.guild
         user = ctx.user
         logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname.name}')
 
 
 async def setup(bot):
+    """Adds the cog to the bot."""
     await bot.add_cog(Logging(bot))

@@ -6,7 +6,7 @@ from datetime import timezone, timedelta
 import sqlalchemy.exc
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
-
+from sqlalchemy.exc import SQLAlchemyError
 import databases.current as db
 from databases.current import *
 
@@ -100,6 +100,24 @@ class UserTransactions(ABC):
 
     @staticmethod
     @abstractmethod
+    def get_all_users():
+        userdata = session.scalars(Select(Users)).all()
+        session.close()
+        return userdata
+
+    @staticmethod
+    @abstractmethod
+    def update_entry_date(userid):
+        try:
+            userdata = session.scalar(Select(Users).where(Users.uid == userid))
+            userdata.entry = datetime.now()
+            session.commit()
+        except SQLAlchemyError:
+            session.rollback()
+            session.close()
+
+    @staticmethod
+    @abstractmethod
     def update():
         raise NotImplementedError
 
@@ -129,6 +147,14 @@ class UserTransactions(ABC):
     @abstractmethod
     def user_add_warning(userid: int, reason: str):
         item = db.Warnings(uid=userid, reason=reason, type="WARN")
+        session.add(item)
+        session.commit()
+        return True
+
+    @staticmethod
+    @abstractmethod
+    def user_add_watchlist(userid: int, reason: str):
+        item = db.Warnings(uid=userid, reason=reason, type="WATCH")
         session.add(item)
         session.commit()
         return True

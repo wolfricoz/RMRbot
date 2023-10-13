@@ -313,7 +313,7 @@ class roulette(commands.GroupCog, name="roulette"):
             if matchcounter[u1.get('Username')] >= 2:
                 print(f"{u1.get('Username')} already has the max amount of matches")
                 continue
-            for p in u1.keys():
+            for p in u1.messagechoices():
                 sk = ['Username']
                 if p in no or p in sk:
                     pass
@@ -327,7 +327,7 @@ class roulette(commands.GroupCog, name="roulette"):
                 if matchcounter[u2.get('Username')] >= 2:
                     print(f"{u2.get('Username')} is already matched")
                     continue
-                for p in u2.keys():
+                for p in u2.messagechoices():
                     if u2.get("Participate?") == "No":
                         print(f"{u2.get('Username')} participate: no")
                         count = -1

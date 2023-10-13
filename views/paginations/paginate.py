@@ -25,7 +25,7 @@ class PaginationView(discord.ui.View):
     def create_embed(self, data):
         embed = discord.Embed(title=f"User {self.warningtype} warnings")
         for item in data:
-            embed.add_field(name=f"Warning id: {item}", value=self.warndict.get(item, "Warning not found"), inline=False)
+            embed.add_field(name=f"{self.warningtype} id: {item}", value=self.warndict.get(item, "Warning not found"), inline=False)
         return embed
 
     def get_current_page_data(self):
@@ -35,7 +35,7 @@ class PaginationView(discord.ui.View):
 
     async def update_message(self, data):
         if len(self.data) == 0:
-            await self.message.channel.send(f"No warnings to display for {self.username}")
+            await self.message.channel.send(f"No {self.warningtype} entries to display for {self.username}")
             await self.message.delete()
             return
         self.update_buttons()

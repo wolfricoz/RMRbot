@@ -1,7 +1,7 @@
+"""This cogs handles all the tasks."""
 import json
+import logging
 import os
-import time
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 
 import discord
@@ -9,39 +9,37 @@ from discord import app_commands
 from discord.ext import commands, tasks
 
 import classes.databaseController
-from classes import permissions
-from classes.databaseController import ConfigData, TimersTransactions
 import classes.searchbans as searchbans
+from classes import permissions
+from classes.databaseController import ConfigData, TimersTransactions, UserTransactions
+
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
 
 
-
-
-# the base for a cog.
 class Tasks(commands.GroupCog):
     def __init__(self, bot):
+        """loads tasks"""
         self.bot = bot
         self.index = 0
         self.config_reload.start()
         self.lobby_history.start()
         self.search_ban_check.start()
+        self.check_users_expiration.start()
 
     def cog_unload(self):
+        """unloads tasks"""
         self.config_reload.cancel()
         self.lobby_history.cancel()
         self.search_ban_check.cancel()
-
+        self.check_users_expiration.cancel()
 
     @tasks.loop(hours=1)
     async def config_reload(self):
+        """Reloads the config for the latest data."""
         for guild in self.bot.guilds:
             ConfigData().load_guild(guild.id)
         print("config reload")
         ConfigData().output_to_json()
-
-    @config_reload.before_loop  # it's called before the actual task runs
-    async def before_checkactiv(self):
-        await self.bot.wait_until_ready()
 
     @tasks.loop(hours=24)
     async def lobby_history(self):
@@ -67,12 +65,9 @@ class Tasks(commands.GroupCog):
             json.dump(historydict, f, indent=4)
         print("[auto refresh]List updated")
 
-    @lobby_history.before_loop
-    async def before_lobbyhistory(self):
-        await self.bot.wait_until_ready()
-
     @tasks.loop(minutes=30)
     async def search_ban_check(self):
+        """checks if searchban can be removed."""
         print("checking search bans")
         for guild in self.bot.guilds:
             try:
@@ -92,7 +87,35 @@ class Tasks(commands.GroupCog):
                     continue
                 await searchbans.remove(member, role, timer)
 
+    @tasks.loop(hours=24)
+    async def check_users_expiration(self):
+        """updates entry time, if entry is expired this also removes it."""
+        print("checking user entries")
+        userdata = UserTransactions.get_all_users()
+        userids = [x.uid for x in userdata]
+        removaldate = datetime.now() - timedelta(days=730)
+        for guild in self.bot.guilds:
+            for member in guild.members:
+                if member.id not in userids:
+                    UserTransactions.add_user_empty(member.id)
+                    continue
+                UserTransactions.update_entry_date(member.id)
+
+        for entry in userdata:
+            if entry.entry < removaldate:
+                UserTransactions.user_delete(entry.uid)
+                logging.debug(f"Database record: {entry.uid} expired")
+
+    @app_commands.command(name="expirecheck")
+    @permissions.check_app_roles_admin()
+    async def expirecheck(self, interaction: discord.Interaction):
+        """forces the automatic search ban check to start; normally runs every 30 minutes"""
+        await interaction.response.send_message("[Debug]Checking all entries.")
+        self.check_users_expiration.restart()
+        await interaction.followup.send("check-up finished.")
+
     @app_commands.command(name="searchbans")
+    @permissions.check_app_roles_admin()
     async def check_search_bans(self, interaction: discord.Interaction):
         """forces the automatic search ban check to start; normally runs every 30 minutes"""
         await interaction.response.send_message("[Debug]Checking all searchbans.")
@@ -101,6 +124,25 @@ class Tasks(commands.GroupCog):
 
     @search_ban_check.before_loop
     async def before_sbc(self):
+        """stops event from starting before the bot has fully loaded"""
         await self.bot.wait_until_ready()
+
+    @check_users_expiration.before_loop
+    async def before_expire(self):
+        """stops event from starting before the bot has fully loaded"""
+        await self.bot.wait_until_ready()
+
+    @lobby_history.before_loop
+    async def before_lobbyhistory(self):
+        """stops event from starting before the bot has fully loaded"""
+        await self.bot.wait_until_ready()
+
+    @config_reload.before_loop  # it's called before the actual task runs
+    async def before_checkactiv(self):
+        """stops event from starting before the bot has fully loaded"""
+        await self.bot.wait_until_ready()
+
+
 async def setup(bot):
+    """Adds the cog to the bot."""
     await bot.add_cog(Tasks(bot))

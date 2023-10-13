@@ -1,3 +1,4 @@
+"""all moderation commands, except for warnings."""
 import datetime
 import typing
 
@@ -8,9 +9,9 @@ from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData, Timers, TimersTransactions
+from classes.databaseController import ConfigData, Timers, TimersTransactions, UserTransactions
 from classes.moduser import ModUser
-
+from views.paginations.paginate import paginate
 
 
 class moderation(commands.Cog, name="Moderation"):
@@ -21,6 +22,7 @@ class moderation(commands.Cog, name="Moderation"):
     @app_commands.command(name="watchlist")
     @permissions.check_app_roles()
     async def watchlist(self, interaction: discord.Interaction, user: discord.Member, *, reason: str):
+        """Adds user to the watchlist."""
         await interaction.response.send_message(f"adding {user} to watchlist", ephemeral=True)
         bot = self.bot
         # warnchannel = bot.get_channel(537365631675400192)
@@ -31,6 +33,7 @@ username: {user}
 reason {reason}""")
 
     async def ban_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[str]]:
+        """generates the ban autocompletion"""
         data = []
         search_commands = ConfigData().get_key(interaction.guild.id, "BAN")
         data.append(app_commands.Choice(name="custom", value="custom"))
@@ -50,16 +53,16 @@ reason {reason}""")
                 Choice(name="No", value="no")
             ]
     )
-    @app_commands.autocomplete(type=ban_autocompletion)
+    @app_commands.autocomplete(bantype=ban_autocompletion)
     @permissions.check_app_roles_admin()
-    async def banc(self, interaction: discord.Interaction, type: str, member: discord.User = None,
+    async def banc(self, interaction: discord.Interaction, bantype: str, member: discord.User = None,
                    memberid: str = None, *, reason: str = "You have been banned by an admin",
                    appeal: Choice[str], idlist: Choice[str]) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
         await interaction.response.defer(ephemeral=True)
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         print(bans)
-        reason = bans.get(type.upper(), reason)
+        reason = bans.get(bantype.upper(), reason)
         print(reason)
         bot = self.bot
         if memberid is None and member is None:
@@ -76,7 +79,8 @@ reason {reason}""")
 
     @app_commands.command(name="kick")
     @permissions.check_app_roles()
-    async def kick(self, interaction: discord.Interaction, user: discord.Member, *, reason: str = None):
+    async def kick(self, interaction: discord.Interaction, user: discord.Member, reason: str = None):
+        """kicks user from the server"""
         await interaction.response.send_message(f"Kicking {user}", ephemeral=True)
         try:
             await user.send(
@@ -86,9 +90,24 @@ reason {reason}""")
         await user.kick(reason=reason)
         await ModUser.log(interaction, user, reason, interaction.guild, typeofaction="kicked")
 
+    @app_commands.command(name="watchlist")
+    @permissions.check_app_roles()
+    async def watchlist(self, interaction: discord.Interaction, user: discord.Member, reason: str):
+        """Adds a suspicious user to the watchlist and database."""
+        await interaction.response.send_message(f"watchlisting {user}", ephemeral=True)
+        UserTransactions.user_add_watchlist(user.id, reason)
+        await ModUser.log(interaction, user, reason, interaction.guild, typeofaction="watchlisted")
+
+    @app_commands.command(name="watchhistory")
+    @permissions.check_app_roles()
+    async def watchhistory(self, interaction: discord.Interaction, user: discord.Member):
+        """View the user's past watchlist entries"""
+        await paginate.create_pagination(interaction, user, "watch", warningtype="Watchlist")
+
     @app_commands.command(name="notify")
     @permissions.check_app_roles()
     async def notify(self, interaction: discord.Interaction, user: discord.Member, *, reason: str):
+        """Notifies user with the message given"""
         await interaction.response.defer()
         await user.send(f"{interaction.guild.name} **__Notification__**: {reason} ")
         await interaction.followup.send(f"{user.mention} has been notified about {reason}")
@@ -96,21 +115,21 @@ reason {reason}""")
     @app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
     @permissions.check_app_roles_admin()
     async def searchban(self, interaction: discord.Interaction, member: discord.Member, days: int) -> None:
+        """Allows admin to add a searchban to a user."""
         await interaction.response.defer(ephemeral=True)
         tz = pytz.timezone("US/Eastern")
         roleid = ConfigData().get_key_int(interaction.guild.id, 'posttimeout')
         searchbanrole = interaction.guild.get_role(roleid)
         await member.add_roles(searchbanrole)
         cooldown = datetime.datetime.now(tz=tz) + datetime.timedelta(days=days)
-        hours = days*24
+        hours = days * 24
         reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban of {days} day(s). Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban.\n\n This search ban expires on:\n {cooldown.strftime('%m/%d/%Y')}"
         await member.send(reason)
         TimersTransactions.add_timer(interaction.guild.id, interaction.user.id, hours, reason=reason, roleid=roleid)
         await ModUser.log(interaction, interaction.user, reason, interaction.guild, typeofaction="searchbanned")
-        await interaction.followup.send(
-            f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
-
+        await interaction.followup.send(f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
 
 
 async def setup(bot: commands.Bot):
+    """Adds the cog to the bot."""
     await bot.add_cog(moderation(bot))

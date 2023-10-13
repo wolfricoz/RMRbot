@@ -71,5 +71,5 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         print(error)
-        await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
+        await interaction.response.send_message(f'Oops! Something went wrong.\n{error}', ephemeral=True)
 

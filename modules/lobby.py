@@ -1,6 +1,5 @@
+"""this module handles the lobby."""
 import datetime
-import re
-from abc import ABC, abstractmethod
 
 import discord
 from discord import app_commands
@@ -11,104 +10,7 @@ import classes.permissions as permissions
 import databases.current
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
-
-
-class LobbyProcess(ABC):
-    @staticmethod
-    @abstractmethod
-    async def approve_user(guild, user, dob, age, staff):
-        # updates user's age if it exists, otherwise makes a new entry
-        UserTransactions.update_user_dob(user.id, dob)
-        # Adds roles to the user
-        await LobbyProcess.add_roles_user(user, guild)
-        # Removes roles from the user
-        await LobbyProcess.remove_roles_user(user, guild)
-        # check add the right age role
-        await LobbyProcess.calculate_age_role(user, guild, age)
-        # Log age and dob to lobbylog
-        await LobbyProcess.log(user, guild, dob, age, staff)
-        # fetches welcoming message and welcomes them in general channel
-        await LobbyProcess.welcome(user, guild)
-        # Cleans up the messages
-        await LobbyProcess.clean_up(guild, user)
-
-    @staticmethod
-    @abstractmethod
-    async def add_roles_user(user, guild):
-        confroles = ConfigData().get_key(guild.id, "ADD")
-        roles = []
-        for role in confroles:
-            verrole = guild.get_role(int(role))
-            roles.append(verrole)
-        await user.add_roles(*roles)
-
-    @staticmethod
-    @abstractmethod
-    async def remove_roles_user(user, guild):
-        confroles = ConfigData().get_key(guild.id, "REM")
-        roles = []
-        for role in confroles:
-            verrole = guild.get_role(int(role))
-            roles.append(verrole)
-        await user.remove_roles(*roles)
-
-    @staticmethod
-    @abstractmethod
-    async def calculate_age_role(user, guild, age):
-        for n, y in {18: 21, 21: 25, 25: 1000}.items():
-            if n <= int(age) < y:
-                agerole = ConfigData().get_key(guild.id, str(n))
-                agerole = guild.get_role(int(agerole))
-                await user.add_roles(agerole)
-                break
-
-    @staticmethod
-    @abstractmethod
-    async def log(user, guild, age, dob, staff):
-        lobbylog = ConfigData().get_key(guild.id, "lobbylog")
-        channel = guild.get_channel(int(lobbylog))
-        await channel.send(f"user: {user.mention}\n"
-                           f"Age: {age} \n"
-                           f"DOB: {dob} \n"
-                           f"User info: \n"
-                           f"UID: {user.id}  joined at: {user.joined_at.strftime('%m/%d/%Y %I:%M:%S %p')} executed: {datetime.datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')} \n"
-                           f"staff: {staff}")
-
-    @staticmethod
-    @abstractmethod
-    async def clean_up(guild, user):
-        lobby = ConfigData().get_key(guild.id, "lobby")
-        lobbymod = ConfigData().get_key(guild.id, "lobbymod")
-        channel = guild.get_channel(int(lobby))
-        messages = channel.history(limit=100)
-        notify = re.compile(r"Info", flags=re.IGNORECASE)
-        count = 0
-        async for message in messages:
-            if message.author == user or user in message.mentions and count < 10:
-                count += 1
-                await message.delete()
-        channel = guild.get_channel(int(lobbymod))
-        messages = channel.history(limit=100)
-        count = 0
-        async for message in messages:
-            if user in message.mentions and count < 5:
-                if message.author.bot:
-                    notify_match = notify.search(message.content)
-                    if notify_match is not None:
-                        pass
-                    else:
-                        count += 1
-                        await message.delete()
-
-    @staticmethod
-    @abstractmethod
-    async def welcome(user: discord.Member, guild: discord.Guild):
-        if ConfigData().get_key(guild.id, "welcome") == "DISABLED":
-            return
-        general = ConfigData().get_key(guild.id, "general")
-        message = ConfigData().get_key(guild.id, "welcomemessage")
-        channel = guild.get_channel(int(general))
-        await channel.send(f"Welcome to {guild.name} {user.mention}! {message}")
+from classes.lobbyprocess import LobbyProcess
 
 
 class Lobby(commands.GroupCog):
@@ -232,6 +134,7 @@ class Lobby(commands.GroupCog):
 
         @discord.ui.button(label="allow", style=discord.ButtonStyle.green, custom_id="allow")
         async def allow(self, interaction: discord.Interaction, button: discord.ui.Button):
+            """starts approving process"""
             if self.age is None or self.dob is None or self.user is None:
                 await interaction.response.send_message('Missing data, please use the command.', ephemeral=True)
                 return
@@ -241,12 +144,14 @@ class Lobby(commands.GroupCog):
 
         @discord.ui.button(label="Manual ID Check", style=discord.ButtonStyle.red, custom_id="ID")
         async def manual_id(self, interaction: discord.Interaction, button: discord.ui.Button):
+            """Flags user for manual id."""
             if self.user is None:
                 await interaction.response.send_message('Missing data, please manually report user to admins',
                                                         ephemeral=True)
             idcheck = ConfigData().get_key_int(interaction.guild.id, "idlog")
             admin = ConfigData().get_key(interaction.guild.id, "admin")
             idlog = interaction.guild.get_channel(idcheck)
+            VerificationTransactions.set_idcheck_to_true(self.user.id, f"manually flagged by {interaction.user.name}")
             await idlog.send(
                     f"<@&{admin[0]}> {interaction.user.mention} has flagged {self.user.mention} for manual ID.")
             return
@@ -254,6 +159,7 @@ class Lobby(commands.GroupCog):
     @app_commands.command(name="button")
     @permissions.check_app_roles_admin()
     async def verify_button(self, interaction: discord.Interaction, text: str):
+        """Verification button for the lobby; initiates the whole process"""
         await interaction.channel.send(text, view=self.VerifyButton())
 
     @app_commands.command()
@@ -261,7 +167,7 @@ class Lobby(commands.GroupCog):
                                      ['add', 'update', 'delete', 'get']])
     @permissions.check_app_roles_admin()
     async def database(self, interaction: discord.Interaction, operation: Choice['str'], userid: str, dob: str = None):
-
+        """One stop shop to handle all age entry management"""
         await interaction.response.defer(ephemeral=True)
         match operation.value.upper():
             case "UPDATE":
@@ -285,12 +191,13 @@ class Lobby(commands.GroupCog):
                                                 f"user: <@{user.uid}>\n"
                                                 f"dob: {user.dob.strftime('%m/%d/%Y')}")
 
-    @app_commands.command(description="ID verifies user. process True will put the user through the lobby.")
+    @app_commands.command()
     @app_commands.choices(process=[Choice(name=x, value=x) for x in
                                    ["True", "False"]])
     @permissions.check_app_roles_admin()
     async def idverify(self, interaction: discord.Interaction, process: Choice['str'],
                        user: discord.Member, dob: str):
+        """ID verifies user. process True will put the user through the lobby."""
         await interaction.response.defer(ephemeral=True)
         lobbylog = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
 
@@ -334,6 +241,7 @@ UID: {user.id}
     @app_commands.command()
     @permissions.check_app_roles()
     async def returnlobby(self, interaction: discord.Interaction, user: discord.Member):
+        """returns user to lobby; removes the roles."""
         await interaction.response.defer()
         add: list = ConfigData().get_key(interaction.guild.id, "add")
         rem: list = ConfigData().get_key(interaction.guild.id, "rem")
@@ -357,12 +265,14 @@ UID: {user.id}
     @app_commands.command()
     @permissions.check_app_roles()
     async def agecheck(self, interaction: discord.Interaction, dob: str):
+        """Checks the age of a dob"""
         age = AgeCalculations.dob_to_age(dob)
         await interaction.response.send_message(f"As of today {dob} is {age} years old", ephemeral=True)
 
     @commands.command(name="18a")
     @permissions.check_roles()
     async def _18a(self, ctx: commands.Context, user: discord.Member, age: int, dob: str):
+        """allows user to enter"""
         dob = AgeCalculations.regex(dob)
         await LobbyProcess.approve_user(ctx.guild, user, dob, age, ctx.author.name)
         await ctx.message.delete()
@@ -370,6 +280,7 @@ UID: {user.id}
     @commands.command(name="21a")
     @permissions.check_roles()
     async def _21a(self, ctx: commands.Context, user: discord.Member, age: int, dob: str):
+        """allows user to enter"""
         dob = AgeCalculations.regex(dob)
         await LobbyProcess.approve_user(ctx.guild, user, dob, age, ctx.author.name)
         await ctx.message.delete()
@@ -377,6 +288,7 @@ UID: {user.id}
     @commands.command(name="25a")
     @permissions.check_roles()
     async def _25a(self, ctx: commands.Context, user: discord.Member, age: int, dob: str):
+        """allows user to enter"""
         dob = AgeCalculations.regex(dob)
         await LobbyProcess.approve_user(ctx.guild, user, dob, age, ctx.author.name)
         await ctx.message.delete()
@@ -385,6 +297,7 @@ UID: {user.id}
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
+        """posts the button for the user to verify with."""
         lobby = ConfigData().get_key_int(member.guild.id, "lobby")
         channel = member.guild.get_channel(lobby)
         lobbywelcome = ConfigData().get_key(member.guild.id, "lobbywelcome")
@@ -392,4 +305,5 @@ UID: {user.id}
 
 
 async def setup(bot):
+    """Adds the cog to the bot."""
     await bot.add_cog(Lobby(bot))

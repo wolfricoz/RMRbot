@@ -1,3 +1,4 @@
+"""these commands are strictly for RMN."""
 import typing
 
 import discord
@@ -12,8 +13,8 @@ class moderation(commands.Cog, name="rmn"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    async def channels_autocomplete(self, interaction: discord.Interaction, current: str) -> typing.List[
-        app_commands.Choice[str]]:
+    async def channels_autocomplete(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[str]]:
+        """generates the autocompletion for partner channels"""
         data = []
         no = ['staff information', 'tickets', 'staff chat', 'partner lounge', 'check out roleplay meets: reborn', 'lobby', 'how to become a partner', 'chatter', 'server-related', 'to-be-removed']
         search_commands = [x for x in interaction.guild.categories]
@@ -28,11 +29,9 @@ class moderation(commands.Cog, name="rmn"):
 
     @app_commands.command(name="partnerapprove")
     @app_commands.autocomplete(category=channels_autocomplete)
-    async def partner(self, interaction: discord.Interaction, category: str, member: discord.Member,
-                      servername: str):
+    async def partner(self, interaction: discord.Interaction, category: str, member: discord.Member, servername: str):
+        """Creates partner channel for partnerships."""
         await interaction.response.defer()
-        bot = self.bot
-        guild = interaction.guild
         category = discord.utils.get(interaction.guild.categories, id=int(category))
         partner = discord.utils.get(interaction.guild.roles, id=ConfigData().get_key_int(interaction.guild.id, "partner"))
         channel = await interaction.guild.create_text_channel(servername, category=category)
@@ -44,4 +43,5 @@ class moderation(commands.Cog, name="rmn"):
 
 
 async def setup(bot: commands.Bot):
+    """Adds the cog to the bot."""
     await bot.add_cog(moderation(bot))
