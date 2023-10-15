@@ -19,18 +19,6 @@ class moderation(commands.Cog, name="Moderation"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="watchlist")
-    @permissions.check_app_roles()
-    async def watchlist(self, interaction: discord.Interaction, user: discord.Member, *, reason: str):
-        """Adds user to the watchlist."""
-        await interaction.response.send_message(f"adding {user} to watchlist", ephemeral=True)
-        bot = self.bot
-        # warnchannel = bot.get_channel(537365631675400192)
-        watchlist = bot.get_channel(661375573649522708)
-        await watchlist.send(f"""Name: {user.mention}
-UID: {user.id}
-username: {user}
-reason {reason}""")
 
     async def ban_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[str]]:
         """generates the ban autocompletion"""
@@ -79,12 +67,15 @@ reason {reason}""")
 
     @app_commands.command(name="kick")
     @permissions.check_app_roles()
-    async def kick(self, interaction: discord.Interaction, user: discord.Member, reason: str = None):
+    async def kick(self, interaction: discord.Interaction, user: discord.Member, reason: str = "Breaking the server rules"):
         """kicks user from the server"""
+        lobby = ConfigData().get_key_int(interaction.guild.id, "lobby")
+        lobbychannel = interaction.guild.get_channel(lobby)
+        invite = await lobbychannel.create_invite(max_age=86400, max_uses=1)
         await interaction.response.send_message(f"Kicking {user}", ephemeral=True)
         try:
             await user.send(
-                    f"you've been kicked from {interaction.guild.name} for {reason} \n \n You may rejoin once your behavior improves.")
+                    f"you've been kicked from {interaction.guild.name} for {reason} \n \n You may rejoin once your behavior improves.\n {invite.url}")
         except discord.Forbidden:
             await interaction.channel.send("Error: user could not be dmed.")
         await user.kick(reason=reason)

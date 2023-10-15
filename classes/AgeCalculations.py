@@ -50,19 +50,28 @@ class AgeCalculations(ABC):
         idlog = ConfigData().get_key_int(guild.id, "idlog")
         idchannel = guild.get_channel(idlog)
         if userinfo is None:
-            print("user info none")
             return False
         if userinfo.idverified is True and userinfo.verifieddob is not None:
-            print("ID found")
+
             await channel.send(f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             return False
         if userinfo.idcheck is True:
-            print("id check")
             await idchannel.send(
                     f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
 
             return True
-        print("None of the above")
+        return False
+
+    @staticmethod
+    @abstractmethod
+    async def id_check(user: discord.Member, guild):
+        userinfo: databases.current.IdVerification = VerificationTransactions.get_id_info(user.id)
+        idlog = ConfigData().get_key_int(guild.id, "idlog")
+        idchannel = guild.get_channel(idlog)
+        if userinfo.idcheck is True:
+            await idchannel.send(
+                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
+            return True
         return False
 
     @staticmethod

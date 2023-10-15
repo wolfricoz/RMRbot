@@ -2,6 +2,8 @@ import datetime
 import re
 from abc import ABC, abstractmethod
 import discord
+
+from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData
 
 
@@ -9,6 +11,9 @@ class LobbyProcess(ABC):
     @staticmethod
     @abstractmethod
     async def approve_user(guild, user, dob, age, staff):
+        # checks if user is on the id list
+        if AgeCalculations.id_check(guild, user):
+            return
         # updates user's age if it exists, otherwise makes a new entry
         UserTransactions.update_user_dob(user.id, dob)
         # Adds roles to the user

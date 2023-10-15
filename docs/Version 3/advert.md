@@ -190,6 +190,6 @@ In the apps there are versions of these commands, identical to these. All you ha
 and select the warning.
 
 example:<br>
-![apps](img/apps.png)
+![apps](../img/apps.png)
 
 

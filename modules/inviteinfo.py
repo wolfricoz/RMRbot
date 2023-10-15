@@ -28,7 +28,7 @@ class inviteInfo(commands.Cog):
 
         for invite in invites_before_join:
             if invite.uses < self.find_invite_by_code(invites_after_join, invite.code).uses:
-                embed = discord.Embed(description=f"""Member {member} Joined
+                embed = discord.Embed(description=f"""Member {member} Joined!
 Invite Code: **{invite.code}**
 Code created by: {invite.inviter} ({invite.inviter.id})
 account created at: {member.created_at.strftime("%m/%d/%Y")}

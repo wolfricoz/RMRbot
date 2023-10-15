@@ -5,6 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from classes import permissions
 from classes.databaseController import ConfigData
 
 
@@ -29,6 +30,7 @@ class moderation(commands.Cog, name="rmn"):
 
     @app_commands.command(name="partnerapprove")
     @app_commands.autocomplete(category=channels_autocomplete)
+    @permissions.check_app_roles()
     async def partner(self, interaction: discord.Interaction, category: str, member: discord.Member, servername: str):
         """Creates partner channel for partnerships."""
         await interaction.response.defer()

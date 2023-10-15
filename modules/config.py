@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from classes.databaseController import ConfigTransactions, ConfigData
 from views.modals.configinput import ConfigInputUnique
+from views.select.configselectroles import *
 
 
 # noinspection PyUnresolvedReferences
@@ -37,6 +38,33 @@ class config(commands.GroupCog, name="config"):
                       "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog"]
     rolechoices = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW",
                    "Partner role": "partner", "Searchban role": "posttimeout"}
+
+    @app_commands.command(name='setup')
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def configsetup(self, interaction: discord.Interaction):
+        """Sets up the config for the bot."""
+        await interaction.response.defer(ephemeral=True)
+        for item in self.channelchoices:
+            view = ConfigSelectChannels()
+            msg = await interaction.channel.send(f"Choose a channel for key: {item}", view=view)
+            await view.wait()
+            await msg.delete()
+            if view.value is None:
+                await interaction.followup.send("Setup cancelled")
+                return
+            ConfigTransactions.config_unique_add(interaction.guild.id, item, int(view.value[0]), overwrite=True)
+        for expl,role in self.rolechoices.items():
+            view = ConfigSelectRoles()
+            msg = await interaction.channel.send(f"{expl}: {role}\nWill add role to the config, if you wish for the old role to be deleted please use the /config role command.", view=view)
+            await view.wait()
+            await msg.delete()
+            if view.value is None:
+                await interaction.followup.send("Setup cancelled")
+                return
+            ConfigTransactions.config_key_add(interaction.guild.id, role, int(view.value[0]), overwrite=True)
+
+        await interaction.followup.send("Config has been set up, please setup the messages with /config messages", ephemeral=True)
+
 
     @app_commands.command()
     @app_commands.choices(key=[Choice(name=x, value=x) for x in messagechoices])

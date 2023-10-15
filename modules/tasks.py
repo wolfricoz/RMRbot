@@ -33,7 +33,7 @@ class Tasks(commands.GroupCog):
         self.search_ban_check.cancel()
         self.check_users_expiration.cancel()
 
-    @tasks.loop(hours=1)
+    @tasks.loop(hours=3)
     async def config_reload(self):
         """Reloads the config for the latest data."""
         for guild in self.bot.guilds:
@@ -65,7 +65,7 @@ class Tasks(commands.GroupCog):
             json.dump(historydict, f, indent=4)
         print("[auto refresh]List updated")
 
-    @tasks.loop(minutes=30)
+    @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
         print("checking search bans")
