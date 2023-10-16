@@ -64,7 +64,8 @@ class Advert(ABC):
                    f"{reason}"
                    f"\n\nIf you have any more questions, you can open a ticket at <#{ConfigData().get_key_int(interaction.guild.id, 'HELPCHANNEL')}>.")
         total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
-        embed = discord.Embed(title=f"{thread_channel.name}", description=f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type}\nWarning user received:\n{warning}")
+        embed = discord.Embed(title=f"{thread_channel.name}", description=f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type}\nWarning user received:\n{warning}",
+                              color=discord.Color.from_rgb(255, 117, 24))
         embed.set_footer(text=f"userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}")
         await modchannel.send(f"{user.mention}", embed=embed)
         return warning
