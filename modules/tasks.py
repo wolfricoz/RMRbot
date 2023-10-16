@@ -44,6 +44,8 @@ class Tasks(commands.GroupCog):
     @tasks.loop(hours=24)
     async def lobby_history(self):
         """Updates banlist when user is unbanned"""
+        if self.lobby_history.current_loop == 0:
+            return
         count = 0
         historydict = {}
         channel = self.bot.get_channel(OLDLOBBY)
@@ -69,6 +71,8 @@ class Tasks(commands.GroupCog):
     @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
+        if self.search_ban_check.current_loop == 0:
+            return
         print("checking search bans")
         for guild in self.bot.guilds:
             try:
@@ -88,9 +92,11 @@ class Tasks(commands.GroupCog):
                     continue
                 await searchbans.remove(member, role, timer)
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=48)
     async def check_users_expiration(self):
         """updates entry time, if entry is expired this also removes it."""
+        if self.lobby_history.current_loop == 0:
+            return
         print("checking user entries")
         userdata = UserTransactions.get_all_users()
         userids = [x.uid for x in userdata]
