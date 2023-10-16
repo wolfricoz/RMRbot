@@ -33,7 +33,6 @@ class LobbyProcess(ABC):
     @abstractmethod
     async def add_roles_user(user, guild):
         confroles = ConfigData().get_key(guild.id, "ADD")
-        print(f"ADD: {confroles}")
         roles = []
         for role in confroles:
             verrole = guild.get_role(int(role))
@@ -48,7 +47,10 @@ class LobbyProcess(ABC):
         roles = []
         for role in confroles:
             verrole = guild.get_role(int(role))
+            print(verrole)
+            print(verrole.name)
             roles.append(verrole)
+        print(roles)
         await user.remove_roles(*roles)
 
     @staticmethod
