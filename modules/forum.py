@@ -184,6 +184,8 @@ class Forum(commands.GroupCog, name="forum"):
             await interaction.response.send_message("Please use the command in a thread, or fill in a message link.")
             return
         thread, thread_channel = await Advert.get_message(thread, interaction)
+        print(thread)
+        print(thread_channel)
         bot = self.bot
         print("got thread")
         if warning_type.upper() == "CUSTOM":

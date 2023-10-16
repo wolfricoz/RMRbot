@@ -50,6 +50,7 @@ class Tasks(commands.GroupCog):
         if channel is None:
             return
         print('creating cache...')
+        logging.debug('creating cache...')
         time = datetime.now()
         async for h in channel.history(limit=None, oldest_first=True, before=time):
             historydict[h.id] = {}
@@ -64,7 +65,7 @@ class Tasks(commands.GroupCog):
         with open('config/history.json', 'w') as f:
             json.dump(historydict, f, indent=4)
         print("[auto refresh]List updated")
-
+        logging.debug("[auto refresh]List updated")
     @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
