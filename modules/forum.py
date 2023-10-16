@@ -184,9 +184,7 @@ class Forum(commands.GroupCog, name="forum"):
             await interaction.response.send_message("Please use the command in a thread, or fill in a message link.")
             return
         thread, thread_channel = await Advert.get_message(thread, interaction)
-
         bot = self.bot
-
         if warning_type.upper() == "CUSTOM":
             await interaction.response.send_modal(Custom(bot=bot, thread=thread, thread_channel=thread_channel))
             return
@@ -197,13 +195,8 @@ class Forum(commands.GroupCog, name="forum"):
         modchannel = bot.get_channel(mc)
         user = thread.author
 
-        warning = (f"Hello, I'm a staff member of **Roleplay Meets Reborn**. Your advert `{thread_channel.name}` has been removed with the following reason: \n"
-                   f"{reason}"
-                   f"\n\nIf you have any more questions, you can open a ticket at <#977720278396305418>.")
         # adds warning to database
-        total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
-        await modchannel.send(
-                f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type} on advert {thread.channel.name}\n userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}\nreason:\n{warning}")
+        warning = Advert.send_in_channel(interaction, user, thread, thread_channel, reason, warning_type, modchannel)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         await Advert.sendadvertuser(interaction, thread, warning)

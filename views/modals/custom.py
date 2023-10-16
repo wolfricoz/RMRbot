@@ -51,17 +51,8 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
         loggingchannel = bot.get_channel(lc)
         modchannel = bot.get_channel(mc)
         user = thread.author
-
         await interaction.response.send_message(content="Command received", ephemeral=True)
-        warning = (
-            f"Hello, I'm a staff member of **Roleplay Meets Reborn**. Your advert `{thread_channel.name}` has been removed with the following reason: \n"
-            f"{self.reason.value}"
-            f"\n\nIf you have any more questions, you can open a ticket at <#977720278396305418>.")
-        # adds warning to database
-        total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
-        await modchannel.send(
-                f"{interaction.user.mention} has warned {user.mention} with warning type: Custom on advert {thread.channel.name}\n userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}\nReason:\n{warning}")
-
+        warning = Advert.send_in_channel(interaction, user, thread, thread_channel, self.reason.value, "Custom", modchannel)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         await Advert.sendadvertuser(interaction, thread, warning)
