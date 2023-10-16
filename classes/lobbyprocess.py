@@ -61,7 +61,7 @@ class LobbyProcess(ABC):
                 agerole = ConfigData().get_key(guild.id, str(n))
                 agerole = guild.get_role(int(agerole))
                 await user.add_roles(agerole)
-                break
+                return
 
     @staticmethod
     @abstractmethod
