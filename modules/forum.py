@@ -203,7 +203,7 @@ class Forum(commands.GroupCog, name="forum"):
         # adds warning to database
         total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
         await modchannel.send(
-                f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type} on advert {thread.channel.mention}\n userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}")
+                f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type} on advert {thread.channel.name}\n userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}\nreason:\n{warning}")
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         await Advert.sendadvertuser(interaction, thread, warning)
