@@ -176,13 +176,16 @@ class Forum(commands.GroupCog, name="forum"):
     @app_commands.autocomplete(warning_type=search_commands_autocompletion)
     async def warn(self, interaction: discord.Interaction, warning_type: str, thread: discord.Thread = None) -> None:
         """Warns the user and removes the advert; logs the warning in database."""
+        print("received warn command")
         warnings: dict = ConfigData().get_key(interaction.guild.id, "SEARCH")
         reason = warnings.get(warning_type)
+        print("got warning")
         if interaction.channel.type != discord.ChannelType.public_thread and thread is None:
             await interaction.response.send_message("Please use the command in a thread, or fill in a message link.")
             return
         thread, thread_channel = await Advert.get_message(thread, interaction)
         bot = self.bot
+        print("got thread")
         if warning_type.upper() == "CUSTOM":
             await interaction.response.send_modal(Custom(bot=bot, thread=thread, thread_channel=thread_channel))
             return
