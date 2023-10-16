@@ -62,7 +62,7 @@ class Advert(ABC):
     async def send_in_channel(interaction, user, thread, thread_channel, reason, warning_type, modchannel):
         warning = (f"Hello, I'm a staff member of **Roleplay Meets Reborn**. Your advert `{thread_channel.name}` has been removed with the following reason: \n"
                    f"{reason}"
-                   f"\n\nIf you have any more questions, you can open a ticket at <#{ConfigData().get_key_int(interaction.guild.id, "HELPCHANNEL")}>.")
+                   f"\n\nIf you have any more questions, you can open a ticket at <#{ConfigData().get_key_int(interaction.guild.id, 'HELPCHANNEL')}>.")
         total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
         embed = discord.Embed(title=f"{thread_channel.name}", description=f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type}\nWarning user received:\n{warning}")
         embed.set_footer(text=f"userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}")
