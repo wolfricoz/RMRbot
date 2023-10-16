@@ -60,7 +60,7 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
         # adds warning to database
         total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
         await modchannel.send(
-                f"{interaction.user.mention} has warned {user.mention} with warning type: Custom on advert {thread.channel.mention}\n userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}\n\n {self.reason.value}
+                f"{interaction.user.mention} has warned {user.mention} with warning type: Custom on advert {thread.channel.mention}\n userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}\n\n {self.reason.value}")
 
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
