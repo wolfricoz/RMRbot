@@ -52,7 +52,7 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
         modchannel = bot.get_channel(mc)
         user = thread.author
         await interaction.response.send_message(content="Command received", ephemeral=True)
-        warning = Advert.send_in_channel(interaction, user, thread, thread_channel, self.reason.value, "Custom", modchannel)
+        warning = await Advert.send_in_channel(interaction, user, thread, thread_channel, self.reason.value, "Custom", modchannel)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         await Advert.sendadvertuser(interaction, thread, warning)

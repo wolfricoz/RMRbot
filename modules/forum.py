@@ -196,7 +196,7 @@ class Forum(commands.GroupCog, name="forum"):
         user = thread.author
 
         # adds warning to database
-        warning = Advert.send_in_channel(interaction, user, thread, thread_channel, reason, warning_type, modchannel)
+        warning = await Advert.send_in_channel(interaction, user, thread, thread_channel, reason, warning_type, modchannel)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         await Advert.sendadvertuser(interaction, thread, warning)
