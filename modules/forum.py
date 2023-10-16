@@ -69,7 +69,7 @@ class Forum(commands.GroupCog, name="forum"):
                     forum = bot.get_channel(thread.parent_id)
                     count = 0
                     user_count = 0
-                    await ForumAutoMod().checktags(thread)
+                    await ForumAutoMod.checktags(thread)
                     if thread.owner_id != message.author.id:
                         await message.channel.send(f"{message.author} You can't bump another's post.")
                         return
