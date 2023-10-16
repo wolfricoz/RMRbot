@@ -69,6 +69,8 @@ class AgeCalculations(ABC):
         print(guild.id)
         idlog = ConfigData().get_key_int(guild.id, "idlog")
         idchannel = guild.get_channel(idlog)
+        if userinfo is None:
+            return False
         if userinfo.idcheck is True:
             await idchannel.send(
                     f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
