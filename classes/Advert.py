@@ -10,8 +10,9 @@ class Advert(ABC):
     @abstractmethod
     async def get_message(thread, interaction):
         if interaction.channel.type != discord.ChannelType.public_thread and thread is not None:
-            thread_channel = thread
-            thread = await thread.fetch_message(thread.id)
+            link = thread.split('/')
+            thread_channel = interaction.guild.get_thread(int(link[5]))
+            thread = await thread_channel.fetch_message(int(link[6]))
             return thread, thread_channel
         thread_channel = interaction.guild.get_thread(interaction.channel.id)
         thread = await thread_channel.fetch_message(thread_channel.id)

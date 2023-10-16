@@ -414,13 +414,13 @@ class ConfigData(ABC):
         try:
             return int(self.conf[guildid][key.upper()])
         except KeyError:
-            raise KeyNotFound(key)
+            raise KeyNotFound(key.upper())
 
     def get_key(self, guildid: int, key: str):
         try:
             return self.conf[guildid][key.upper()]
         except KeyError:
-            raise KeyNotFound(key)
+            raise KeyNotFound(key.upper())
 
     def get_key_or_none(self, guildid: int, key: str):
         return self.conf[guildid].get(key.upper(), None)

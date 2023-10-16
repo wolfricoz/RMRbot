@@ -64,8 +64,9 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def id_check(user: discord.Member, guild):
+    async def id_check(guild, user: discord.Member):
         userinfo: databases.current.IdVerification = VerificationTransactions.get_id_info(user.id)
+        print(guild.id)
         idlog = ConfigData().get_key_int(guild.id, "idlog")
         idchannel = guild.get_channel(idlog)
         if userinfo.idcheck is True:

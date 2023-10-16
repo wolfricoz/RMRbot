@@ -91,6 +91,15 @@ class Logging(commands.Cog):
         tree = self.bot.tree
         tree.on_error = self._old_tree_error
 
+    async def on_fail_message(self, interaction: Interaction, message: str):
+        """sends a message to the user if the command fails."""
+        try:
+            await interaction.response.send_message(message, ephemeral=True)
+        except discord.Webhook:
+            await interaction.followup.send(message)
+        except Exception as e:
+            logging.error(e)
+
     async def on_app_command_error(
             self,
             interaction: Interaction,
@@ -98,15 +107,21 @@ class Logging(commands.Cog):
     ):
         """app command error handler."""
         if isinstance(error, CheckFailure):
-            await interaction.response.send_message("[PERMERROR] You do not have permission.", ephemeral=True)
-            return
-        await interaction.followup.send(f"Command failed: {error} \nreport this to Rico")
+            await self.on_fail_message(interaction, "You do not have permission.")
+        elif isinstance(error, commands.MemberNotFound):
+            await self.on_fail_message(interaction, "User not found.")
+        elif isinstance(error.original, IndexError):
+            await self.on_fail_message(interaction, "Please fill in the required arguments: discord message link.")
+        await self.on_fail_message(interaction, f"Command failed: {error} \nreport this to Rico")
         channel = self.bot.get_channel(self.bot.DEV)
         with open('error.txt', 'w', encoding='utf-8') as file:
             file.write(traceback.format_exc())
-        await channel.send(
-                f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}",
-                file=discord.File(file.name, "error.txt"))
+        try:
+            await channel.send(
+                    f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}",
+                    file=discord.File(file.name, "error.txt"))
+        except Exception as e:
+            logging.error(e)
         logger.warning(
                 f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
 

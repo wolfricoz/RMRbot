@@ -12,8 +12,8 @@ class LobbyProcess(ABC):
     @abstractmethod
     async def approve_user(guild, user, dob, age, staff):
         # checks if user is on the id list
-        # if await AgeCalculations.id_check(guild, user):
-        #     return
+        if await AgeCalculations.id_check(guild, user):
+            return
         # updates user's age if it exists, otherwise makes a new entry
         UserTransactions.update_user_dob(user.id, dob)
         # Adds roles to the user
@@ -33,6 +33,7 @@ class LobbyProcess(ABC):
     @abstractmethod
     async def add_roles_user(user, guild):
         confroles = ConfigData().get_key(guild.id, "ADD")
+        print(f"ADD: {confroles}")
         roles = []
         for role in confroles:
             verrole = guild.get_role(int(role))
@@ -43,6 +44,7 @@ class LobbyProcess(ABC):
     @abstractmethod
     async def remove_roles_user(user, guild):
         confroles = ConfigData().get_key(guild.id, "REM")
+        print(f"REM: {confroles}")
         roles = []
         for role in confroles:
             verrole = guild.get_role(int(role))
