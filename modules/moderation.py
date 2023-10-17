@@ -117,7 +117,7 @@ class moderation(commands.Cog, name="Moderation"):
         reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban of {days} day(s). Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban.\n\n This search ban expires on:\n {cooldown.strftime('%m/%d/%Y')}"
         await member.send(reason)
         TimersTransactions.add_timer(interaction.guild.id, interaction.user.id, hours, reason=reason, roleid=roleid)
-        await ModUser.log(interaction, interaction.user, reason, interaction.guild, typeofaction="searchbanned")
+        await ModUser.log(interaction, member, reason, interaction.guild, typeofaction="searchbanned")
         await interaction.followup.send(f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
 
 

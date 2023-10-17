@@ -49,11 +49,15 @@ class ModUser(ABC):
             guilds = ", ".join(rguilds)
             for guild in bot.guilds:
                 await ModUser.log(interaction, member, reason, guild, typeofaction="banned", servers=guilds)
+
     @staticmethod
     @abstractmethod
     async def log(interaction, member, reason, guild, typeofaction, servers=None):
         """Catch all logging function for all the warnings. No more repeating."""
         count = 0
+        posted_at = []
+        if guild.id in posted_at:
+            return
         try:
             embed = discord.Embed(title=f"{member.name} {typeofaction}",
                                   description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
@@ -63,6 +67,6 @@ class ModUser(ABC):
                 await interaction.channel.send(embed=embed)
             count += 1
             await log.send(embed=embed)
+            posted_at.append(guild.id)
         except classes.databaseController.KeyNotFound as e:
             logging.exception(f"{guild.name}: {e}")
-
