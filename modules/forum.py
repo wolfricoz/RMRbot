@@ -29,6 +29,7 @@ class Forum(commands.GroupCog, name="forum"):
         # gets the config
         forums = ForumAutoMod.config(guildid=thread.guild.id)
         bot = self.bot
+        await ForumAutoMod.checktags(thread)
         # Checks the tags and adds the correct ones.
         msg: discord.Message = await thread.fetch_message(thread.id)
         forum_channel = bot.get_channel(thread.parent_id)

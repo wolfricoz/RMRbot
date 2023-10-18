@@ -35,13 +35,13 @@ class ForumAutoMod(ABC):
         # This module needs to be fixed; keeps adding too much tags.
         botmessage = None
         matched = await AutomodComponents.tags(thread, forum, msg)
-
+        await ForumAutoMod.checktags(thread)
         if matched:
             fm = ', '.join([x.name for x in matched])
             for a in forum.available_tags:
                 if a.name == "New":
                     matched.append(a)
-            print(f"adding tags: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
+            print(f"[debugging] adding tags to {thread.name}: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
             await thread.add_tags(*matched, reason=f"Automod applied {fm}")
             botmessage = await thread.send(
                     f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
