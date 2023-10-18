@@ -91,6 +91,9 @@ class Tasks(commands.GroupCog):
                 if datetime.now() < remove:
                     continue
                 await searchbans.remove(member, role, timer)
+                advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
+                advert_mod_channel = guild.get_channel(advert_mod)
+                await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
 
     @tasks.loop(hours=48)
     async def check_users_expiration(self):
