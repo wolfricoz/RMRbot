@@ -45,7 +45,7 @@ class AutomodComponents(ABC):
                 continue
             if r.name in skip:
                 pass
-            if count == 3:
+            if count >= 3:
                 break
             tagreg = re.compile(rf"{r.name}", flags=re.I)
             match = tagreg.search(message.content)
