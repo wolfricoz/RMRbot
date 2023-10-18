@@ -48,6 +48,8 @@ class Forum(commands.GroupCog, name="forum"):
             return
         if message.channel.type is discord.ChannelType.text:
             return
+        if message.channel.type is discord.ChannelType.private:
+            return
         forums = ForumAutoMod.config(guildid=message.guild.id)
         dobreg = re.compile(r"bump|bumping", flags=re.IGNORECASE)
         match = dobreg.search(message.content)
