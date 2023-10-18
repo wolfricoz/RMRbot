@@ -1,4 +1,3 @@
-import json
 import os.path
 import re
 from abc import ABC, abstractmethod
@@ -9,6 +8,7 @@ import pytz
 
 from classes.AutomodComponents import AutomodComponents
 from classes.databaseController import ConfigData
+
 
 class ForumAutoMod(ABC):
     @staticmethod
@@ -33,31 +33,40 @@ class ForumAutoMod(ABC):
     @abstractmethod
     async def info(forum, thread, msg):
         # This module needs to be fixed; keeps adding too much tags.
-        botmessage = None
         matched = await AutomodComponents.tags(thread, forum, msg)
         await ForumAutoMod.checktags(thread)
+        # applies the new tag
+        for a in forum.available_tags:
+            if a.name == "New":
+                await thread.add_tags(a, reason="new post")
+        botmessage = await thread.send(
+                f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
+                f"\n\n"
+                f"To close the advert, please use /forum close")
+        if len(thread.applied_tags) >= 5:
+            print("too many tags")
+            return botmessage
         if matched:
-            fm = ', '.join([x.name for x in matched])
-            for a in forum.available_tags:
-                if a.name == "New":
-                    matched.append(a)
+            count = 0
+            maxtags = 5 - len(thread.applied_tags)
+            counted_tags = []
+            for x in matched:
+                if x in thread.applied_tags:
+                    continue
+                if count >= maxtags:
+                    break
+                counted_tags.append(x)
+                count += 1
+
+            fm = ', '.join([x.name for x in counted_tags])
+
             print(f"[debugging] adding tags to {thread.name}: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
-            await thread.add_tags(*matched, reason=f"Automod applied {fm}")
-            botmessage = await thread.send(
-                    f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
-                    "\n\n"
-                    f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"
-                    f"\n\n"
-                    f"To close the advert, please use /forum close")
-        else:
-            for a in forum.available_tags:
-                if a.name == "New":
-                    await thread.add_tags(a, reason="new post")
-            botmessage = await thread.send(
-                    f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
-                    f"\n\n"
-                    f"To close the advert, please use /forum close")
+            await thread.add_tags(*counted_tags, reason=f"Automod applied {fm}")
+            await thread.send(
+                    f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!")
+
         return botmessage
+
     @staticmethod
     @abstractmethod
     async def bump(bot, interaction):
@@ -152,4 +161,4 @@ class ForumAutoMod(ABC):
                 f.write('Advert Approvals')
         with open('config/approvals.txt', 'a') as f:
             f.write(
-                f"\n{datetime.now().strftime('%m/%d/%Y %I:%M %p')}: {interaction.user} has approved post '{interaction.channel}'")
+                    f"\n{datetime.now().strftime('%m/%d/%Y %I:%M %p')}: {interaction.user} has approved post '{interaction.channel}'")
