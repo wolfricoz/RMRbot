@@ -19,11 +19,11 @@ class LobbyProcess(ABC):
         # updates user's age if it exists, otherwise makes a new entry
         UserTransactions.update_user_dob(user.id, dob)
 
-        # changes user's roles; adds and removes
-        await LobbyProcess.change_user_roles(user, guild)
-
         # check add the right age role
         await LobbyProcess.calculate_age_role(user, guild, age)
+
+        # changes user's roles; adds and removes
+        await LobbyProcess.change_user_roles(user, guild)
 
         # Log age and dob to lobbylog
         await LobbyProcess.log(user, guild, dob, age, staff)
