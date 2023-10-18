@@ -63,9 +63,12 @@ class NsfwVerifyModal(discord.ui.Modal):
     # Add in all the checks before it even gets to the lobby; age matches dob, dob already exists but diff?
 
     async def on_submit(self, interaction: discord.Interaction):
-        userdata = UserTransactions.get_user(interaction.user.id)
+        userdata: databases.current.Users = UserTransactions.get_user(interaction.user.id)
         modlobby = ConfigData().get_key_int(interaction.guild.id, "lobbymod")
+        idlog = ConfigData().get_key_int(interaction.guild.id, "idlog")
+        admin = ConfigData().get_key(interaction.guild.id, "admin")
         channel = interaction.guild.get_channel(modlobby)
+        idchannel = interaction.guild.get_channel(idlog)
         age = self.age.value
         # validates inputs with regex
         if await AgeCalculations.infocheck(interaction, age, self.dateofbirth.value, channel, "NSFW") is False:
@@ -87,8 +90,8 @@ class NsfwVerifyModal(discord.ui.Modal):
         # Checks if user is underaged
         agechecked, years = AgeCalculations.agechecker(int(age), dob)
         if agechecked != 0:
-            await channel.send(
-                    f"[Info] User {interaction.user.mention}\'s age does not match and has been timed out. User gave {age} but dob indicates {years}\n"
+            await idchannel.send(
+                    f"[Info] <@{admin[0]}> User {interaction.user.mention}\'s age does not match and has been timed out. User gave {age} but dob indicates {years}\n"
                     f"[NSFW Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
                     f'A staff member will contact you within 24 hours, please wait patiently.',
@@ -96,8 +99,8 @@ class NsfwVerifyModal(discord.ui.Modal):
             return
         # Checks if user has a date of birth in the database, and if the date of births match.
         if AgeCalculations.check_date_of_birth(userdata, dob) is False:
-            await channel.send(
-                    f"[Info] User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {userdata.dob.strftime('%m/%d/%Y')}\n"
+            await idchannel.send(
+                    f"[Info] <@{admin[0]}> User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {userdata.dob.strftime('%m/%d/%Y')}\n"
                     f"[NSFW Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
                     f'A staff member will contact you within 24 hours, please wait patiently.',
