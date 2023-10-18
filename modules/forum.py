@@ -49,6 +49,7 @@ class Forum(commands.GroupCog, name="forum"):
         if message.channel.type is discord.ChannelType.text:
             return
         if message.channel.type is discord.ChannelType.private:
+            logging.info(f"Private message from {message.author}:\n{message.content}")
             return
         forums = ForumAutoMod.config(guildid=message.guild.id)
         dobreg = re.compile(r"bump|bumping", flags=re.IGNORECASE)
