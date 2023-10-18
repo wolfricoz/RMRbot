@@ -45,14 +45,13 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def id_check_or_id_verified(user: discord.Member, guild, channel):
+    async def id_check_or_id_verified(user: discord.Member, guild, channel, send_message=True):
         userinfo: databases.current.IdVerification = VerificationTransactions.get_id_info(user.id)
         idlog = ConfigData().get_key_int(guild.id, "idlog")
         idchannel = guild.get_channel(idlog)
         if userinfo is None:
             return False
-        if userinfo.idverified is True and userinfo.verifieddob is not None:
-
+        if userinfo.idverified is True and userinfo.verifieddob is not None and send_message is True:
             await channel.send(f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             return False
         if userinfo.idcheck is True:
