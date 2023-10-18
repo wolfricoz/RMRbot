@@ -40,7 +40,7 @@ Member joined at {datetime.now().strftime("%m/%d/%Y")}
                 except:
                     pass
                 embed.set_footer(text=f"USERID: {member.id}")
-                channel = self.bot.get_channel(1155647574288642060)
+                channel = self.bot.get_channel(infochannel)
                 await channel.send(embed=embed)
 
                 self.bot.invites[member.guild.id] = invites_after_join

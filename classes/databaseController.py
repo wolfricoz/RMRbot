@@ -67,13 +67,10 @@ class UserTransactions(ABC):
     def update_user_dob(userid: int, dob: str):
         userdata: Users = session.scalar(Select(Users).where(Users.uid == userid))
         if userdata is None:
-            print("entry not found, making a new one.")
             UserTransactions.add_user_full(userid, dob)
             return False
-        print("entry found, updating now")
         userdata.dob = datetime.strptime(dob, "%m/%d/%Y")
         userdata.entry = datetime.now(tz=timezone.utc)
-        print(datetime.now(tz=timezone.utc))
         session.commit()
         return True
 
@@ -419,6 +416,7 @@ class ConfigData(ABC):
     def get_key(self, guildid: int, key: str):
         try:
             return self.conf[guildid][key.upper()]
+
         except KeyError:
             raise KeyNotFound(key.upper())
 

@@ -11,7 +11,7 @@ import databases.current
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
 from classes.lobbyprocess import LobbyProcess
-
+from inspect import isclass
 
 class Lobby(commands.GroupCog):
     def __init__(self, bot):
@@ -246,18 +246,22 @@ UID: {user.id}
     async def returnlobby(self, interaction: discord.Interaction, user: discord.Member):
         """returns user to lobby; removes the roles."""
         await interaction.response.defer()
-        add: list = ConfigData().get_key(interaction.guild.id, "add")
-        rem: list = ConfigData().get_key(interaction.guild.id, "rem")
+        original_user = ConfigData().get_key(interaction.guild.id, "add")
+        add_to_user = list(original_user)
+        rem_from_user: list = ConfigData().get_key(interaction.guild.id, "rem")
         returns: list = ConfigData().get_key(interaction.guild.id, "return")
-        add.append(ConfigData().get_key_int(interaction.guild.id, "18"))
-        add.append(ConfigData().get_key_int(interaction.guild.id, "21"))
-        add.append(ConfigData().get_key_int(interaction.guild.id, "25"))
+        role18 = ConfigData().get_key_int(interaction.guild.id, "18")
+        role21 = ConfigData().get_key_int(interaction.guild.id, "21")
+        role25 = ConfigData().get_key_int(interaction.guild.id, "25")
+        add_to_user.append(role18)
+        add_to_user.append(role21)
+        add_to_user.append(role25)
         rm = []
         ra = []
-        for role in rem:
+        for role in rem_from_user:
             r = interaction.guild.get_role(role)
             ra.append(r)
-        for role in add + returns:
+        for role in add_to_user + returns:
             r = interaction.guild.get_role(role)
             rm.append(r)
         await user.remove_roles(*rm, reason="returning to lobby")
