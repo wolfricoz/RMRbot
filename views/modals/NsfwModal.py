@@ -110,7 +110,7 @@ class NsfwVerifyModal(discord.ui.Modal):
                     f'A staff member will contact you within 24 hours, please wait patiently.', ephemeral=True)
             return
         # Check Chat History
-        await AgeCalculations.check_history(interaction.user, channel)
+        # await AgeCalculations.check_history(interaction.user, channel)
         # Automatically processes users if all checks pass.
         await NsfwFunctions.add_roles_user(interaction.user, interaction.guild)
         await interaction.response.send_message(
