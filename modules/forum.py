@@ -1,4 +1,5 @@
 """Handles all forum related actions; such as automod and warnings."""
+import logging
 import os
 import re
 import typing
@@ -16,7 +17,7 @@ from views.modals.custom import Custom
 from views.paginations.paginate import paginate
 
 
-# noinspection PyUnresolvedReferences
+
 class Forum(commands.GroupCog, name="forum"):
 
     def __init__(self, bot: commands.Bot):
