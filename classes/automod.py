@@ -156,9 +156,10 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     def approval_log(interaction):
-        if os.path.isfile('config/approvals.txt') is False:
-            with open('config/approvals.txt', 'w') as f:
+        file_name = f"config/approvals{datetime.now().strftime('%m-%y')}.txt"
+        if os.path.isfile(file_name) is False:
+            with open(file_name, 'w') as f:
                 f.write('Advert Approvals')
-        with open('config/approvals.txt', 'a') as f:
+        with open(file_name, 'a') as f:
             f.write(
                     f"\n{datetime.now().strftime('%m/%d/%Y %I:%M %p')}: {interaction.user} has approved post '{interaction.channel}'")

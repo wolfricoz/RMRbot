@@ -355,14 +355,16 @@ class VerificationTransactions(ABC):
 
     @staticmethod
     @abstractmethod
-    def idverify_update(userid, dob: str, idcheck=True):
+    def idverify_update(userid, dob: str, idverified=True):
 
         userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
         if userdata is None:
-            VerificationTransactions.add_idcheck(userid, dob)
+            VerificationTransactions.add_idcheck(userid, dob, idcheck=False)
             return
         userdata.verifieddob = datetime.strptime(dob, "%m/%d/%Y")
-        userdata.idverified = idcheck
+        userdata.idverified = idverified
+        userdata.idcheck = False
+        userdata.reason = "User ID Verified"
         session.commit()
         UserTransactions.update_user_dob(userid, dob)
 
