@@ -63,10 +63,12 @@ class ModUser(ABC):
                                   description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
             embed.set_footer(text=f"Time:{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} {f'servers:{servers}' if servers else ''}")
             log = guild.get_channel(ConfigData().get_key_int(guild.id, "warnlog"))
+            banlog = guild.get_channel(ConfigData().get_key_int(guild.id, "banlog"))
             if count < 1:
                 await interaction.channel.send(embed=embed)
             count += 1
             await log.send(embed=embed)
+            await banlog.send(embed=embed)
             posted_at.append(guild.id)
         except classes.databaseController.KeyNotFound as e:
             logging.exception(f"{guild.name}: {e}")
