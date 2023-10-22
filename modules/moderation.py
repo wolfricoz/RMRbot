@@ -49,9 +49,7 @@ class moderation(commands.Cog, name="Moderation"):
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
         await interaction.response.defer(ephemeral=True)
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
-        print(bans)
         reason = bans.get(bantype.upper(), reason)
-        print(reason)
         bot = self.bot
         if memberid is None and member is None:
             await interaction.followup.send("Please fill in the member or memberid field.")

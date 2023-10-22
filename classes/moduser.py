@@ -63,7 +63,7 @@ class ModUser(ABC):
                                   description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
             embed.set_footer(text=f"Time:{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} {f'servers:{servers}' if servers else ''}")
             log = guild.get_channel(ConfigData().get_key_int(guild.id, "warnlog"))
-            banlog = guild.get_channel(ConfigData().get_key_int(guild.id, "banlog"))
+            banlog = guild.get_channel(ConfigData().get_key_int(guild.id, "blog"))
             if count < 1:
                 await interaction.channel.send(embed=embed)
             count += 1

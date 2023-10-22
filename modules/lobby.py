@@ -171,7 +171,7 @@ class Lobby(commands.GroupCog):
     @permissions.check_app_roles_admin()
     async def database(self, interaction: discord.Interaction, operation: Choice['str'], userid: str, dob: str = None):
         """One stop shop to handle all age entry management"""
-        age_log = ConfigData().get_key_int(interaction.guild.id, "agelog")
+        age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
         age_log_channel = interaction.guild.get_channel(age_log)
         await interaction.response.defer(ephemeral=True)
         match operation.value.upper():
