@@ -71,7 +71,6 @@ class Logging(commands.Cog):
         #     logging.warning(error)
         #     raise error
         else:
-            await ctx.send(error)
             logger.warning(f"\n{ctx.guild.name} {ctx.guild.id} {ctx.command.name}: {error}")
             channel = self.bot.get_channel(self.bot.DEV)
             with open('error.txt', 'w', encoding='utf-16') as file:
