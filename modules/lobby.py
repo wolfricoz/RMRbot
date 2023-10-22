@@ -180,7 +180,7 @@ class Lobby(commands.GroupCog):
                     return
                 UserTransactions.update_user_dob(userid, dob)
                 await interaction.followup.send(f"<@{userid}>'s dob updated to: {dob}")
-                await age_log_channel.send(f"USER ADDED\n"
+                await age_log_channel.send(f"USER UPDATED\n"
                                            f"DOB: {dob}\n"
                                            f"UID: {userid}\n"
                                            f"Entry updated by: {interaction.user.name}")
@@ -194,6 +194,10 @@ class Lobby(commands.GroupCog):
                     return
                 UserTransactions.add_user_full(str(userid), dob)
                 await interaction.followup.send(f"<@{userid}> added to the database with dob: {dob}")
+                await age_log_channel.send(f"USER ADDED\n"
+                                           f"DOB: {dob}\n"
+                                           f"UID: {userid}\n"
+                                           f"Entry updated by: {interaction.user.name}")
             case "GET":
                 user = UserTransactions.get_user(userid)
                 await interaction.followup.send(f"**__USER INFO__**\n"
