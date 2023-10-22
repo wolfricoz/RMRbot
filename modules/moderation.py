@@ -56,7 +56,6 @@ class moderation(commands.Cog, name="Moderation"):
         try:
             await ModUser.ban_user(interaction, member, bot, reason, appeal, idlist)
         except Exception as e:
-            print(e)
             if memberid is None:
                 await interaction.followup.send("User is not in the server, please use Memberid")
                 return
