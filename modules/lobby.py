@@ -1,5 +1,6 @@
 """this module handles the lobby."""
 import datetime
+import os
 
 import discord
 from discord import app_commands
@@ -11,6 +12,7 @@ import databases.current
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
 from classes.lobbyprocess import LobbyProcess
+from views.buttons.confirmButtons import confirmAction
 
 
 class Lobby(commands.GroupCog):
@@ -304,6 +306,41 @@ UID: {user.id}
         dob = AgeCalculations.regex(dob)
         await LobbyProcess.approve_user(ctx.guild, user, dob, age, ctx.author.name)
         await ctx.message.delete()
+
+    @app_commands.command()
+    @permissions.check_app_roles_admin()
+    async def purge(self, interaction: discord.Interaction, days: int = 14):
+        """This command will kick all the users that have not been processed through the lobby with the given days."""
+        lobby_config = ConfigData().get_key_int(interaction.guild.id, "lobby")
+        lobby_channel = interaction.guild.get_channel(lobby_config)
+        if days > 14:
+            days = 14
+            await interaction.channel.send("Max days is 14, setting to 14")
+
+        view = confirmAction()
+        await view.send_message(interaction, f"Are you sure you want to purge the lobby of users that have not been processed in the last {days} days?")
+        await view.wait()
+        if view.confirmed is False:
+            await interaction.followup.send("Purge cancelled")
+            return
+        days_to_datetime = datetime.datetime.now() - datetime.timedelta(days=days)
+        kicked = []
+        async for x in lobby_channel.history(limit=None, after=days_to_datetime):
+            if x.author.bot is False:
+                continue
+            for a in x.mentions:
+                try:
+                    await a.kick()
+                    kicked.append(a.id)
+                except Exception as e:
+                    print(f"unable to kick {a} because {e}")
+            await x.delete()
+        with open("config/kicked.txt", "w") as file:
+            str_kicked = "\n".join(kicked)
+            file.write(f"these users were removed during the purge:\n")
+            file.write(str_kicked)
+        await interaction.channel.send(f"{interaction.user.mention} Kicked {len(kicked)}", file=discord.File(file.name, "kicked.txt"))
+        os.remove("config/kicked.txt")
 
     # Event
 

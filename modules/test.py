@@ -136,12 +136,13 @@ class Test(commands.Cog, name="test"):
             json.dump(historydict, f, indent=4)
         print(perf_counter() - start)
 
-    @commands.command()
-    @commands.is_owner()
-    async def update(self, ctx: commands.Context):
-        from classes import jsonmaker
-        await jsonmaker.guildconfiger.updateconfig(ctx.guild.id)
-        await ctx.send('Guild config updated to latest version')
+    # depracated
+    # @commands.command()
+    # @commands.is_owner()
+    # async def update(self, ctx: commands.Context):
+    #     from classes import jsonmaker
+    #     await jsonmaker.guildconfiger.updateconfig(ctx.guild.id)
+    #     await ctx.send('Guild config updated to latest version')
 
     @commands.command()
     @commands.is_owner()

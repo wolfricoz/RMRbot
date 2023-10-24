@@ -117,9 +117,9 @@ class Forum(commands.GroupCog, name="forum"):
     async def on_message_delete(self, message: discord.Message):
         """Removes the thread if the main message is removed."""
         print("message removed")
-        forums = ForumAutoMod.config(message.guild.id)
         if message.channel.type != discord.ChannelType.public_thread:
             return
+        forums = ForumAutoMod.config(message.guild.id)
         forum: discord.ForumChannel = self.bot.get_channel(message.channel.parent_id)
         if message.author == self.bot:
             return

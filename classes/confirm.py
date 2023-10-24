@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 class ConfirmDialogue(ABC):
     @abstractmethod
+    @staticmethod
     async def confirm(bot, discord, interaction, desc, title):
         def check(m):
             return m.content is not None and m.channel == interaction.channel
@@ -18,6 +19,11 @@ class ConfirmDialogue(ABC):
                 confirm = False
                 await conf.edit(embed=embed)
                 await msg.delete()
+            elif "cancel" in msg.content.lower():
+                desc = "Cancelled!"
+                embed = discord.Embed(title=f"Roleplay Roulette", description=desc)
+                await conf.edit(embed=embed)
+                return
         return msg
 
     @abstractmethod
