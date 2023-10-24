@@ -96,8 +96,8 @@ class ForumAutoMod(ABC):
 
         forum = bot.get_channel(thread.parent_id)
         og = await thread.fetch_message(thread.id)
-        print(user_count)
-        if og.edited_at is not None and og.edited_at <= bcheck and user_count <= 0 or og.edited_at is None and user_count <= 0:
+        og_time = og.created_at.astimezone(pytz.UTC)
+        if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
             for a in forum.available_tags:
                 if a.name == "Approved":
                     await thread.add_tags(a)
@@ -163,3 +163,14 @@ class ForumAutoMod(ABC):
         with open(file_name, 'a') as f:
             f.write(
                     f"\n{datetime.now().strftime('%m/%d/%Y %I:%M %p')}: {interaction.user} has approved post '{interaction.channel}'")
+
+    @staticmethod
+    @abstractmethod
+    async def get_message(thread: discord.Thread):
+        """Loops through the history of the channel and retrieves the message"""
+        if thread.type != discord.ChannelType.public_thread:
+            return False
+        async for message in thread.history(limit=10, oldest_first=True):
+            if message.id == thread.id:
+                return message
+        return False

@@ -26,7 +26,7 @@ class LobbyProcess(ABC):
         await LobbyProcess.change_user_roles(user, guild)
 
         # Log age and dob to lobbylog
-        await LobbyProcess.log(user, guild, dob, age, staff)
+        await LobbyProcess.log(user, guild, age, dob, staff)
 
         # fetches welcoming message and welcomes them in general channel
         await LobbyProcess.welcome(user, guild)
@@ -107,3 +107,12 @@ class LobbyProcess(ABC):
         message = ConfigData().get_key(guild.id, "welcomemessage")
         channel = guild.get_channel(int(general))
         await channel.send(f"Welcome to {guild.name} {user.mention}! {message}")
+
+    @staticmethod
+    @abstractmethod
+    async def age_log(age_log_channel, userid, dob, interaction):
+        await age_log_channel.send(f"USER ADDED\n"
+                                   f"DOB: {dob}\n"
+                                   f"UID: {userid}\n"
+                                   f"Entry updated by: {interaction.user.name}")
+        await interaction.channel.send(f"added {userid} to age log with dob: {dob}")

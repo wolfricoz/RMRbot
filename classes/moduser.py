@@ -70,7 +70,8 @@ class ModUser(ABC):
                 await interaction.channel.send(embed=embed)
             count += 1
             await log.send(embed=embed)
-            await banlog.send(embed=embed)
+            if typeofaction == "banned":
+                await banlog.send(embed=embed)
             posted_at.append(guild.id)
         except classes.databaseController.KeyNotFound as e:
             logging.exception(f"{guild.name}: {e}")

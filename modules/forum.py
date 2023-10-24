@@ -1,4 +1,5 @@
 """Handles all forum related actions; such as automod and warnings."""
+import asyncio
 import logging
 import os
 import re
@@ -31,7 +32,10 @@ class Forum(commands.GroupCog, name="forum"):
         bot = self.bot
         await ForumAutoMod.checktags(thread)
         # Checks the tags and adds the correct ones.
-        msg: discord.Message = await thread.fetch_message(thread.id)
+        msg: discord.Message = await ForumAutoMod.get_message(thread)
+        if msg is False:
+            logging.error(f"[Automod Error] Message not found in thread: {thread.name}")
+            return
         forum_channel = bot.get_channel(thread.parent_id)
         if forum_channel.id not in forums:
             return
