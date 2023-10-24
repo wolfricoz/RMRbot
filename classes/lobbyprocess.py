@@ -115,4 +115,4 @@ class LobbyProcess(ABC):
                                    f"DOB: {dob}\n"
                                    f"UID: {userid}\n"
                                    f"Entry updated by: {interaction.user.name}")
-        await interaction.channel.send(f"added {userid} to age log with dob: {dob}")
+        await interaction.channel.send(f"added <@{userid}>({userid}) to age log with dob: {dob}")
