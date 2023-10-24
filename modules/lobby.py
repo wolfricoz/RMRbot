@@ -181,7 +181,7 @@ class Lobby(commands.GroupCog):
                     return
                 UserTransactions.update_user_dob(userid, dob)
                 await interaction.followup.send(f"<@{userid}>'s dob updated to: {dob}")
-                await LobbyProcess.age_log(age_log_channel, userid, dob, interaction, operation.value.upper())
+                await LobbyProcess.age_log(age_log_channel, userid, dob, interaction, "updated")
             case "DELETE":
                 if UserTransactions.user_delete(userid) is False:
                     await interaction.followup.send(f"Can't find entry: <@{userid}>")
