@@ -110,8 +110,8 @@ class LobbyProcess(ABC):
 
     @staticmethod
     @abstractmethod
-    async def age_log(age_log_channel, userid, dob, interaction):
-        await age_log_channel.send(f"USER ADDED\n"
+    async def age_log(age_log_channel, userid, dob, interaction, operation="ADDED"):
+        await age_log_channel.send(f"USER {operation.upper()}\n"
                                    f"DOB: {dob}\n"
                                    f"UID: {userid}\n"
                                    f"Entry updated by: {interaction.user.name}")
