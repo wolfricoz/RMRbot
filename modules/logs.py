@@ -11,6 +11,8 @@ from discord.app_commands import AppCommandError, command, CheckFailure
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from classes.databaseController import CommitError
+
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')
 spec = os.getenv('spec')
@@ -93,9 +95,7 @@ class Logging(commands.Cog):
     async def on_fail_message(self, interaction: Interaction, message: str):
         """sends a message to the user if the command fails."""
         try:
-            await interaction.response.send_message(message, ephemeral=True)
-        except discord.Webhook:
-            await interaction.followup.send(message)
+            await interaction.channel.send(message)
         except Exception as e:
             logging.error(e)
 
@@ -105,13 +105,7 @@ class Logging(commands.Cog):
             error: AppCommandError
     ):
         """app command error handler."""
-        if isinstance(error, CheckFailure):
-            await self.on_fail_message(interaction, "You do not have permission.")
-        elif isinstance(error, commands.MemberNotFound):
-            await self.on_fail_message(interaction, "User not found.")
-        elif isinstance(error.original, IndexError):
-            await self.on_fail_message(interaction, "Please fill in the required arguments: discord message link.")
-        await self.on_fail_message(interaction, f"Command failed: {error} \nreport this to Rico")
+
         channel = self.bot.get_channel(self.bot.DEV)
         with open('error.txt', 'w', encoding='utf-8') as file:
             file.write(traceback.format_exc())
@@ -123,7 +117,20 @@ class Logging(commands.Cog):
             logging.error(e)
         logger.warning(
                 f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
+        if isinstance(error, CheckFailure):
+            await self.on_fail_message(interaction, "You do not have permission.")
+            return
+        elif isinstance(error, commands.MemberNotFound):
+            await self.on_fail_message(interaction, "User not found.")
+            return
+        elif isinstance(error.original, IndexError):
+            await self.on_fail_message(interaction, "Please fill in the required arguments: discord message link.")
+            return
+        elif isinstance(error.original, CommitError):
+            await self.on_fail_message(interaction, "Failed to commit to database; please try again later. user/key may already exist.")
+            return
 
+        await self.on_fail_message(interaction, f"Command failed: {error} \nreport this to Rico")
         # raise error
 
     @commands.Cog.listener(name='on_command')
