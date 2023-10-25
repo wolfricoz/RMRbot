@@ -342,6 +342,47 @@ UID: {user.id}
         await interaction.channel.send(f"{interaction.user.mention} Kicked {len(kicked)}", file=discord.File(file.name, "kicked.txt"))
         os.remove("config/kicked.txt")
 
+    @app_commands.command()
+    @app_commands.choices(operation=[Choice(name=x, value=x) for x in
+                                     ['add', 'update', 'get']])
+    @app_commands.choices(idcheck=[Choice(name=x, value=x) for x in
+                                   {"Yes": "True", "No": "False"}])
+    @permissions.check_app_roles()
+    async def idcheck(self, interaction: discord.Interaction, operation: Choice['str'], idcheck: Choice['str'],
+                      userid: str, reason: str = None):
+        """adds user to id check or removes them"""
+        if idcheck.value == "True":
+            idcheck = True
+        elif idcheck.value == "False":
+            idcheck = False
+        await interaction.response.defer(ephemeral=False)
+        match operation.value.upper():
+            case "UPDATE":
+                if reason is None:
+                    await interaction.followup.send(f"Please include a reason")
+                    return
+                VerificationTransactions.update_check(userid, reason, idcheck)
+                await interaction.followup.send(
+                        f"<@{userid}>'s userid entry has been updated with reason: {reason} and idcheck: {idcheck}")
+            case "ADD":
+                if reason is None:
+                    await interaction.followup.send(f"Please include a reason")
+                    return
+                VerificationTransactions.add_idcheck(userid, reason, idcheck)
+                await interaction.followup.send(
+                        f"<@{userid}>'s userid entry has been added with reason: {reason} and idcheck: {idcheck}")
+            case "GET":
+                user = VerificationTransactions.get_id_info(userid)
+                if user is None:
+                    await interaction.followup.send("Not found")
+                    return
+                await interaction.followup.send(f"**__USER INFO__**\n"
+                                                f"user: <@{user.uid}>\n"
+                                                f"Reason: {user.reason}\n"
+                                                f"idcheck: {user.idcheck}\n"
+                                                f"idverifier: {user.idverified}\n"
+                                                f"verifieddob: {user.verifieddob}\n")
+
     # Event
 
     @commands.Cog.listener()
