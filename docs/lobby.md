@@ -43,10 +43,13 @@ it is affected by the options: 18+ role, 21+, 25+ role, add, rem, return to lobb
 this command is used to quickly check what age the user is supposed to be, it will calculate the current age using the
 date of birth.
 
-## mod: `/verification idcheck operation:(add, update, get) toggle:(True, False) userid:required reason:optional`
+## mod: `/lobby idcheck operation:(add, update, get) idcheck:(Yes, No) userid:required reason:optional`
 
 This command is used to add, update or get an entry in the ID list. The ID list is used to prevent users from being
 approved with the age commands.
+
+To add a user to the ID list, use the operation: add, the idcheck: Yes and the userid: the user's id. The reason is not
+required but is recommended.
 
 ### admin: `/Lobby button text:string`
 
