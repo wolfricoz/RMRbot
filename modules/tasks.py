@@ -110,17 +110,17 @@ class Tasks(commands.GroupCog):
         logging.debug(f"Checking all entries for expiration at {datetime.now()}")
         for guild in self.bot.guilds:
             for member in guild.members:
-                print(f"Checking {member.id}")
                 await asyncio.sleep(0.1)
                 if member.id not in userids:
+                    logging.debug(f"User {member.id} not found in database, adding.")
                     UserTransactions.add_user_empty(member.id)
                     continue
+                logging.debug(f"Updating entry time for {member.id}")
                 UserTransactions.update_entry_date(member.id)
 
 
     async def user_expiration_remove(self, userdata, removaldate):
         for entry in userdata:
-            print(f"Checking {entry.uid}")
             if entry.entry < removaldate:
                 await asyncio.sleep(0.1)
                 UserTransactions.user_delete(entry.uid)
@@ -128,8 +128,8 @@ class Tasks(commands.GroupCog):
     @tasks.loop(hours=48)
     async def check_users_expiration(self):
         """updates entry time, if entry is expired this also removes it."""
-        # if self.lobby_history.current_loop == 0:
-        #     return
+        if self.lobby_history.current_loop == 0:
+            return
         print("checking user entries")
         userdata = UserTransactions.get_all_users()
         userids = [x.uid for x in userdata]
@@ -137,14 +137,6 @@ class Tasks(commands.GroupCog):
         await self.user_expiration_update(userids)
         await self.user_expiration_remove(userdata, removaldate)
         print("Finished checking all entries")
-        # task = asyncio.create_task(self.user_expiration())
-        # while not task.done():
-        #     print("checking if task is done...")
-        #     await asyncio.sleep(5)
-        #     if not task.done():
-        #         print("Awaiting result")
-        #         continue
-        #     print("Task is done")
 
     @app_commands.command(name="expirecheck")
     @permissions.check_app_roles_admin()
