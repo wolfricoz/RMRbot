@@ -110,6 +110,7 @@ class Tasks(commands.GroupCog):
         logging.debug(f"Checking all entries for expiration at {datetime.now()}")
         for guild in self.bot.guilds:
             for member in guild.members:
+                print(f"Checking {member.id}")
                 await asyncio.sleep(0.1)
                 if member.id not in userids:
                     UserTransactions.add_user_empty(member.id)
@@ -119,7 +120,9 @@ class Tasks(commands.GroupCog):
 
     async def user_expiration_remove(self, userdata, removaldate):
         for entry in userdata:
+            print(f"Checking {entry.uid}")
             if entry.entry < removaldate:
+                await asyncio.sleep(0.1)
                 UserTransactions.user_delete(entry.uid)
                 logging.debug(f"Database record: {entry.uid} expired")
     @tasks.loop(hours=48)
