@@ -1,4 +1,5 @@
 """This cogs handles all the tasks."""
+import asyncio
 import json
 import logging
 import os
@@ -68,6 +69,8 @@ class Tasks(commands.GroupCog):
             json.dump(historydict, f, indent=4)
         print("[auto refresh]List updated")
         logging.debug("[auto refresh]List updated")
+
+
     @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
@@ -95,12 +98,9 @@ class Tasks(commands.GroupCog):
                 advert_mod_channel = guild.get_channel(advert_mod)
                 await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
 
-    @tasks.loop(hours=48)
-    async def check_users_expiration(self):
+    async def user_expiration(self):
         """updates entry time, if entry is expired this also removes it."""
-        if self.lobby_history.current_loop == 0:
-            return
-        print("checking user entries")
+        logging.debug(f"Checking all entries for expiration at {datetime.now()}")
         userdata = UserTransactions.get_all_users()
         userids = [x.uid for x in userdata]
         removaldate = datetime.now() - timedelta(days=730)
@@ -115,14 +115,28 @@ class Tasks(commands.GroupCog):
             if entry.entry < removaldate:
                 UserTransactions.user_delete(entry.uid)
                 logging.debug(f"Database record: {entry.uid} expired")
+    @tasks.loop(hours=48)
+    async def check_users_expiration(self):
+        """updates entry time, if entry is expired this also removes it."""
+        # if self.lobby_history.current_loop == 0:
+        #     return
+        print("checking user entries")
+        task = asyncio.create_task(self.user_expiration())
+        while not task.done():
+            print("checking if task is done...")
+            await asyncio.sleep(5)
+            if not task.done():
+                print("Awaiting result")
+                continue
+            print("Task is done")
 
     @app_commands.command(name="expirecheck")
     @permissions.check_app_roles_admin()
     async def expirecheck(self, interaction: discord.Interaction):
-        """forces the automatic search ban check to start; normally runs every 30 minutes"""
-        await interaction.response.send_message("[Debug]Checking all entries.")
+        """forces the automatic user expiration check to start; normally runs every 48 hours"""
         self.check_users_expiration.restart()
-        await interaction.followup.send("check-up finished.")
+        await interaction.response.send_message("[Debug]Checking all entries.")
+
 
     @app_commands.command(name="searchbans")
     @permissions.check_app_roles_admin()
