@@ -18,12 +18,15 @@ from classes.databaseController import ConfigData, TimersTransactions, UserTrans
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
 
+
 # overhaul of database is needed to allow SQLalchemy to run in async mode.
 def to_thread(func: typing.Callable) -> typing.Coroutine:
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         return await asyncio.to_thread(func, *args, **kwargs)
+
     return wrapper
+
 
 class Tasks(commands.GroupCog):
     def __init__(self, bot):
@@ -78,7 +81,6 @@ class Tasks(commands.GroupCog):
         print("[auto refresh]List updated")
         logging.debug("[auto refresh]List updated")
 
-
     @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
@@ -105,6 +107,7 @@ class Tasks(commands.GroupCog):
                 advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
                 advert_mod_channel = guild.get_channel(advert_mod)
                 await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
+
     async def user_expiration_update(self, userids):
         """updates entry time, if entry is expired this also removes it."""
         logging.debug(f"Checking all entries for expiration at {datetime.now()}")
@@ -118,17 +121,18 @@ class Tasks(commands.GroupCog):
                 logging.debug(f"Updating entry time for {member.id}")
                 UserTransactions.update_entry_date(member.id)
 
-
     async def user_expiration_remove(self, userdata, removaldate):
+        """removes expired entries."""
         for entry in userdata:
             if entry.entry < removaldate:
                 await asyncio.sleep(0.1)
                 UserTransactions.user_delete(entry.uid)
                 logging.debug(f"Database record: {entry.uid} expired")
+
     @tasks.loop(hours=48)
     async def check_users_expiration(self):
         """updates entry time, if entry is expired this also removes it."""
-        if self.lobby_history.current_loop == 0:
+        if self.check_users_expiration.current_loop == 0:
             return
         print("checking user entries")
         userdata = UserTransactions.get_all_users()
@@ -144,7 +148,6 @@ class Tasks(commands.GroupCog):
         """forces the automatic user expiration check to start; normally runs every 48 hours"""
         self.check_users_expiration.restart()
         await interaction.response.send_message("[Debug]Checking all entries.")
-
 
     @app_commands.command(name="searchbans")
     @permissions.check_app_roles_admin()
