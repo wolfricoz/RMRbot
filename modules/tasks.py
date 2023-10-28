@@ -1,8 +1,10 @@
 """This cogs handles all the tasks."""
 import asyncio
+import functools
 import json
 import logging
 import os
+import typing
 from datetime import datetime, timedelta
 
 import discord
@@ -16,6 +18,12 @@ from classes.databaseController import ConfigData, TimersTransactions, UserTrans
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
 
+# overhaul of database is needed to allow SQLalchemy to run in async mode.
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return wrapper
 
 class Tasks(commands.GroupCog):
     def __init__(self, bot):
@@ -97,20 +105,19 @@ class Tasks(commands.GroupCog):
                 advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
                 advert_mod_channel = guild.get_channel(advert_mod)
                 await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
-
-    async def user_expiration(self):
+    async def user_expiration_update(self, userids):
         """updates entry time, if entry is expired this also removes it."""
         logging.debug(f"Checking all entries for expiration at {datetime.now()}")
-        userdata = UserTransactions.get_all_users()
-        userids = [x.uid for x in userdata]
-        removaldate = datetime.now() - timedelta(days=730)
         for guild in self.bot.guilds:
             for member in guild.members:
+                await asyncio.sleep(0.1)
                 if member.id not in userids:
                     UserTransactions.add_user_empty(member.id)
                     continue
                 UserTransactions.update_entry_date(member.id)
 
+
+    async def user_expiration_remove(self, userdata, removaldate):
         for entry in userdata:
             if entry.entry < removaldate:
                 UserTransactions.user_delete(entry.uid)
@@ -121,14 +128,20 @@ class Tasks(commands.GroupCog):
         # if self.lobby_history.current_loop == 0:
         #     return
         print("checking user entries")
-        task = asyncio.create_task(self.user_expiration())
-        while not task.done():
-            print("checking if task is done...")
-            await asyncio.sleep(5)
-            if not task.done():
-                print("Awaiting result")
-                continue
-            print("Task is done")
+        userdata = UserTransactions.get_all_users()
+        userids = [x.uid for x in userdata]
+        removaldate = datetime.now() - timedelta(days=730)
+        await self.user_expiration_update(userids)
+        await self.user_expiration_remove(userdata, removaldate)
+        print("Finished checking all entries")
+        # task = asyncio.create_task(self.user_expiration())
+        # while not task.done():
+        #     print("checking if task is done...")
+        #     await asyncio.sleep(5)
+        #     if not task.done():
+        #         print("Awaiting result")
+        #         continue
+        #     print("Task is done")
 
     @app_commands.command(name="expirecheck")
     @permissions.check_app_roles_admin()
