@@ -345,8 +345,8 @@ UID: {user.id}
     @app_commands.command()
     @app_commands.choices(operation=[Choice(name=x, value=x) for x in
                                      ['add', 'update', 'get']])
-    @app_commands.choices(idcheck=[Choice(name=x, value=x) for x in
-                                   {"Yes": "True", "No": "False"}])
+    @app_commands.choices(idcheck=[Choice(name=x, value=y) for x, y in
+                                   {"Yes": "True", "No": "False"}.items()])
     @permissions.check_app_roles()
     async def idcheck(self, interaction: discord.Interaction, operation: Choice['str'], idcheck: Choice['str'],
                       userid: str, reason: str = None):

@@ -159,12 +159,7 @@ class Test(commands.Cog, name="test"):
 
         await ctx.send(f"Kicked {count}")
 
-    @commands.command()
-    @commands.is_owner()
-    async def getlog(self, ctx: commands.Context):
-        logfile = f"logs/log-{time.strftime('%m-%d-%Y')}.txt"
-        with open(logfile, 'r') as file:
-            await ctx.send(f"Current logfile:", file=discord.File(file.name))
+
 
 
 async def setup(bot: commands.Bot):

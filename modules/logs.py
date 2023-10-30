@@ -8,6 +8,7 @@ from sys import platform
 import discord.utils
 from discord import Interaction
 from discord.app_commands import AppCommandError, command, CheckFailure
+from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -148,6 +149,11 @@ class Logging(commands.Cog):
         user = ctx.user
         logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname.name}')
 
+    @app_commands.command(name="getlog")
+    async def getlog(self, interaction: Interaction):
+        """gets the log file"""
+        with open(logfile, 'rb') as file:
+            await interaction.response.send_message("Here's the log file.", file=discord.File(file.name, "log.txt"))
 
 async def setup(bot):
     """Adds the cog to the bot."""
