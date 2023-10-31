@@ -54,24 +54,22 @@ class ModUser(ABC):
     @abstractmethod
     async def log(interaction, member, reason, guild, typeofaction, servers=None):
         """Catch all logging function for all the warnings. No more repeating."""
-        if interaction.guild.id != guild.id:
-            return
-        count = 0
-        posted_at = []
-        log = guild.get_channel(ConfigData().get_key_int(guild.id, "warnlog"))
-        banlog = guild.get_channel(ConfigData().get_key_int(guild.id, "blog"))
-        if guild.id in posted_at:
+
+        try:
+            log = guild.get_channel(ConfigData().get_key_int(guild.id, "warnlog"))
+            banlog = guild.get_channel(ConfigData().get_key_int(guild.id, "blog"))
+        except Exception as e:
+            logging.exception(f"{guild.name}: {e}")
             return
         try:
             embed = discord.Embed(title=f"{member.name} {typeofaction}",
                                   description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
             embed.set_footer(text=f"Time:{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} {f'servers:{servers}' if servers else ''}")
-            if count < 1:
-                await interaction.channel.send(embed=embed)
-            count += 1
+
+            await interaction.channel.send(embed=embed)
             await log.send(embed=embed)
             if typeofaction == "banned":
                 await banlog.send(embed=embed)
-            posted_at.append(guild.id)
         except classes.databaseController.KeyNotFound as e:
             logging.exception(f"{guild.name}: {e}")
+
