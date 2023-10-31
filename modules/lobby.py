@@ -98,6 +98,7 @@ class Lobby(commands.GroupCog):
 
             # Check if user needs to ID or has previously ID'd
             if await AgeCalculations.id_check_or_id_verified(interaction.user, interaction.guild, channel):
+                await modlobby.send(f"{interaction.user.mention} gave ages: {age} {dob}, but is on the idlist.")
                 await interaction.response.send_message(
                         f'A staff member will contact you within 24 hours, please wait patiently.', ephemeral=True)
                 return
