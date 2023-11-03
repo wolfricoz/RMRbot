@@ -107,10 +107,12 @@ class Tasks(commands.GroupCog):
                 advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
                 advert_mod_channel = guild.get_channel(advert_mod)
                 await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
+        print("Finished checking all roles on users for searchbans")
         for data in DatabaseTransactions.get_table("timers"):
             if datetime.now() > data.created_at + timedelta(hours=data.removal):
                 TimersTransactions.remove_timer(data.id)
                 logging.debug(f"searchban expired with id {data.id} with data: {data.ui}, {data.guildid}, {data.roleid}, {data.reason}, {data.removal}, {data.created_at}")
+        print("removed all expired searchbans from database")
 
     async def user_expiration_update(self, userids):
         """updates entry time, if entry is expired this also removes it."""
@@ -159,7 +161,6 @@ class Tasks(commands.GroupCog):
         """forces the automatic search ban check to start; normally runs every 30 minutes"""
         await interaction.response.send_message("[Debug]Checking all searchbans.")
         self.search_ban_check.restart()
-        await interaction.followup.send("check-up finished.")
 
     @search_ban_check.before_loop
     async def before_sbc(self):
