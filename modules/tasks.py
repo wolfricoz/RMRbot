@@ -109,9 +109,10 @@ class Tasks(commands.GroupCog):
                 await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
         print("Finished checking all roles on users for searchbans")
         for data in DatabaseTransactions.get_table("timers"):
-            if datetime.now() > data.created_at + timedelta(hours=data.removal):
-                TimersTransactions.remove_timer(data.id)
-                logging.debug(f"searchban expired with id {data.id} with data: {data.ui}, {data.guildid}, {data.roleid}, {data.reason}, {data.removal}, {data.created_at}")
+            if datetime.now() < data.created_at + timedelta(hours=data.removal):
+                continue
+            TimersTransactions.remove_timer(data.id)
+            logging.debug(f"searchban expired with id {data.id} with data: {data.ui}, {data.guildid}, {data.roleid}, {data.reason}, {data.removal}, {data.created_at}")
         print("removed all expired searchbans from database")
 
     async def user_expiration_update(self, userids):
