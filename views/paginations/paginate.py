@@ -121,7 +121,7 @@ class paginate(ABC):
     @staticmethod
     @abstractmethod
     async def create_pagination_table(interaction, table_name, warningtype="official"):
-        data, warndict = DatabaseTransactions.get_all_timers(table_name, interaction.guild.id)
+        data, warndict = DatabaseTransactions.get_all_timers(table_name)
         pagination_view = PaginationView()
         pagination_view.data = data
         pagination_view.warndict = warndict

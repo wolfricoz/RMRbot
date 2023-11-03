@@ -82,14 +82,12 @@ class DatabaseTransactions(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_all_timers(table_name, guildid):
+    def get_all_timers(table_name):
         """This function will return the table requested."""
-        table = DatabaseTransactions.get_table(table_name, guildid)
+        table = DatabaseTransactions.get_table(table_name)
         print(f"table: {table}")
         warning_dict = {}
         warning_list = []
-        for x in table:
-            print(x.uid)
         session.close()
         if len(table) == 0 or table is None:
             return False
@@ -97,8 +95,6 @@ class DatabaseTransactions(ABC):
             removal_time = entry.created_at + timedelta(hours=entry.removal)
             warning_dict[entry.uid] = removal_time.strftime("%m/%d/%Y")
             warning_list.append(entry.uid)
-        print(warning_dict)
-        print(warning_list)
         return warning_list, warning_dict
 
 
