@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import discord
 
 import classes.permissions as permissions
-from classes.databaseController import UserTransactions, ConfigData
+from classes.databaseController import UserTransactions, ConfigData, DatabaseTransactions
 
 
 # noinspection PyUnresolvedReferences
@@ -109,11 +109,22 @@ class PaginationView(discord.ui.View):
 class paginate(ABC):
     @staticmethod
     @abstractmethod
-    async def create_pagination(interaction, user, wtype, warningtype="official"):
+    async def create_pagination_user(interaction, user, wtype, warningtype="official"):
         data, warndict = UserTransactions.user_get_warnings(user.id, wtype)
         pagination_view = PaginationView()
         pagination_view.data = data
         pagination_view.warndict = warndict
         pagination_view.username = user.name
+        pagination_view.warningtype = warningtype
+        await pagination_view.send(interaction)
+
+    @staticmethod
+    @abstractmethod
+    async def create_pagination_table(interaction, table_name, warningtype="official"):
+        data, warndict = DatabaseTransactions.get_all_timers(table_name, interaction.guild.id)
+        pagination_view = PaginationView()
+        pagination_view.data = data
+        pagination_view.warndict = warndict
+        pagination_view.username = "search bans"
         pagination_view.warningtype = warningtype
         await pagination_view.send(interaction)

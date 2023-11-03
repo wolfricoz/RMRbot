@@ -1,3 +1,4 @@
+import logging
 import re
 
 import discord
@@ -53,11 +54,12 @@ class AgeCalculations(ABC):
             return False
         if userinfo.idverified is True and userinfo.verifieddob is not None and send_message is True:
             await channel.send(f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
+            logging.debug(f"{user} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             return False
         if userinfo.idcheck is True:
             await idchannel.send(
                     f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
-
+            logging.debug(f"{user} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
             return True
         return False
 

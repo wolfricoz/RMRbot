@@ -21,7 +21,7 @@ class Warnings(commands.Cog):
     @permissions.check_app_roles()
     async def view(self, interaction: discord.Interaction, user: discord.Member):
         """View the user's past warnings"""
-        await paginate.create_pagination(interaction, user, "warn")
+        await paginate.create_pagination_user(interaction, user, "warn")
 
     @app_commands.command(name="warn")
     @app_commands.choices(notify=[

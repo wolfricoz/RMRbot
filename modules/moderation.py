@@ -90,7 +90,7 @@ class moderation(commands.Cog, name="Moderation"):
     @permissions.check_app_roles()
     async def watchhistory(self, interaction: discord.Interaction, user: discord.Member):
         """View the user's past watchlist entries"""
-        await paginate.create_pagination(interaction, user, "watch", warningtype="Watchlist")
+        await paginate.create_pagination_user(interaction, user, "watch", warningtype="Watchlist")
 
     @app_commands.command(name="notify")
     @permissions.check_app_roles()
@@ -113,7 +113,7 @@ class moderation(commands.Cog, name="Moderation"):
         hours = days * 24
         reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban of {days} day(s). Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban.\n\n This search ban expires on:\n {cooldown.strftime('%m/%d/%Y')}"
         await member.send(reason)
-        TimersTransactions.add_timer(interaction.guild.id, interaction.user.id, hours, reason=reason, roleid=roleid)
+        TimersTransactions.add_timer(interaction.guild.id, member.id, hours, reason=reason, roleid=roleid)
         await ModUser.log(interaction, member, reason, interaction.guild, typeofaction="searchbanned")
         await interaction.followup.send(f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
 

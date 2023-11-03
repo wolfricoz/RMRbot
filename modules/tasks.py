@@ -14,7 +14,7 @@ from discord.ext import commands, tasks
 import classes.databaseController
 import classes.searchbans as searchbans
 from classes import permissions
-from classes.databaseController import ConfigData, TimersTransactions, UserTransactions
+from classes.databaseController import ConfigData, TimersTransactions, UserTransactions, DatabaseTransactions
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
 
@@ -107,6 +107,10 @@ class Tasks(commands.GroupCog):
                 advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
                 advert_mod_channel = guild.get_channel(advert_mod)
                 await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
+        for data in DatabaseTransactions.get_table("timers"):
+            if datetime.now() > data.created_at + timedelta(hours=data.removal):
+                TimersTransactions.remove_timer(data.id)
+                logging.debug(f"searchban expired with id {data.id} with data: {data.ui}, {data.guildid}, {data.roleid}, {data.reason}, {data.removal}, {data.created_at}")
 
     async def user_expiration_update(self, userids):
         """updates entry time, if entry is expired this also removes it."""

@@ -1,5 +1,4 @@
 """Handles all forum related actions; such as automod and warnings."""
-import asyncio
 import logging
 import os
 import re
@@ -13,10 +12,9 @@ from discord.ext import commands
 import classes.permissions as permissions
 from classes.Advert import Advert
 from classes.automod import ForumAutoMod
-from classes.databaseController import ConfigData, SearchWarningTransactions
+from classes.databaseController import ConfigData
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
-
 
 
 class Forum(commands.GroupCog, name="forum"):
@@ -216,9 +214,15 @@ class Forum(commands.GroupCog, name="forum"):
 
     @app_commands.command()
     @permissions.check_app_roles()
+    async def bans(self, interaction: discord.Interaction):
+        """View the user's past warnings"""
+        await paginate.create_pagination_table(interaction, "timers", "Search Bans")
+
+    @app_commands.command()
+    @permissions.check_app_roles()
     async def history(self, interaction: discord.Interaction, user: discord.Member):
         """View the user's past warnings"""
-        await paginate.create_pagination(interaction, user, "search", "search")
+        await paginate.create_pagination_user(interaction, user, "search", "search")
 
 
 async def setup(bot: commands.Bot):

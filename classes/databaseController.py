@@ -62,6 +62,47 @@ class DatabaseTransactions(ABC):
         finally:
             session.close()
 
+    @staticmethod
+    @abstractmethod
+    def get_table(name):
+        """This function will return the table requested."""
+        match name.lower():
+            case "config":
+                return session.scalars(Select(db.Config)).all()
+            case "users":
+                return session.scalars(Select(db.Users)).all()
+            case "warnings":
+                return session.scalars(Select(db.Warnings)).all()
+            case "servers":
+                return session.scalars(Select(db.Servers)).all()
+            case "timers":
+                return session.scalars(Select(db.Timers).order_by(db.Timers.uid)).all()
+            case "idverification":
+                return session.scalars(Select(db.IdVerification)).all()
+
+    @staticmethod
+    @abstractmethod
+    def get_all_timers(table_name, guildid):
+        """This function will return the table requested."""
+        table = DatabaseTransactions.get_table(table_name, guildid)
+        print(f"table: {table}")
+        warning_dict = {}
+        warning_list = []
+        for x in table:
+            print(x.uid)
+        session.close()
+        if len(table) == 0 or table is None:
+            return False
+        for entry in table:
+            removal_time = entry.created_at + timedelta(hours=entry.removal)
+            warning_dict[entry.uid] = removal_time.strftime("%m/%d/%Y")
+            warning_list.append(entry.uid)
+        print(warning_dict)
+        print(warning_list)
+        return warning_list, warning_dict
+
+
+
 
 class UserTransactions(ABC):
 
