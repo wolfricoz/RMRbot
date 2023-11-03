@@ -215,7 +215,7 @@ class Forum(commands.GroupCog, name="forum"):
     @app_commands.command()
     @permissions.check_app_roles()
     async def bans(self, interaction: discord.Interaction):
-        """View the user's past warnings"""
+        """View all the search bans in the server."""
         await paginate.create_pagination_table(interaction, "timers", "Search Bans")
 
     @app_commands.command()
