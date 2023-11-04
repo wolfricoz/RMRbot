@@ -81,37 +81,37 @@ class Tasks(commands.GroupCog):
         print("[auto refresh]List updated")
         logging.debug("[auto refresh]List updated")
 
-    def remove_entry(data: classes.databaseController.Timers):
-        TimersTransactions.remove_timer(data.id)
+    def remove_entry(self, data: classes.databaseController.Timers):
+        TimersTransactions.remove_timer(data)
         logging.debug(f"searchban expired with id {data.id} with data: {data.uid}, {data.guild}, {data.role}, {data.reason}, {data.removal}, {data.created_at}")
 
     @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
-        # Can likely be improved by using a database query instead of looping through all guilds and members.
         print("checking search bans")
         for data in DatabaseTransactions.get_table("timers"):
-            if datetime.now() < data.created_at + timedelta(hours=data.removal):
+            print(data.id, data.uid, data.guild, data.role, data.reason, data.removal, data.created_at)
+            removal = data.created_at + timedelta(hours=data.removal)
+            if datetime.now() < removal:
+                print(datetime.now(), " ", removal)
                 continue
             guild = self.bot.get_guild(data.guild)
             try:
                 roleid = ConfigData().get_key_int(guild.id, 'posttimeout')
                 role = guild.get_role(roleid)
             except classes.databaseController.KeyNotFound:
+                self.remove_entry(data)
                 continue
             member = guild.get_member(data.uid)
             if member is None:
+                self.remove_entry(data)
                 continue
             userroles = [x.id for x in member.roles]
             if roleid not in userroles:
+                self.remove_entry(data)
                 continue
-            timer = TimersTransactions.get_timer_with_role(member.id, guild.id, roleid)
-            if timer is None:
-                continue
-            remove = timer.created_at + timedelta(hours=timer.removal)
-            if datetime.now() < remove:
-                continue
-            await searchbans.remove(member, role, timer)
+
+            await searchbans.remove(member, role, data)
             advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
             advert_mod_channel = guild.get_channel(advert_mod)
             await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")

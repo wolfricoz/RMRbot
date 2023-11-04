@@ -537,15 +537,8 @@ class TimersTransactions(ABC):
         session.close()
         return timer
 
-    # @staticmethod
-    # @abstractmethod
-    # def get_timers(userid, guild):
-    #     """Gets all timers that a user has with userid and guild."""
-    #     timer = session.scalar(Select(Timers).where(Timers.uid == userid))
-
     @staticmethod
     @abstractmethod
-    def remove_timer(id):
-        timer = session.scalar(Select(Timers).where(Timers.id == id))
+    def remove_timer(timer):
         session.delete(timer)
-        DatabaseTransactions.commit(session)
+        session.commit()
