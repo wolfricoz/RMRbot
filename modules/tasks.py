@@ -90,10 +90,8 @@ class Tasks(commands.GroupCog):
         """checks if searchban can be removed."""
         print("checking search bans")
         for data in DatabaseTransactions.get_table("timers"):
-            print(data.id, data.uid, data.guild, data.role, data.reason, data.removal, data.created_at)
             removal = data.created_at + timedelta(hours=data.removal)
             if datetime.now() < removal:
-                print(datetime.now(), " ", removal)
                 continue
             guild = self.bot.get_guild(data.guild)
             try:
