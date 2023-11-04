@@ -81,39 +81,41 @@ class Tasks(commands.GroupCog):
         print("[auto refresh]List updated")
         logging.debug("[auto refresh]List updated")
 
+    def remove_entry(data: classes.databaseController.Timers):
+        TimersTransactions.remove_timer(data.id)
+        logging.debug(f"searchban expired with id {data.id} with data: {data.uid}, {data.guild}, {data.role}, {data.reason}, {data.removal}, {data.created_at}")
+
     @tasks.loop(minutes=60)
     async def search_ban_check(self):
         """checks if searchban can be removed."""
-        if self.search_ban_check.current_loop == 0:
-            return
+        # Can likely be improved by using a database query instead of looping through all guilds and members.
         print("checking search bans")
-        for guild in self.bot.guilds:
+        for data in DatabaseTransactions.get_table("timers"):
+            if datetime.now() < data.created_at + timedelta(hours=data.removal):
+                continue
+            guild = self.bot.get_guild(data.guild)
             try:
                 roleid = ConfigData().get_key_int(guild.id, 'posttimeout')
                 role = guild.get_role(roleid)
             except classes.databaseController.KeyNotFound:
                 continue
-            for member in guild.members:
-                userroles = [x.id for x in member.roles]
-                if roleid not in userroles:
-                    continue
-                timer = TimersTransactions.get_timer_with_role(member.id, guild.id, roleid)
-                if timer is None:
-                    continue
-                remove = timer.created_at + timedelta(hours=timer.removal)
-                if datetime.now() < remove:
-                    continue
-                await searchbans.remove(member, role, timer)
-                advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
-                advert_mod_channel = guild.get_channel(advert_mod)
-                await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
-        print("Finished checking all roles on users for searchbans")
-        for data in DatabaseTransactions.get_table("timers"):
-            if datetime.now() < data.created_at + timedelta(hours=data.removal):
+            member = guild.get_member(data.uid)
+            if member is None:
                 continue
-            TimersTransactions.remove_timer(data.id)
-            logging.debug(f"searchban expired with id {data.id} with data: {data.ui}, {data.guildid}, {data.roleid}, {data.reason}, {data.removal}, {data.created_at}")
-        print("removed all expired searchbans from database")
+            userroles = [x.id for x in member.roles]
+            if roleid not in userroles:
+                continue
+            timer = TimersTransactions.get_timer_with_role(member.id, guild.id, roleid)
+            if timer is None:
+                continue
+            remove = timer.created_at + timedelta(hours=timer.removal)
+            if datetime.now() < remove:
+                continue
+            await searchbans.remove(member, role, timer)
+            advert_mod = ConfigData().get_key_int(guild.id, "advertmod")
+            advert_mod_channel = guild.get_channel(advert_mod)
+            await advert_mod_channel.send(f"{member.mention}\'s search ban has expired.")
+        print("Finished checking all roles on users for searchbans")
 
     async def user_expiration_update(self, userids):
         """updates entry time, if entry is expired this also removes it."""
