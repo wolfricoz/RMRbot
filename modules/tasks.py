@@ -160,7 +160,7 @@ class Tasks(commands.GroupCog):
             for channel in x.channels:
                 if channel.type == discord.ChannelType.forum:
                     async for post in channel.archived_threads():
-                        message = await post.send(f"[unarchived] {post.owner.mention} Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close")
+                        message = await post.send(f"{post.owner.mention} Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close")
                         await asyncio.sleep(1)
 
     @unarchiver.before_loop  # it's called before the actual task runs
