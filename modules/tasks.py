@@ -155,13 +155,13 @@ class Tasks(commands.GroupCog):
     @tasks.loop(hours=72)
     async def unarchiver(self):
         "makes all posts active again"
+        post: discord.Thread
         for x in self.bot.guilds:
             for channel in x.channels:
                 if channel.type == discord.ChannelType.forum:
                     async for post in channel.archived_threads():
-                        message = await post.send("[unarchived]")
+                        message = await post.send(f"[unarchived] {post.owner.mention} Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close")
                         await asyncio.sleep(1)
-                        await message.delete()
 
     @unarchiver.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):
