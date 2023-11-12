@@ -37,6 +37,7 @@ class Tasks(commands.GroupCog):
         self.lobby_history.start()
         self.search_ban_check.start()
         self.check_users_expiration.start()
+        self.unarchiver.start()
 
     def cog_unload(self):
         """unloads tasks"""
@@ -44,6 +45,7 @@ class Tasks(commands.GroupCog):
         self.lobby_history.cancel()
         self.search_ban_check.cancel()
         self.check_users_expiration.cancel()
+        self.unarchiver.cancel()
 
     @tasks.loop(hours=3)
     async def config_reload(self):
@@ -148,6 +150,22 @@ class Tasks(commands.GroupCog):
         await self.user_expiration_update(userids)
         await self.user_expiration_remove(userdata, removaldate)
         print("Finished checking all entries")
+
+
+    @tasks.loop(hours=72)
+    async def unarchiver(self):
+        "makes all posts active again"
+        for x in self.bot.guilds:
+            for channel in x.channels:
+                if channel.type == discord.ChannelType.forum:
+                    async for post in channel.archived_threads():
+                        message = await post.send("[unarchived]")
+                        await asyncio.sleep(1)
+                        await message.delete()
+
+    @unarchiver.before_loop  # it's called before the actual task runs
+    async def before_checkactiv(self):
+        await self.bot.wait_until_ready()
 
     @app_commands.command(name="expirecheck")
     @permissions.check_app_roles_admin()
