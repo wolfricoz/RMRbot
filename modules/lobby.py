@@ -390,9 +390,13 @@ UID: {user.id}
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """posts the button for the user to verify with."""
-        lobby = ConfigData().get_key_int(member.guild.id, "lobby")
+        try:
+            lobby = ConfigData().get_key_int(member.guild.id, "lobby")
+            lobbywelcome = ConfigData().get_key(member.guild.id, "lobbywelcome")
+        except Exception as e:
+            await member.guild.owner.send(f"config error in {member.guild.name}: {e}")
         channel = member.guild.get_channel(lobby)
-        lobbywelcome = ConfigData().get_key(member.guild.id, "lobbywelcome")
+
         await channel.send(f"Welcome {member.mention}! {lobbywelcome}", view=self.VerifyButton())
 
 

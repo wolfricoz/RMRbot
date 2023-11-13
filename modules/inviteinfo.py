@@ -21,7 +21,10 @@ class inviteInfo(commands.Cog):
     async def on_member_join(self, member):
         """reads invite dictionary, and outputs user info"""
         self.bot.invites[member.guild.id] = await member.guild.invites()
-        infochannel = ConfigData().get_key_int(member.guild.id, 'inviteinfo')
+        try:
+            infochannel = ConfigData().get_key_int(member.guild.id, 'inviteinfo')
+        except KeyError:
+            infochannel = None
         if infochannel is None:
             return
         invites_before_join = self.bot.invites[member.guild.id]
