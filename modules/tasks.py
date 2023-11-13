@@ -180,6 +180,8 @@ class Tasks(commands.GroupCog):
                             await post.send(postreminder)
                             await asyncio.sleep(1)
                     for thread in channel.threads:
+                        if regex.search(channel.name) is not None:
+                            continue
                         user = thread.guild.get_member(thread.owner_id)
                         if user is not None:
                             continue
