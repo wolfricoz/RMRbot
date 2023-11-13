@@ -89,10 +89,10 @@ class Forum(commands.GroupCog, name="forum"):
                                     f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
                                     f"\nRepeated early bumps will result in your advert being taken down.")
                             await message.delete()
-                            await modchannel.send(
-                                    f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
-                                    f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
-                            return
+                            # await modchannel.send(
+                            #         f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
+                            #         f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+                            # return
                         if m.author.id == message.author.id:
                             user_count += 1
                     og = await thread.fetch_message(thread.id)

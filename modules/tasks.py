@@ -156,16 +156,24 @@ class Tasks(commands.GroupCog):
     async def unarchiver(self):
         "makes all posts active again"
         post: discord.Thread
+        channel: discord.ForumChannel
         for x in self.bot.guilds:
             for channel in x.channels:
                 if channel.type == discord.ChannelType.forum:
                     async for post in channel.archived_threads():
                         try:
-                            await post.send(f"{post.owner.mention} Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close")
+                            await post.send(f"{post.owner.mention} Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this counts as a bump.)")
                             await asyncio.sleep(1)
                         except AttributeError:
-                            await post.send(f"Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close")
+                            await post.send(f"Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)")
                             await asyncio.sleep(1)
+                    for thread in channel.threads:
+                        user = thread.guild.get_member(thread.owner_id)
+                        if user is not None:
+                            continue
+                        logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
+                        await thread.delete()
+
 
     @unarchiver.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):
