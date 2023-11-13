@@ -147,7 +147,10 @@ class Logging(commands.Cog):
         """logs the app command when finished."""
         server = ctx.guild
         user = ctx.user
-        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname.name}')
+        try:
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname.name}')
+        except AttributeError:
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname}')
 
     @app_commands.command(name="getlog")
     async def getlog(self, interaction: Interaction):

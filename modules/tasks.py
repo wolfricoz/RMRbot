@@ -120,6 +120,7 @@ class Tasks(commands.GroupCog):
     async def user_expiration_update(self, userids):
         """updates entry time, if entry is expired this also removes it."""
         logging.debug(f"Checking all entries for expiration at {datetime.now()}")
+        updated_users = []
         for guild in self.bot.guilds:
             for member in guild.members:
                 await asyncio.sleep(0.1)
@@ -127,8 +128,12 @@ class Tasks(commands.GroupCog):
                     logging.debug(f"User {member.id} not found in database, adding.")
                     UserTransactions.add_user_empty(member.id)
                     continue
-                logging.debug(f"Updating entry time for {member.id}")
+                updated_users.append(member.id)
                 UserTransactions.update_entry_date(member.id)
+        uu = ", ".join(updated_users)
+        logging.debug(f"Updating entry time for ({len(updated_users)}) {uu}")
+        del updated_users
+        del uu
 
     async def user_expiration_remove(self, userdata, removaldate):
         """removes expired entries."""
@@ -151,10 +156,9 @@ class Tasks(commands.GroupCog):
         await self.user_expiration_remove(userdata, removaldate)
         print("Finished checking all entries")
 
-
     @tasks.loop(hours=72)
     async def unarchiver(self):
-        "makes all posts active again"
+        """makes all posts active again"""
         post: discord.Thread
         channel: discord.ForumChannel
         for x in self.bot.guilds:
@@ -173,7 +177,6 @@ class Tasks(commands.GroupCog):
                             continue
                         logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
                         await thread.delete()
-
 
     @unarchiver.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):
