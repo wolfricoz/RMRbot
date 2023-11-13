@@ -159,24 +159,23 @@ class Tasks(commands.GroupCog):
     @tasks.loop(hours=72)
     async def unarchiver(self):
         """makes all posts active again"""
-        modroles = ConfigData().get_key(ctx.guild.id, 'mod')
-        adminroles = ConfigData().get_key(ctx.guild.id, 'admin')
         post: discord.Thread
         channel: discord.ForumChannel
         for x in self.bot.guilds:
             for channel in x.channels:
                 if channel.type == discord.ChannelType.forum:
                     async for post in channel.archived_threads():
+                        postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
                         try:
                             if permissions.check_admin(post.owner):
-                                message = await post.send(f"Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this counts as a bump.)")
+                                message = await post.send(postreminder)
                                 await asyncio.sleep(1)
                                 await message.delete()
                                 continue
-                            await post.send(f"{post.owner.mention} Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this counts as a bump.)")
+                            await post.send(f"{post.owner.mention} {postreminder}")
                             await asyncio.sleep(1)
                         except AttributeError:
-                            await post.send(f"Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)")
+                            await post.send(postreminder)
                             await asyncio.sleep(1)
                     for thread in channel.threads:
                         user = thread.guild.get_member(thread.owner_id)
