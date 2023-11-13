@@ -172,8 +172,9 @@ class Lobby(commands.GroupCog):
     @app_commands.command()
     @app_commands.choices(operation=[Choice(name=x, value=x) for x in
                                      ['add', 'update', 'delete', 'get']])
-    @permissions.check_app_roles_admin()
+    @permissions.check_app_roles()
     async def database(self, interaction: discord.Interaction, operation: Choice['str'], userid: str, dob: str = None):
+        adminroles = ConfigData().get_key(interaction.guild.id, 'admin')
         """One stop shop to handle all age entry management"""
         userid = int(userid)
         age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
@@ -187,6 +188,9 @@ class Lobby(commands.GroupCog):
                 await interaction.followup.send(f"<@{userid}>'s dob updated to: {dob}")
                 await LobbyProcess.age_log(age_log_channel, userid, dob, interaction, "updated")
             case "DELETE":
+                if permissions.check_admin(interaction.user) is False:
+                    await interaction.followup.send("You are not an admin")
+                    return
                 if UserTransactions.user_delete(userid) is False:
                     await interaction.followup.send(f"Can't find entry: <@{userid}>")
                     return
