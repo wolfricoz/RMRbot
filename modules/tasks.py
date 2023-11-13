@@ -4,6 +4,7 @@ import functools
 import json
 import logging
 import os
+import re
 import typing
 from datetime import datetime, timedelta
 
@@ -161,13 +162,14 @@ class Tasks(commands.GroupCog):
         """makes all posts active again"""
         post: discord.Thread
         channel: discord.ForumChannel
+        regex = re.compile(f"search", flags=re.IGNORECASE)
         for x in self.bot.guilds:
             for channel in x.channels:
                 if channel.type == discord.ChannelType.forum:
                     async for post in channel.archived_threads():
                         postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
                         try:
-                            if permissions.check_admin(post.owner):
+                            if permissions.check_admin(post.owner) or regex.search(channel.name) is not None:
                                 message = await post.send(postreminder)
                                 await asyncio.sleep(1)
                                 await message.delete()
