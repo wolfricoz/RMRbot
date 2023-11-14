@@ -126,7 +126,7 @@ class AgeCalculations(ABC):
             year = dob_object.group(3)
             fulldob = f"{month}/{day}/{year}"
             return fulldob
-        except AttributeError:
+        except AttributeError or TypeError:
             return "AttributeError"
         except ValueError:
             return "ValueError"

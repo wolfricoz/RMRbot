@@ -1,4 +1,5 @@
 """Handles all forum related actions; such as automod and warnings."""
+import asyncio
 import logging
 import os
 import re
@@ -26,6 +27,7 @@ class Forum(commands.GroupCog, name="forum"):
     async def on_thread_create(self, thread: discord.Thread):
         """Initiates automod to check the thread"""
         # gets the config
+        await asyncio.sleep(5)
         forums = ForumAutoMod.config(guildid=thread.guild.id)
         bot = self.bot
         await ForumAutoMod.checktags(thread)
@@ -33,6 +35,9 @@ class Forum(commands.GroupCog, name="forum"):
         msg: discord.Message = await ForumAutoMod.get_message(thread)
         if msg is False:
             logging.error(f"[Automod Error] Message not found in thread: {thread.name}")
+            modchannel = bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
+            await modchannel.send(f"[Automod Error] Message not found in thread: {thread.mention}, please manually check for duplicates.")
+            await ForumAutoMod.reminder(thread, thread.guild.id)
             return
         forum_channel = bot.get_channel(thread.parent_id)
         if forum_channel.id not in forums:

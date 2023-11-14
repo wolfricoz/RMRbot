@@ -175,7 +175,7 @@ class Lobby(commands.GroupCog):
     @permissions.check_app_roles()
     async def database(self, interaction: discord.Interaction, operation: Choice['str'], userid: str, dob: str = None):
         adminroles = ConfigData().get_key(interaction.guild.id, 'admin')
-        """One stop shop to handle all age entry management"""
+        """One stop shop to handle all age entry management. Only add 1 date of birth per user."""
         userid = int(userid)
         age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
         age_log_channel = interaction.guild.get_channel(age_log)
