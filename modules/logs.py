@@ -106,18 +106,9 @@ class Logging(commands.Cog):
             error: AppCommandError
     ):
         """app command error handler."""
-
+        data = [f"{a['name']}: {a['value']}" for a in interaction.data['options']]
+        formatted_data = ", ".join(data)
         channel = self.bot.get_channel(self.bot.DEV)
-        with open('error.txt', 'w', encoding='utf-8') as file:
-            file.write(traceback.format_exc())
-        try:
-            await channel.send(
-                    f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name}",
-                    file=discord.File(file.name, "error.txt"))
-        except Exception as e:
-            logging.error(e)
-        logger.warning(
-                f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name}: {traceback.format_exc()}")
         if isinstance(error, CheckFailure):
             await self.on_fail_message(interaction, "You do not have permission.")
             return
@@ -131,11 +122,22 @@ class Logging(commands.Cog):
             await self.on_fail_message(interaction, "Failed to commit to database; please try again later. user/key may already exist.")
             return
 
+        with open('error.txt', 'w', encoding='utf-8') as file:
+            file.write(traceback.format_exc())
+        try:
+            await channel.send(
+                    f"{interaction.guild.name} {interaction.guild.id}: {interaction.user}: {interaction.command.name} with arguments {formatted_data}",
+                    file=discord.File(file.name, "error.txt"))
+        except Exception as e:
+            logging.error(e)
+        logger.warning(
+                f"\n{interaction.guild.name} {interaction.guild.id} {interaction.command.name} with arguments {formatted_data}: {traceback.format_exc()}")
+
         await self.on_fail_message(interaction, f"Command failed: {error} \nreport this to Rico")
         # raise error
 
     @commands.Cog.listener(name='on_command')
-    async def print(self, ctx):
+    async def print(self, ctx: commands.Context):
         """logs the chat command when initiated"""
         server = ctx.guild
         user = ctx.author
@@ -148,9 +150,12 @@ class Logging(commands.Cog):
         server = ctx.guild
         user = ctx.user
         try:
-            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname.name}')
+            data = [f"{a['name']}: {a['value']}" for a in ctx.data['options']]
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {", ".join(data)}')
+            for a in ctx.data['options']:
+                print(a)
         except AttributeError:
-            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: {commandname}')
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand `{commandname}`')
 
     @app_commands.command(name="getlog")
     async def getlog(self, interaction: Interaction):
