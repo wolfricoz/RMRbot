@@ -71,7 +71,7 @@ class ForumAutoMod(ABC):
     @abstractmethod
     async def bump(bot, interaction):
         thread: discord.Thread = interaction.channel
-        bcheck = datetime.utcnow() + timedelta(hours=-70)
+        bcheck = datetime.now(pytz.UTC) + timedelta(hours=-70)
         messages = thread.history(limit=300, after=bcheck, oldest_first=False)
         count = 0
         user_count = 0
@@ -96,8 +96,8 @@ class ForumAutoMod(ABC):
 
         forum = bot.get_channel(thread.parent_id)
         og = await thread.fetch_message(thread.id)
-        # og_time = og.created_at.astimezone(pytz.UTC)
-        if og.edited_at is not None and og.edited_at <= bcheck and user_count <= 0 or og.edited_at is None and user_count <= 0:
+        og_time = og.created_at.astimezone(pytz.UTC)
+        if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
             for a in forum.available_tags:
                 if a.name == "Approved":
                     await thread.add_tags(a)
@@ -170,7 +170,8 @@ class ForumAutoMod(ABC):
         """Loops through the history of the channel and retrieves the message"""
         if thread.type != discord.ChannelType.public_thread:
             return False
-        async for message in thread.history(limit=10, oldest_first=True):
+        messages = thread.history(limit=10, oldest_first=True)
+        for message in messages:
             if message.id == thread.id:
                 return message
         return False
