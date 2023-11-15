@@ -106,8 +106,11 @@ class Logging(commands.Cog):
             error: AppCommandError
     ):
         """app command error handler."""
-        data = [f"{a['name']}: {a['value']}" for a in interaction.data['options']]
-        formatted_data = ", ".join(data)
+        try:
+            data = [f"{a['name']}: {a['value']}" for a in interaction.data['options']]
+            formatted_data = ", ".join(data)
+        except KeyError:
+            formatted_data = "KeyError/No data"
         channel = self.bot.get_channel(self.bot.DEV)
         if isinstance(error, CheckFailure):
             await self.on_fail_message(interaction, "You do not have permission.")
