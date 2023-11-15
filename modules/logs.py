@@ -148,13 +148,17 @@ class Logging(commands.Cog):
         logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued command: {commandname}')
 
     @commands.Cog.listener(name='on_app_command_completion')
-    async def appprint(self, ctx: Interaction, commandname: command):
+    async def appprint(self, interaction: Interaction, commandname: command):
         """logs the app command when finished."""
-        server = ctx.guild
-        user = ctx.user
+        server = interaction.guild
+        user = interaction.user
         try:
-            data = [f"{a['name']}: {a['value']}" for a in ctx.data['options']]
-            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {", ".join(data)}')
+            try:
+                data = [f"{a['name']}: {a['value']}" for a in interaction.data['options']]
+                formatted_data = ", ".join(data)
+            except KeyError:
+                formatted_data = "KeyError/No data"
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {", ".join(formatted_data)}')
         except AttributeError:
             logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand `{commandname}`')
 
