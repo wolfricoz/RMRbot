@@ -152,15 +152,8 @@ class Logging(commands.Cog):
         """logs the app command when finished."""
         server = interaction.guild
         user = interaction.user
-        try:
-            try:
-                data = [f"{a['name']}: {a['value']}" for a in interaction.data['options']]
-                formatted_data = ", ".join(data)
-            except KeyError:
-                formatted_data = "KeyError/No data"
-            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {", ".join(formatted_data)}')
-        except AttributeError:
-            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand `{commandname}`')
+        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {interaction.data["options"]}')
+
 
     @app_commands.command(name="getlog")
     async def getlog(self, interaction: Interaction):
