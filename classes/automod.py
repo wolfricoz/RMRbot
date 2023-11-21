@@ -1,3 +1,4 @@
+import logging
 import os.path
 import re
 from abc import ABC, abstractmethod
@@ -97,13 +98,16 @@ class ForumAutoMod(ABC):
         forum = bot.get_channel(thread.parent_id)
         og = await thread.fetch_message(thread.id)
         og_time = datetime.strptime(og.created_at.astimezone(pytz.UTC).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
-        if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
-            for a in forum.available_tags:
-                if a.name == "Approved":
-                    await thread.add_tags(a)
-            await interaction.channel.send("Post successfully bumped and automatically approved")
-            # await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
-            return
+        try:
+            if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
+                for a in forum.available_tags:
+                    if a.name == "Approved":
+                        await thread.add_tags(a)
+                await interaction.channel.send("Post successfully bumped and automatically approved")
+                # await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
+                return
+        except Exception as e:
+            logging.error(e)
         for a in forum.available_tags:
             if a.name == "Bump":
                 await thread.add_tags(a)
