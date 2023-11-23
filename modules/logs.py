@@ -152,7 +152,10 @@ class Logging(commands.Cog):
         """logs the app command when finished."""
         server = interaction.guild
         user = interaction.user
-        logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {interaction.data["options"]}')
+        try:
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with arguments: {interaction.data["options"]}')
+        except KeyError:
+            logging.debug(f'\n{server.name}({server.id}): {user}({user.id}) issued appcommand: `{commandname.name}` with no arguments.')
 
 
     @app_commands.command(name="getlog")
