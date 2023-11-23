@@ -93,7 +93,10 @@ class Forum(commands.GroupCog, name="forum"):
                                     f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
                                     f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
                                     f"\nRepeated early bumps will result in your advert being taken down.")
-                            await message.delete()
+                            try:
+                                await message.delete()
+                            except discord.NotFound:
+                                pass
                             # await modchannel.send(
                             #         f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
                             #         f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")

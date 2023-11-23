@@ -71,8 +71,10 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     async def bump(bot, interaction):
+        utc = pytz.UTC
         thread: discord.Thread = interaction.channel
-        bcheck = datetime.now() + timedelta(hours=-70)
+        dcheck = datetime.now() + timedelta(hours=-70)
+        bcheck = dcheck.replace(tzinfo=utc)
         messages = thread.history(limit=300, after=bcheck, oldest_first=False)
         count = 0
         user_count = 0
@@ -97,7 +99,7 @@ class ForumAutoMod(ABC):
 
         forum = bot.get_channel(thread.parent_id)
         og = await thread.fetch_message(thread.id)
-        og_time = datetime.strptime(og.created_at.astimezone(pytz.UTC).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
+        og_time = og.created_at.replace(tzinfo=utc)
         try:
             if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
                 for a in forum.available_tags:
