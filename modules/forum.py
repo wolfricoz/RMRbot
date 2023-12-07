@@ -193,8 +193,10 @@ class Forum(commands.GroupCog, name="forum"):
         """Warns the user and removes the advert; logs the warning in database."""
 
         warnings: dict = ConfigData().get_key(interaction.guild.id, "SEARCH")
-        reason = warnings.get(warning_type)
-
+        reason = warnings.get(warning_type.upper())
+        if reason is None:
+            await interaction.response.send_message("Please select a valid warning type.")
+            return
         if interaction.channel.type != discord.ChannelType.public_thread and thread is None:
             await interaction.response.send_message("Please use the command in a thread, or fill in a message link.")
             return
