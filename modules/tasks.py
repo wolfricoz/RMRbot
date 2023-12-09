@@ -129,7 +129,7 @@ class Tasks(commands.GroupCog):
                     logging.debug(f"User {member.id} not found in database, adding.")
                     UserTransactions.add_user_empty(member.id)
                     continue
-                updated_users.append(member.id)
+                updated_users.append(str(member.id))
                 UserTransactions.update_entry_date(member.id)
         uu = ", ".join(updated_users)
         logging.debug(f"Updating entry time for ({len(updated_users)}) {uu}")
