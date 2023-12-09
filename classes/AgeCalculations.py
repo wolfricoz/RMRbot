@@ -80,7 +80,7 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def infocheck(interaction, age, dateofbirth, channel, location="Lobby"):
+    async def infocheck(interaction: discord.Interaction, age: str, dateofbirth: str, channel: discord.TextChannel, location="Lobby"):
         agevalid = re.match(r'[0-9]*$', age)
         if agevalid is None:
             await interaction.response.send_message('Please fill in your age in numbers.', ephemeral=True)
