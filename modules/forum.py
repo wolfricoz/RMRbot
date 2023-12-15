@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import discord
 from discord import app_commands
 from discord.ext import commands
+from pytz import utc
 
 import classes.permissions as permissions
 from classes.Advert import Advert
@@ -104,14 +105,15 @@ class Forum(commands.GroupCog, name="forum"):
                         if m.author.id == message.author.id:
                             user_count += 1
                     og = await thread.fetch_message(thread.id)
-                    if og.edited_at is not None and og.edited_at <= bcheck and user_count <= 1 or og.edited_at is None and user_count <= 1:
-                        for a in forum.available_tags:
-                            if a.name == "Approved":
-                                await thread.add_tags(a)
-                        # await modchannel.send(
-                        #         f"`[Experimental]` Automatically approved bump of {message.channel.mention}. Post was not edited in the last 70 hours.")
-                        await message.channel.send("Post successfully bumped and automatically approved")
-                        return
+                    og_time = og.created_at.replace(tzinfo=utc)
+                    try:
+                        if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
+                            for a in forum.available_tags:
+                                if a.name == "Approved":
+                                    await thread.add_tags(a)
+                            return
+                    except Exception as e:
+                        logging.error(e)
                     for a in forum.available_tags:
                         if a.name == "Bump":
                             await thread.add_tags(a)
