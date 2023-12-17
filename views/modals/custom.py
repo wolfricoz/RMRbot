@@ -8,12 +8,6 @@ from classes.databaseController import ConfigData
 
 
 class Custom(discord.ui.Modal, title='Custom Warning'):
-    # Our modal classes MUST subclass `discord.ui.Modal`,
-    # but the title can be whatever you want.
-    # This will be a short input, where the user can enter their name
-    # It will also have a placeholder, as denoted by the `placeholder` kwarg.
-    # By default, it is required and is a short-style input which is exactly
-    # what we want.
     custom_id = "cw"
 
     def __init__(self, bot, thread, thread_channel):
@@ -24,10 +18,6 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
 
     reason = discord.ui.TextInput(label='What is the reason?', style=discord.TextStyle.long, placeholder='Type your waning here...', max_length=512)
 
-    # This is a longer, paragraph style input, where user can submit feedback
-    # Unlike the name, it is not required. If filled out, however, it will
-    # only accept a maximum of 300 characters, as denoted by the
-    # `max_length=300` kwarg.
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         bot = self.bot

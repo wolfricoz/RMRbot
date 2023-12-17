@@ -196,7 +196,7 @@ class Forum(commands.GroupCog, name="forum"):
 
         warnings: dict = ConfigData().get_key(interaction.guild.id, "SEARCH")
         reason = warnings.get(warning_type.upper())
-        if reason is None:
+        if reason is None and warning_type.upper() != "CUSTOM":
             await interaction.response.send_message("Please select a valid warning type.")
             return
         if interaction.channel.type != discord.ChannelType.public_thread and thread is None:
