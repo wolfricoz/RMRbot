@@ -248,6 +248,14 @@ UID: {user.id}
                                                 f"idcheck: {user.idcheck}\n"
                                                 f"idverifier: {user.idverified}\n"
                                                 f"verifieddob: {user.verifieddob}\n")
+            case "DELETE":
+                if permissions.check_admin(interaction.user) is False:
+                    await interaction.followup.send("You are not an admin")
+                    return
+                if VerificationTransactions.set_idcheck_to_false(userid) is False:
+                    await interaction.followup.send(f"Can't find entry: <@{userid}>")
+                    return
+                await interaction.followup.send(f"Deleted entry: <@{userid}>")
 
     # Event
 
