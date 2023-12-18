@@ -209,7 +209,7 @@ UID: {user.id}
 
     @app_commands.command()
     @app_commands.choices(operation=[Choice(name=x, value=x) for x in
-                                     ['add', 'update', 'get']])
+                                     ['add', 'update', 'get', 'delete']])
     @app_commands.choices(idcheck=[Choice(name=x, value=y) for x, y in
                                    {"Yes": "True", "No": "False"}.items()])
     @permissions.check_app_roles()
