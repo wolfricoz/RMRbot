@@ -164,7 +164,7 @@ class ForumAutoMod(ABC):
 
     @staticmethod
     @abstractmethod
-    async def check_header(message: discord.Message, thread: discord.Thread):
+    async def check_header(message: discord.Message, thread: discord.Thread) -> bool:
         header = re.match(r"(All character'?s? are [1-9][0-9])([\S\n\t\v ]*)([-|—]{5,100})", message.content, flags=re.IGNORECASE)
         search = re.search(r"search", message.channel.name, flags=re.IGNORECASE)
         if search is None:
@@ -184,6 +184,7 @@ Your advert here
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
 """)
             await thread.delete()
+            return False
 
     @staticmethod
     @abstractmethod

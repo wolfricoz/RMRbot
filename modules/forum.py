@@ -44,7 +44,8 @@ class Forum(commands.GroupCog, name="forum"):
         forum_channel = bot.get_channel(thread.parent_id)
         if forum_channel.id not in forums:
             return
-        await ForumAutoMod.check_header(msg, thread)
+        if await ForumAutoMod.check_header(msg, thread) is False:
+            return
         duplicate = await ForumAutoMod.duplicate(thread=thread, bot=bot)
         if duplicate is True:
             return
