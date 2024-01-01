@@ -143,7 +143,10 @@ class ForumAutoMod(ABC):
         if reminder is None:
             return
         embed = discord.Embed(title="Rule Reminder", description=reminder)
-        await thread.send(embed=embed)
+        try:
+            await thread.send(embed=embed)
+        except discord.NotFound:
+            print(f"thread not found, {thread}")
 
     @staticmethod
     @abstractmethod

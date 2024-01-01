@@ -30,7 +30,6 @@ class Forum(commands.GroupCog, name="forum"):
     async def on_thread_create(self, thread: discord.Thread):
         """Initiates automod to check the thread"""
         # gets the config
-        await asyncio.sleep(5)
         forums = ForumAutoMod.config(guildid=thread.guild.id)
         bot = self.bot
         await ForumAutoMod.checktags(thread)
@@ -47,7 +46,6 @@ class Forum(commands.GroupCog, name="forum"):
             return
         await ForumAutoMod.check_header(msg, thread)
         duplicate = await ForumAutoMod.duplicate(thread=thread, bot=bot)
-
         if duplicate is True:
             return
         await ForumAutoMod.reminder(thread, thread.guild.id)
