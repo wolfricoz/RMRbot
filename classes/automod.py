@@ -167,7 +167,8 @@ class ForumAutoMod(ABC):
     @abstractmethod
     async def check_header(message: discord.Message, thread: discord.Thread):
         header = re.match(r"(All character'?s? are [1-9][0-9])([\S\n\t\v ]*)(-|—|_{1,100})", message.content, flags=re.IGNORECASE)
-        if message.channel.id == ConfigData().get_key_int(thread.guild.id, "profile"):
+        search = re.search(r"search", message.channel.name, flags=re.IGNORECASE)
+        if search is None:
             return
         if header is None:
             await message.author.send(
