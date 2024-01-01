@@ -162,8 +162,7 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     async def check_header(message: discord.Message, thread: discord.Thread):
-        header = re.match(r"(All character's are [1-9][0-9])([\S\n\t\v ]*)(-{1,100})", message.content, flags=re.IGNORECASE)
-        print(header)
+        header = re.match(r"(All character'?s? are [1-9][0-9])([\S\n\t\v ]*)(-|—|\*|_|\.|\+{1,100})", message.content, flags=re.IGNORECASE)
         if header is None:
             await message.author.send(
                     """Your advert has been removed because it does not have a header. Please re-post with a header.
