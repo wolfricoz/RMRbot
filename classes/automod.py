@@ -123,11 +123,7 @@ class ForumAutoMod(ABC):
     @abstractmethod
     async def duplicate(thread: discord.Thread, bot):
         forums = ForumAutoMod.config(thread.guild.id)
-        try:
-            originalmsg = await thread.fetch_message(thread.id)
-        except discord.errors.NotFound:
-            devchannel = bot.get_channel(ConfigData().get_key_int(thread.guild.id, "DEV"))
-            await devchannel.send(f"[Duplicate Check] Thread {thread.name} was not found")
+        originalmsg = thread.starter_message
         if thread.owner_id == 188647277181665280:
             return
         for c in forums:
