@@ -258,6 +258,7 @@ class Forum(commands.GroupCog, name="forum"):
         amount = 0
         forums = ConfigData().get_key(interaction.guild.id, "FORUM")
         for x in forums:
+            await asyncio.sleep(0.1)
             forum: discord.ForumChannel = self.bot.get_channel(x)
             if isinstance(forum, discord.ForumChannel) is False:
                 continue
