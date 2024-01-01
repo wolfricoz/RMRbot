@@ -162,7 +162,7 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     async def check_header(message: discord.Message, thread: discord.Thread):
-        header = re.match(r"(All character'?s? are [1-9][0-9])([\S\n\t\v ]*)(-|—|_{1,100})", message.content, flags=re.IGNORECASE)
+        header = re.match(r"(All character'?s? are [1-9][0-9])([\S\n\t\v ]*)([-|—]{5,100})", message.content, flags=re.IGNORECASE)
         search = re.search(r"search", message.channel.name, flags=re.IGNORECASE)
         if search is None:
             return
