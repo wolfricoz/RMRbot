@@ -184,7 +184,7 @@ Your advert here
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
 """)
             await thread.delete()
-            return False
+            return True
 
     @staticmethod
     @abstractmethod
