@@ -266,7 +266,7 @@ class Forum(commands.GroupCog, name="forum"):
                 try:
                     if thread.owner.id == interaction.user.id:
                         continue
-                except AttributeError:
+                except Exception:
                     pass
                 try:
                     thread_message = await thread.fetch_message(thread.id)
