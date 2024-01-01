@@ -267,6 +267,9 @@ class Forum(commands.GroupCog, name="forum"):
                     await Advert.send_advert_to_user(interaction, thread_message, "Your advert has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!", "purge")
                     await thread.delete()
                     amount += 1
+                except discord.NotFound:
+                    await thread.delete()
+                    continue
                 except Exception as e:
                     await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
             async for thread in forum.archived_threads(limit=None):
@@ -276,6 +279,9 @@ class Forum(commands.GroupCog, name="forum"):
                                                      "purge")
                     await thread.delete()
                     amount += 1
+                except discord.NotFound:
+                    await thread.delete()
+                    continue
                 except Exception as e:
                     await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
         await interaction.channel.send(f"Purge finished, {amount} adverts removed.")

@@ -157,9 +157,11 @@ class Tasks(commands.GroupCog):
         await self.user_expiration_remove(userdata, removaldate)
         print("Finished checking all entries")
 
-    @tasks.loop(hours=72)
+    @tasks.loop(hours=24)
     async def unarchiver(self):
         """makes all posts active again"""
+        if self.unarchiver.current_loop == 0:
+            return
         post: discord.Thread
         channel: discord.ForumChannel
         regex = re.compile(f"search", flags=re.IGNORECASE)
