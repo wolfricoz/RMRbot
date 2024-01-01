@@ -263,8 +263,11 @@ class Forum(commands.GroupCog, name="forum"):
             if isinstance(forum, discord.ForumChannel) is False:
                 continue
             for thread in forum.threads:
-                if thread.owner.id == interaction.user.id:
-                    continue
+                try:
+                    if thread.owner.id == interaction.user.id:
+                        continue
+                except AttributeError:
+                    pass
                 try:
                     thread_message = await thread.fetch_message(thread.id)
                     await Advert.send_advert_to_user(interaction, thread_message, "Your advert has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!", "purge")
