@@ -516,8 +516,7 @@ class SearchWarningTransactions(ABC):
         search_warning = Warnings(uid=userid, reason=reason, type="SEARCH")
         session.add(search_warning)
         DatabaseTransactions.commit(session)
-        total_warnings, active_warnings = SearchWarningTransactions.get_total_warnings(userid)
-        return total_warnings, active_warnings
+
 
 
 class TimersTransactions(ABC):

@@ -17,8 +17,8 @@ class Advert(ABC):
             thread = await thread_channel.fetch_message(int(link[6]))
             return thread, thread_channel
         thread_channel = interaction.guild.get_thread(interaction.channel.id)
-        thread = await thread_channel.fetch_message(thread_channel.id)
-        return thread, thread_channel
+        thread_message = await thread_channel.fetch_message(thread_channel.id)
+        return thread_message, thread_channel
 
     @staticmethod
     @abstractmethod
@@ -43,29 +43,36 @@ class Advert(ABC):
 
     @staticmethod
     @abstractmethod
-    async def sendadvertuser(ctx, msg, warning):
+    async def send_advert_to_user(interaction, msg, reminder, warning):
+        """Sends the advert and the warning to the user."""
         user = msg.author
         try:
-            await user.send(warning)
-            await user.send("**__The removed advert: (Please make the required changes before reposting.)__**")
+            if warning != "purge":
+                await user.send(warning)
+            await user.send(reminder)
             if len(msg.content) < 2000:
                 await user.send(msg.content)
             if len(msg.content) > 2000:
                 await user.send(msg.content[0:2000])
                 await user.send(msg.content[2000:4000])
         except discord.Forbidden:
-            await ctx.followup.send("Can't DM user")
+            await interaction.followup.send(f"Can't DM {user.mention}.")
             pass
+
+
 
     @staticmethod
     @abstractmethod
-    async def send_in_channel(interaction, user, thread, thread_channel, reason, warning_type, modchannel):
+    async def send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel, warn):
+        """Sends the warning to the user and logs it in the mod channel."""
         warning = (f"Hello, I'm a staff member of **Roleplay Meets Reborn**. Your advert `{thread_channel.name}` has been removed with the following reason: \n"
                    f"{reason}"
                    f"\n\nIf you have any more questions, you can open a ticket at <#{ConfigData().get_key_int(interaction.guild.id, 'HELPCHANNEL')}>.")
-        total_warnings, active_warnings = SearchWarningTransactions.add_warning(user.id, warning)
+        if warn.lower() == "yes":
+            SearchWarningTransactions.add_warning(user.id, warning)
+        total_warnings, active_warnings = SearchWarningTransactions.get_total_warnings(user.id)
         embed = discord.Embed(title=f"{thread_channel.name}", description=f"{interaction.user.mention} has warned {user.mention} with warning type: {warning_type}\nWarning user received:\n{warning}",
                               color=discord.Color.from_rgb(255, 117, 24))
-        embed.set_footer(text=f"userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}")
+        embed.set_footer(text=f"userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}, warn: {warn}")
         await modchannel.send(f"{user.mention}", embed=embed)
         return warning

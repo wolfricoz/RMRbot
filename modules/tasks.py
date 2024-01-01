@@ -169,7 +169,7 @@ class Tasks(commands.GroupCog):
                     async for post in channel.archived_threads():
                         postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
                         try:
-                            if permissions.check_admin(post.owner) or regex.search(channel.name) is not None:
+                            if permissions.check_admin(post.owner) or regex.search(channel.name) is None:
                                 message = await post.send(postreminder)
                                 await asyncio.sleep(1)
                                 await message.delete()
@@ -180,10 +180,12 @@ class Tasks(commands.GroupCog):
                             await post.send(postreminder)
                             await asyncio.sleep(1)
                     for thread in channel.threads:
-                        if regex.search(channel.name) is not None:
+                        if regex.search(channel.name) is None:
                             continue
                         user = thread.guild.get_member(thread.owner_id)
                         if user is not None:
+                            continue
+                        if permissions.check_admin(thread.owner):
                             continue
                         logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
                         await thread.delete()

@@ -61,7 +61,7 @@ class ForumAutoMod(ABC):
 
             fm = ', '.join([x.name for x in counted_tags])
 
-            print(f"[debugging] adding tags to {thread.name}: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
+            # print(f"[debugging] adding tags to {thread.name}: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
             await thread.add_tags(*counted_tags, reason=f"Automod applied {fm}")
             await thread.send(
                     f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!")
@@ -158,6 +158,27 @@ class ForumAutoMod(ABC):
                     found = True
             if not found:
                 await thread.remove_tags(tags[0])
+
+    @staticmethod
+    @abstractmethod
+    async def check_header(message: discord.Message, thread: discord.Thread):
+        header = re.match(r"(All character's are [1-9][0-9])([\S\n\t\v ]*)(-{1,100})", message.content, flags=re.IGNORECASE)
+        print(header)
+        if header is None:
+            await message.author.send(
+                    """Your advert has been removed because it does not have a header. Please re-post with a header.
+```text
+All character's are (ages)+
+(optional) Tags:
+(optional) Pairings:
+(Any other information you want to stand out!)
+-----------------------------------
+Your advert here
+```
+
+This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
+""")
+            await thread.delete()
 
     @staticmethod
     @abstractmethod

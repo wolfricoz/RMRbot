@@ -25,7 +25,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 activity = discord.Activity(type=discord.ActivityType.watching, name="over RMR")
-bot = commands.Bot(command_prefix=PREFIX, case_insensitive=False, intents=intents, activity=activity)
+bot = commands.Bot(command_prefix=PREFIX, case_insensitive=True, intents=intents, activity=activity)
 bot.DEV = int(os.getenv("DEV"))
 
 
@@ -43,7 +43,7 @@ bot.invites = {}
 # EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
 @bot.event
 async def on_ready():
-    devroom = bot.get_channel(bot.DEV)
+    devroom: discord.TextChannel = bot.get_channel(bot.DEV)
     # CREATES A COUNTER TO KEEP TRACK OF HOW MANY GUILDS / SERVERS THE BOT IS CONNECTED TO.
     guilds = []
     for guild in bot.guilds:

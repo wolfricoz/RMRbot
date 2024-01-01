@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import discord
 from discord import app_commands
+from discord.app_commands import Choice
 from discord.ext import commands
 from pytz import utc
 
@@ -15,6 +16,7 @@ import classes.permissions as permissions
 from classes.Advert import Advert
 from classes.automod import ForumAutoMod
 from classes.databaseController import ConfigData
+from views.buttons.confirmButtons import confirmAction
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
 
@@ -43,6 +45,7 @@ class Forum(commands.GroupCog, name="forum"):
         forum_channel = bot.get_channel(thread.parent_id)
         if forum_channel.id not in forums:
             return
+        await ForumAutoMod.check_header(msg, thread)
         duplicate = await ForumAutoMod.duplicate(thread=thread, bot=bot)
         if duplicate is True:
             return
@@ -191,36 +194,41 @@ class Forum(commands.GroupCog, name="forum"):
     @app_commands.command()
     @permissions.check_app_roles()
     @app_commands.autocomplete(warning_type=search_commands_autocompletion)
-    async def warn(self, interaction: discord.Interaction, warning_type: str, thread: str = None) -> None:
+    @app_commands.choices(warn=[Choice(name=x, value=x) for x in ['Yes', 'No']])
+    async def warn(self, interaction: discord.Interaction, warning_type: str, thread_message: str = None, warn: Choice[str] = "Yes") -> None:
         """Warns the user and removes the advert; logs the warning in database."""
+        if type(warn) is Choice:
+            warn = warn.value
 
+        print(warn)
         warnings: dict = ConfigData().get_key(interaction.guild.id, "SEARCH")
         reason = warnings.get(warning_type.upper())
         if reason is None and warning_type.upper() != "CUSTOM":
             await interaction.response.send_message("Please select a valid warning type.")
             return
-        if interaction.channel.type != discord.ChannelType.public_thread and thread is None:
+        if interaction.channel.type != discord.ChannelType.public_thread and thread_message is None:
             await interaction.response.send_message("Please use the command in a thread, or fill in a message link.")
             return
-        thread, thread_channel = await Advert.get_message(thread, interaction)
+        thread_message, thread_channel = await Advert.get_message(thread_message, interaction)
         bot = self.bot
         if warning_type.upper() == "CUSTOM":
-            await interaction.response.send_modal(Custom(bot=bot, thread=thread, thread_channel=thread_channel))
+            await interaction.response.send_modal(Custom(bot=bot, thread=thread_message, thread_channel=thread_channel, warn=warn))
             return
         await interaction.response.defer(ephemeral=True)
         lc = ConfigData().get_key_int(interaction.guild.id, "ADVERTLOG")
         mc = ConfigData().get_key_int(interaction.guild.id, "ADVERTMOD")
         loggingchannel = bot.get_channel(lc)
         modchannel = bot.get_channel(mc)
-        user = thread.author
+        user = thread_message.author
 
         # adds warning to database
-        warning = await Advert.send_in_channel(interaction, user, thread, thread_channel, reason, warning_type, modchannel)
+        warning = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel, warn)
         # Logs the advert and sends it to the user.
-        await Advert.logadvert(thread, loggingchannel)
-        await Advert.sendadvertuser(interaction, thread, warning)
+        await Advert.logadvert(thread_message, loggingchannel)
+        reminder = "**__The removed advert: (Please make the required changes before reposting.)__**"
+        await Advert.send_advert_to_user(interaction, thread_message, reminder, warning)
         try:
-            await interaction.followup.send(f"{thread.author.mention} successfully warned")
+            await interaction.followup.send(f"{thread_message.author.mention} successfully warned")
         except discord.NotFound:
             pass
 
@@ -235,6 +243,42 @@ class Forum(commands.GroupCog, name="forum"):
     async def history(self, interaction: discord.Interaction, user: discord.Member):
         """View the user's past warnings"""
         await paginate.create_pagination_user(interaction, user, "search", "search")
+
+    @app_commands.command()
+    @permissions.check_app_roles_admin()
+    async def purge(self, interaction: discord.Interaction):
+        """Purges all threads in the search forums."""
+        view = confirmAction()
+        await view.send_message(interaction, f"Are you sure you want to purge **ALL** of adverts in the search channels?")
+        await view.wait()
+        if view.confirmed is False:
+            await interaction.followup.send("Purge cancelled")
+            return
+        await interaction.followup.send(f"Purge started")
+        amount = 0
+        forums = ConfigData().get_key(interaction.guild.id, "FORUM")
+        for x in forums:
+            forum: discord.ForumChannel = self.bot.get_channel(x)
+            if isinstance(forum, discord.ForumChannel) is False:
+                continue
+            for thread in forum.threads:
+                try:
+                    thread_message = await thread.fetch_message(thread.id)
+                    await Advert.send_advert_to_user(interaction, thread_message, "Your advert has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!", "purge")
+                    await thread.delete()
+                    amount += 1
+                except Exception as e:
+                    await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
+            async for thread in forum.archived_threads(limit=None):
+                try:
+                    thread_message = await thread.fetch_message(thread.id)
+                    await Advert.send_advert_to_user(interaction, thread_message, f"Your advert `{thread.name}` has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!\nYour advert:",
+                                                     "purge")
+                    await thread.delete()
+                    amount += 1
+                except Exception as e:
+                    await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
+        await interaction.channel.send(f"Purge finished, {amount} adverts removed.")
 
 
 async def setup(bot: commands.Bot):

@@ -16,7 +16,7 @@ class AgeButtons(discord.ui.View):
     async def allow(self, interaction: discord.Interaction, button: discord.ui.Button):
         """starts approving process"""
         if self.age is None or self.dob is None or self.user is None:
-            await interaction.response.send_message('Missing data, please use the command.', ephemeral=True)
+            await interaction.response.send_message('The bot has restarted and the data of this button is missing. Please use the command.', ephemeral=True)
             return
         await interaction.response.send_message('User approved.', ephemeral=True)
         button.disabled = True
@@ -27,7 +27,7 @@ class AgeButtons(discord.ui.View):
     async def manual_id(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Flags user for manual id."""
         if self.user is None:
-            await interaction.response.send_message('Missing data, please manually report user to admins',
+            await interaction.response.send_message('The bot has restarted and the data of this button is missing. Please manually report user to admins',
                                                     ephemeral=True)
         await interaction.response.send_message('User flagged for manual ID.', ephemeral=True)
         idcheck = ConfigData().get_key_int(interaction.guild.id, "idlog")
@@ -44,7 +44,7 @@ class AgeButtons(discord.ui.View):
         age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
         age_log_channel = interaction.guild.get_channel(age_log)
         if self.user is None:
-            await interaction.response.send_message('Missing data, please manually report user to admins',
+            await interaction.response.send_message('The bot has restarted and the data of this button is missing. Please add the user manually.',
                                                     ephemeral=True)
         await LobbyProcess.age_log(age_log_channel, self.user.id, self.dob, interaction)
         self.disable_buttons()
