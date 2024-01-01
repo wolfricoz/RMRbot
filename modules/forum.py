@@ -262,6 +262,8 @@ class Forum(commands.GroupCog, name="forum"):
             if isinstance(forum, discord.ForumChannel) is False:
                 continue
             for thread in forum.threads:
+                if thread.owner.id == interaction.user.id:
+                    continue
                 try:
                     thread_message = await thread.fetch_message(thread.id)
                     await Advert.send_advert_to_user(interaction, thread_message, "Your advert has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!", "purge")
@@ -273,6 +275,8 @@ class Forum(commands.GroupCog, name="forum"):
                 except Exception as e:
                     await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
             async for thread in forum.archived_threads(limit=None):
+                if thread.owner.id == interaction.user.id:
+                    continue
                 try:
                     thread_message = await thread.fetch_message(thread.id)
                     await Advert.send_advert_to_user(interaction, thread_message, f"Your advert `{thread.name}` has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!\nYour advert:",
