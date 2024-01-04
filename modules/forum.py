@@ -128,23 +128,27 @@ class Forum(commands.GroupCog, name="forum"):
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         """Removes the thread if the main message is removed."""
-        print("message removed")
+        logging.debug("on_message_delete: started")
         if message.channel.type != discord.ChannelType.public_thread:
+            logging.debug("on_message_delete: not a thread")
             return
         forums = ForumAutoMod.config(message.guild.id)
         forum: discord.ForumChannel = self.bot.get_channel(message.channel.parent_id)
         if message.author == self.bot:
+            logging.debug("on_message_delete: bot message")
             return
-
         if forum.id not in forums:
+            logging.debug("on_message_delete: forum not found")
             return
         if message.id != message.channel.id:
+            logging.debug("on_message_delete: not main message")
             return
         mod_channel_id = ConfigData().get_key_int(message.guild.id, 'removallog')
         mod_channel = self.bot.get_channel(mod_channel_id)
         await mod_channel.send(
                 f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
         await message.channel.delete()
+        logging.debug("on_message_delete: finished")
 
     # Commands start here
     @app_commands.command(name="bump", description="Bumps your post!")

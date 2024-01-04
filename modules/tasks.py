@@ -30,7 +30,7 @@ def to_thread(func: typing.Callable) -> typing.Coroutine:
 
 
 class Tasks(commands.GroupCog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         """loads tasks"""
         self.bot = bot
         self.index = 0
@@ -158,39 +158,48 @@ class Tasks(commands.GroupCog):
         print("Finished checking all entries")
 
     @tasks.loop(hours=24)
-    async def unarchiver(self):
+    async def unarchiver(self) -> None:
         """makes all posts active again"""
-        if self.unarchiver.current_loop == 0:
-            return
+        print("checking for unarchiving")
         post: discord.Thread
         channel: discord.ForumChannel
         regex = re.compile(f"search", flags=re.IGNORECASE)
         for x in self.bot.guilds:
             for channel in x.channels:
-                if channel.type == discord.ChannelType.forum:
-                    async for post in channel.archived_threads():
-                        postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
-                        try:
-                            if permissions.check_admin(post.owner) or regex.search(channel.name) is None:
-                                message = await post.send(postreminder)
-                                await asyncio.sleep(1)
-                                await message.delete()
-                                continue
-                            await post.send(f"{post.owner.mention} {postreminder}")
+                if channel.type != discord.ChannelType.forum:
+                    # print(f"Skipping {channel.name} as it is not a forum channel.")
+                    continue
+                async for post in channel.archived_threads():
+                    postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
+                    try:
+                        if permissions.check_admin(post.owner) or regex.search(channel.name) is None:
+                            message = await post.send(postreminder)
                             await asyncio.sleep(1)
-                        except AttributeError:
-                            await post.send(postreminder)
-                            await asyncio.sleep(1)
-                    for thread in channel.threads:
-                        if regex.search(channel.name) is None:
+                            await message.delete()
                             continue
-                        user = thread.guild.get_member(thread.owner_id)
-                        if user is not None:
-                            continue
-                        if permissions.check_admin(thread.owner):
-                            continue
-                        logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
+                        await post.send(f"{post.owner.mention} {postreminder}")
+                        await asyncio.sleep(1)
+                    except AttributeError:
+                        await post.send(postreminder)
+                        await asyncio.sleep(1)
+                for thread in channel.threads:
+                    try:
+                        message = await thread.fetch_message(thread.id)
+                    except discord.errors.NotFound:
+                        message = None
+                    print(f"Checking {thread.name} in {channel.name} in {thread.guild.name}")
+                    if message is None:
+                        logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing.")
                         await thread.delete()
+                    if regex.search(channel.name) is None:
+                        continue
+                    user = thread.guild.get_member(thread.owner_id)
+                    if user is not None:
+                        continue
+                    if permissions.check_admin(thread.owner):
+                        continue
+                    logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
+                    await thread.delete()
 
     @unarchiver.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):
