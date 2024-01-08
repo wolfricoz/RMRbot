@@ -84,11 +84,11 @@ class ForumAutoMod(ABC):
         if interaction.channel.type != discord.ChannelType.public_thread:
             return
         async for m in messages:
-            print(m.id)
             if m.author.id == bot.application_id:
                 count += 1
             if count == 1:
                 pm = m.created_at
+                logging.info(f"last bump: {pm - datetime.now()}")
                 await interaction.user.send(
                         f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention} and was removed."
                         f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
