@@ -88,7 +88,8 @@ class ForumAutoMod(ABC):
                 count += 1
             if count == 1:
                 pm = m.created_at
-                logging.info(f"last bump: {pm - datetime.now()}")
+                logging.info(f"last bump: {bcheck - datetime.utcnow()}")
+
                 await interaction.user.send(
                         f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention} and was removed."
                         f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
