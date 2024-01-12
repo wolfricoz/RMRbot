@@ -82,12 +82,12 @@ class ForumAutoMod(ABC):
             if m.author.id == bot.application_id:
                 count += 1
             if count == 1:
-                pm = m.created_at
+                pm = m.created_at.replace(tzinfo=utc)
                 if pm < bcheck:
                     print("72 hours has passed")
                     break
 
-                timeinfo = f"last bump: {datetime.now() - dcheck}, hours {round(abs(datetime.now() - dcheck).total_seconds() / 3600, 2)}"
+                timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
                 logging.info(timeinfo)
 
                 await interaction.user.send(
