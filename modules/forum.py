@@ -14,6 +14,8 @@ from pytz import utc
 
 import classes.permissions as permissions
 from classes.Advert import Advert
+from classes.AutomodComponents import AutomodComponents
+from classes.Support.LogTo import automod_log, automod_approval_log
 from classes.automod import ForumAutoMod
 from classes.databaseController import ConfigData
 from views.buttons.confirmButtons import confirmAction
@@ -32,27 +34,30 @@ class Forum(commands.GroupCog, name="forum"):
         # gets the config
         forums = ForumAutoMod.config(guildid=thread.guild.id)
         bot = self.bot
-        await ForumAutoMod.checktags(thread)
-        # Checks the tags and adds the correct ones.
-        msg: discord.Message = await ForumAutoMod.get_message(thread)
-        if msg is False:
-            logging.error(f"[Automod Error] Message not found in thread: {thread.name}")
-            modchannel = bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
-            await modchannel.send(f"[Automod Error] Message not found in thread: {thread.mention}, please manually check for duplicates.")
-            await ForumAutoMod.reminder(thread, thread.guild.id)
-            return
         forum_channel = bot.get_channel(thread.parent_id)
         if forum_channel.id not in forums:
             return
+
+        await ForumAutoMod.checktags(thread)
+        # Checks the tags and adds the correct ones.
+
+        msg: discord.Message = await ForumAutoMod.get_message(thread)
+        if msg is None:
+            await automod_log(bot, thread.guild.id, f"Message not found in {thread.name} posted by {thread.owner.mention}", "automodlog")
+            await ForumAutoMod.reminder(thread, thread.guild.id)
+            return
+
         header_status = await ForumAutoMod.check_header(msg, thread)
         duplicate_status = await ForumAutoMod.duplicate(thread=thread, bot=bot)
         if header_status:
+            await automod_log(bot, thread.guild.id, f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog")
             return
         if duplicate_status:
+            await automod_log(bot, thread.guild.id, f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog")
             return
         await ForumAutoMod.reminder(thread, thread.guild.id)
-        botmsg = await ForumAutoMod.info(forum_channel, thread, msg)
-        await ForumAutoMod.age(msg, botmsg)
+        await ForumAutoMod.info(forum_channel, thread, msg)
+        # await ForumAutoMod.age(msg, botmsg)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -73,59 +78,10 @@ class Forum(commands.GroupCog, name="forum"):
         except Exception as e:
             print(e)
             return
-
-        if message.channel.type is discord.ChannelType.public_thread:
-            if forum.id in forums:
-                if match:
-                    bot = self.bot
-                    modchannel = bot.get_channel(763058339088957548)
-                    thread: discord.Thread = message.channel
-                    bcheck = datetime.utcnow() + timedelta(hours=-70)
-                    messages = thread.history(limit=300, after=bcheck, oldest_first=False)
-                    forum = bot.get_channel(thread.parent_id)
-                    count = 0
-                    user_count = 0
-                    await ForumAutoMod.checktags(thread)
-                    if thread.owner_id != message.author.id:
-                        await message.channel.send(f"{message.author} You can't bump another's post.")
-                        return
-                    async for m in messages:
-                        if m.author.id == bot.application_id:
-                            count += 1
-                        if count == 1:
-                            pm = m.created_at
-                            logging.info(f"last bump: {bcheck - datetime.utcnow()}")
-                            await message.author.send(
-                                    f"Your last bump was within the 72 hours cooldown period in {message.channel.mention} and was removed."
-                                    f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}"
-                                    f"\nRepeated early bumps will result in your advert being taken down.")
-                            try:
-                                await message.delete()
-                            except discord.NotFound:
-                                pass
-                            # await modchannel.send(
-                            #         f"{message.author.mention} tried to bump within the 72 hours cooldown period in {message.channel.mention}."
-                            #         f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
-                            # return
-                        if m.author.id == message.author.id:
-                            user_count += 1
-                    og = await thread.fetch_message(thread.id)
-                    og_time = og.created_at.replace(tzinfo=utc)
-                    try:
-                        if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
-                            for a in forum.available_tags:
-                                if a.name == "Approved":
-                                    await thread.add_tags(a)
-                            return
-                    except Exception as e:
-                        logging.error(e)
-                    for a in forum.available_tags:
-                        if a.name == "Bump":
-                            await thread.add_tags(a)
-                            await message.channel.send("Post successfully bumped and awaiting manual review")
-                        if a.name == "Approved":
-                            await thread.remove_tags(a)
-
+        if message.channel.type != discord.ChannelType.public_thread or forum.id not in forums:
+            return
+        if match:
+            await message.channel.send(f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`")
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         """Removes the thread if the main message is removed."""
@@ -192,7 +148,7 @@ class Forum(commands.GroupCog, name="forum"):
         search_commands = ConfigData().get_key(interaction.guild.id, "SEARCH")
         data.append(app_commands.Choice(name="custom", value="custom"))
         for x in search_commands:
-            if current.lower() in x:
+            if current.lower() in x.lower():
                 data.append(app_commands.Choice(name=x.lower(), value=x))
         return data
 

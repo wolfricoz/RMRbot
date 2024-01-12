@@ -1,3 +1,4 @@
+"""This module is used to handle the automod for the forums."""
 import logging
 import os.path
 import re
@@ -8,31 +9,24 @@ import discord
 import pytz
 
 from classes.AutomodComponents import AutomodComponents
+from classes.Support.LogTo import automod_log, automod_approval_log
 from classes.databaseController import ConfigData
 
 
 class ForumAutoMod(ABC):
+    """This class is used to handle the automod for the forums."""
+
     @staticmethod
     @abstractmethod
     def config(guildid):
+        """This function is used to get the config for the forums."""
         data = ConfigData().get_key(guildid, "FORUM")
         return data
 
     @staticmethod
     @abstractmethod
-    async def age(message, botmessage):
-        check = re.search(
-                r"\b(all character(s|'s) ([2-9][0-9]|18|19)|all character(s|'s) are ([2-9][0-9]|18|19)|([2-9][0-9]|18|19)\+ character(s|'s))\b",
-                message.content, flags=re.IGNORECASE)
-        if check is None:
-            await botmessage.add_reaction("❓")
-        else:
-            await botmessage.add_reaction("🆗")
-        print("age checked")
-
-    @staticmethod
-    @abstractmethod
     async def info(forum, thread, msg):
+        """This to remind users about the bumping rules"""
         # This module needs to be fixed; keeps adding too much tags.
         matched = await AutomodComponents.tags(thread, forum, msg)
         await ForumAutoMod.checktags(thread)
@@ -71,11 +65,12 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     async def bump(bot, interaction):
+        """This function is used to bump the post."""
         utc = pytz.UTC
         thread: discord.Thread = interaction.channel
         dcheck = datetime.now() + timedelta(hours=-70)
         bcheck = dcheck.replace(tzinfo=utc)
-        messages = thread.history(limit=300, after=bcheck, oldest_first=False)
+        messages = thread.history(after=bcheck, oldest_first=False)
         count = 0
         user_count = 0
         if thread.owner_id != interaction.user.id:
@@ -88,11 +83,18 @@ class ForumAutoMod(ABC):
                 count += 1
             if count == 1:
                 pm = m.created_at
-                logging.info(f"last bump: {bcheck - datetime.utcnow()}")
+                if pm < bcheck:
+                    print("72 hours has passed")
+                    break
+
+                timeinfo = f"last bump: {datetime.now() - dcheck}, hours {round(abs(datetime.now() - dcheck).total_seconds() / 3600, 2)}"
+                logging.info(timeinfo)
 
                 await interaction.user.send(
                         f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention} and was removed."
                         f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+                await automod_log(bot, interaction.guild_id, f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
+                await interaction.followup.send(f"You've bumped too soon, please wait {timeinfo} hours before bumping again.")
                 return
             if m.author.id == interaction.user.id:
                 user_count += 1
@@ -102,26 +104,22 @@ class ForumAutoMod(ABC):
         og_time = og.created_at.replace(tzinfo=utc)
         try:
             if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
-                for a in forum.available_tags:
-                    if a.name == "Approved":
-                        await thread.add_tags(a)
+                await AutomodComponents.change_forum_tags(forum, thread)
                 await interaction.channel.send("Post successfully bumped and automatically approved")
+                await automod_approval_log(bot, interaction.guild_id, f"User bumped post in {interaction.channel.mention} and was automatically approved", "automodlog")
                 # await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
                 return
         except Exception as e:
             logging.error(e)
-        for a in forum.available_tags:
-            if a.name == "Bump":
-                await thread.add_tags(a)
-            if a.name == "Approved":
-                await thread.remove_tags(a)
-                await interaction.channel.send("Post successfully bumped and awaiting manual review")
+        await AutomodComponents.change_forum_tags(forum, thread)
 
+        await interaction.channel.send("Post successfully bumped and awaiting manual review")
         await interaction.followup.send("You've successfully bumped your post")
 
     @staticmethod
     @abstractmethod
     async def duplicate(thread: discord.Thread, bot):
+        """This function is used to check for duplicate posts."""
         forums = ForumAutoMod.config(thread.guild.id)
         originalmsg = thread.starter_message
         if thread.owner_id == 188647277181665280:
@@ -134,11 +132,12 @@ class ForumAutoMod(ABC):
                         f"Hi, I am a bot of {thread.guild.name}. Your latest advertisement is too similar to {checkdup.channel.mention}; since 07/01/2023 you're only allowed to have the same advert up once. \n\n"
                         f"If you wish to bump your advert, do /forum bump on your advert, if you wish to move then please use /forum close")
                 await thread.delete()
-                return True
+                return checkdup
 
     @staticmethod
     @abstractmethod
     async def reminder(thread: discord.Thread, guildid):
+        """This function is used to remind users about the bumping rules."""
         reminder = ConfigData().get_key_or_none(guildid, "REMINDER")
         if reminder is None:
             return
@@ -151,6 +150,7 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     async def checktags(thread):
+        """This function is used to check the tags."""
         tags = thread.applied_tags
         remove = ["new", "approved", "bump"]
         found = False
@@ -165,6 +165,7 @@ class ForumAutoMod(ABC):
     @staticmethod
     @abstractmethod
     async def check_header(message: discord.Message, thread: discord.Thread) -> bool | None:
+        """This function is used to check the header."""
         header = re.match(r"(All character'?s? are [1-9][0-9])([\S\n\t\v ]*)([-|—]{5,100})", message.content, flags=re.IGNORECASE)
         pattern = re.compile(r'\bsearch\b', re.IGNORECASE)
         search = pattern.search(thread.parent.name)
@@ -182,6 +183,7 @@ All characters are (ages)+
 Your advert here
 ```
 
+You can use this website to check your header: https://regex101.com/r/HYkkf9/2
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
 """)
             await thread.delete()
@@ -190,6 +192,7 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
     @staticmethod
     @abstractmethod
     def approval_log(interaction):
+        """This function is used to log the approval."""
         file_name = f"config/approvals{datetime.now().strftime('%m-%y')}.txt"
         if os.path.isfile(file_name) is False:
             with open(file_name, 'w') as f:
@@ -208,4 +211,5 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
         async for message in messages:
             if message.id == thread.id:
                 return message
-        return False
+        else:
+            return thread.starter_message

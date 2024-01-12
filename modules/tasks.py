@@ -187,7 +187,7 @@ class Tasks(commands.GroupCog):
                         message = await thread.fetch_message(thread.id)
                     except discord.errors.NotFound:
                         message = None
-                    print(f"Checking {thread.name} in {channel.name} in {thread.guild.name}")
+                    # print(f"Checking {thread.name} in {channel.name} in {thread.guild.name}")
                     if message is None:
                         logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing.")
                         await thread.delete()
