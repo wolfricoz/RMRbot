@@ -83,7 +83,7 @@ class ForumAutoMod(ABC):
                 count += 1
             if count == 1:
                 pm = m.created_at.replace(tzinfo=utc)
-                if pm < bcheck:
+                if abs(pm - bcheck).total_seconds() / 3600 <= 72:
                     print("72 hours has passed")
                     break
 
