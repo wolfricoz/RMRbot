@@ -63,9 +63,19 @@ class AutomodComponents(ABC):
 
     @staticmethod
     @abstractmethod
-    async def change_forum_tags(forum, thread):
+    async def change_tags_bump(forum, thread):
         for a in forum.available_tags:
             if a.name == "Bump":
                 await thread.add_tags(a)
+            if a.name == "Approved" or a.name == "New":
+                await thread.remove_tags(a)
+
+    @staticmethod
+    @abstractmethod
+    async def change_tags_approve(forum, thread):
+        for a in forum.available_tags:
+
             if a.name == "Approved":
+                await thread.add_tags(a)
+            if a.name == "Bump" or a.name == "New":
                 await thread.remove_tags(a)

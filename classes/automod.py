@@ -104,14 +104,13 @@ class ForumAutoMod(ABC):
         og_time = og.created_at.replace(tzinfo=utc)
         try:
             if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
-                await AutomodComponents.change_forum_tags(forum, thread)
+                await AutomodComponents.change_tags_approve(forum, thread)
                 await interaction.channel.send("Post successfully bumped and automatically approved")
                 await automod_approval_log(bot, interaction.guild_id, f"User bumped post in {interaction.channel.mention} and was automatically approved", "automodlog")
-                # await modchannel.send(f"`[Experimental]` Automatically approved bump of {interaction.channel.mention}. Post was not edited in the last 70 hours.")
                 return
         except Exception as e:
             logging.error(e)
-        await AutomodComponents.change_forum_tags(forum, thread)
+        await AutomodComponents.change_tags_bump(forum, thread)
 
         await interaction.channel.send("Post successfully bumped and awaiting manual review")
         await interaction.followup.send("You've successfully bumped your post")
