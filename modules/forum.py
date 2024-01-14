@@ -83,7 +83,10 @@ class Forum(commands.GroupCog, name="forum"):
         if match:
             remind = await message.channel.send(f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. This message will he removed in 60 seconds so you can bump!")
             await asyncio.sleep(60)
-            await message.delete()
+            try:
+                await message.delete()
+            except discord.NotFound:
+                pass
             await remind.delete()
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
