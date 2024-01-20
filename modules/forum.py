@@ -4,18 +4,15 @@ import logging
 import os
 import re
 import typing
-from datetime import datetime, timedelta
 
 import discord
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
-from pytz import utc
 
 import classes.permissions as permissions
 from classes.Advert import Advert
-from classes.AutomodComponents import AutomodComponents
-from classes.Support.LogTo import automod_log, automod_approval_log
+from classes.Support.LogTo import automod_log
 from classes.automod import ForumAutoMod
 from classes.databaseController import ConfigData
 from views.buttons.confirmButtons import confirmAction
@@ -48,7 +45,7 @@ class Forum(commands.GroupCog, name="forum"):
             return
 
         header_status = await ForumAutoMod.check_header(msg, thread)
-        duplicate_status = await ForumAutoMod.duplicate(thread=thread, bot=bot)
+        duplicate_status = await ForumAutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)
         if header_status:
             await automod_log(bot, thread.guild.id, f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog")
             return
@@ -88,7 +85,9 @@ class Forum(commands.GroupCog, name="forum"):
             except discord.NotFound:
                 pass
             await remind.delete()
-    @commands.Cog.listener()
+
+    # Could be replaced with on_raw_message_delete, however currently we have a task running to delete the threads without message doing the same effectively. Potentially useful to remember for future.
+    @commands.Cog.listener("on_message_delete")
     async def on_message_delete(self, message: discord.Message):
         """Removes the thread if the main message is removed."""
         logging.debug("on_message_delete: started")
@@ -109,9 +108,15 @@ class Forum(commands.GroupCog, name="forum"):
         mod_channel_id = ConfigData().get_key_int(message.guild.id, 'removallog')
         mod_channel = self.bot.get_channel(mod_channel_id)
         await mod_channel.send(
-                f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:\n{message.content[:1900]}")
+                f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:")
+        count = 0
+        while count < len(message.content):
+            await mod_channel.send(message.content[count:count + 1500])
+            count += 1500
         await message.channel.delete()
         logging.debug("on_message_delete: finished")
+
+
 
     # Commands start here
     @app_commands.command(name="bump", description="Bumps your post!")

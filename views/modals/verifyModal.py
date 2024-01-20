@@ -99,10 +99,14 @@ class VerifyModal(discord.ui.Modal):
                 f"\n"
                 f"[LOBBY DEBUG] `?{command_prefix} {interaction.user.mention} {age} {dob}`",
                 view=AgeButtons(age=age, dob=dob, user=interaction.user))
-
-        await interaction.response.send_message(
-                f'Thank you for submitting your age and dob! We will let you through within 24 hours.',
-                ephemeral=True)
+        try:
+            await interaction.response.send_message(
+                    f'Thank you for submitting your age and dob! We will let you through within 24 hours.',
+                    ephemeral=True)
+        except discord.errors.NotFound:
+            await interaction.followup.send(
+                    f'Thank you for submitting your age and dob! We will let you through within 24 hours.',
+                    ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         print(error)

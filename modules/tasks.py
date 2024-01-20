@@ -66,7 +66,6 @@ class Tasks(commands.GroupCog):
         channel = self.bot.get_channel(OLDLOBBY)
         if channel is None:
             return
-        print('creating cache...')
         logging.debug('creating cache...')
         time = datetime.now()
         async for h in channel.history(limit=None, oldest_first=True, before=time):
@@ -131,10 +130,8 @@ class Tasks(commands.GroupCog):
                     continue
                 updated_users.append(str(member.id))
                 UserTransactions.update_entry_date(member.id)
-        uu = ", ".join(updated_users)
-        logging.debug(f"Updating entry time for ({len(updated_users)}) {uu}")
+        logging.debug(f"Updating entry time for {len(updated_users)} users")
         del updated_users
-        del uu
 
     async def user_expiration_remove(self, userdata, removaldate):
         """removes expired entries."""

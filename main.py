@@ -40,7 +40,6 @@ async def stop(ctx):
 bot.invites = {}
 
 
-# EVENT LISTENER FOR WHEN THE BOT HAS SWITCHED FROM OFFLINE TO ONLINE.
 @bot.event
 async def on_ready():
     devroom: discord.TextChannel = bot.get_channel(bot.DEV)

@@ -117,10 +117,9 @@ class ForumAutoMod(ABC):
 
     @staticmethod
     @abstractmethod
-    async def duplicate(thread: discord.Thread, bot):
+    async def duplicate(thread: discord.Thread, bot, originalmsg: discord.Message):
         """This function is used to check for duplicate posts."""
         forums = ForumAutoMod.config(thread.guild.id)
-        originalmsg = thread.starter_message
         if thread.owner_id == 188647277181665280:
             return
         for c in forums:
