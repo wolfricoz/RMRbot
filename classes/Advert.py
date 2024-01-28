@@ -46,16 +46,17 @@ class Advert(ABC):
     async def send_advert_to_user(interaction, msg, reminder, warning):
         """Sends the advert and the warning to the user."""
         user = msg.author
+        count = 0
         try:
-            if warning != "purge":
+            if warning.lower() not in ["purge", "no"]:
                 await user.send(warning)
             await user.send(reminder)
-            if len(msg.content) < 2000:
-                await user.send(msg.content)
-            if len(msg.content) > 2000:
-                await user.send(msg.content[0:2000])
-                await user.send(msg.content[2000:4000])
+            while count < len(msg.content):
+                await user.send(msg.content[count:count + 1950])
+                count += 1950
         except discord.Forbidden:
+            if isinstance(interaction, discord.Interaction) is False:
+                await interaction.channel.send(f"Can't DM {user.mention}.")
             await interaction.followup.send(f"Can't DM {user.mention}.")
             pass
 

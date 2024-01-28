@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import discord
 import pytz
 
+from classes.Advert import Advert
 from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log, automod_approval_log
 from classes.databaseController import ConfigData
@@ -124,6 +125,7 @@ class ForumAutoMod(ABC):
     @abstractmethod
     async def duplicate(thread: discord.Thread, bot, originalmsg: discord.Message):
         """This function is used to check for duplicate posts."""
+
         forums = ForumAutoMod.config(thread.guild.id)
         if thread.owner_id == 188647277181665280:
             return
@@ -134,6 +136,7 @@ class ForumAutoMod(ABC):
                 await thread.owner.send(
                         f"Hi, I am a bot of {thread.guild.name}. Your latest advertisement is too similar to {checkdup.channel.mention}; since 07/01/2023 you're only allowed to have the same advert up once. \n\n"
                         f"If you wish to bump your advert, do /forum bump on your advert, if you wish to move then please use /forum close")
+                await Advert.send_advert_to_user(thread, originalmsg, "Your advert:", "no")
                 await thread.delete()
                 return checkdup
 
@@ -189,6 +192,7 @@ Your advert here
 You can use this website to check your header: https://regex101.com/r/HYkkf9/2
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
 """)
+            await Advert.send_advert_to_user(message, message, "Your advert:", "no")
             await thread.delete()
             return True
 
