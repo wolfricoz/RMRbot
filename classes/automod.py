@@ -68,7 +68,7 @@ class ForumAutoMod(ABC):
         """This function is used to bump the post."""
         utc = pytz.UTC
         thread: discord.Thread = interaction.channel
-        dcheck = datetime.now() + timedelta(hours=-70)
+        dcheck = datetime.now() + timedelta(hours=-60)
         bcheck = dcheck.replace(tzinfo=utc)
         messages = thread.history(after=bcheck, oldest_first=False)
         count = 0
@@ -83,7 +83,7 @@ class ForumAutoMod(ABC):
                 count += 1
             if count == 1:
                 pm = m.created_at.replace(tzinfo=utc)
-                if abs(pm - bcheck).total_seconds() / 3600 <= 72:
+                if abs(pm - bcheck).total_seconds() / 3600 <= 70:
                     print("72 hours has passed")
                     break
 
