@@ -6,6 +6,8 @@ from classes.databaseController import ConfigData
 
 
 def check_admin(user: discord.Member):
+    if user is None:
+        return False
     adminroles = ConfigData().get_key(user.guild.id, 'admin')
     user_roles = [x.id for x in user.roles]
     return any(x in adminroles for x in user_roles)
