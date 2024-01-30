@@ -58,6 +58,8 @@ class ModUser(ABC):
         try:
             log = guild.get_channel(ConfigData().get_key_int(guild.id, "warnlog"))
             banlog = guild.get_channel(ConfigData().get_key_int(guild.id, "blog"))
+            if typeofaction == "watchlisted":
+                typeofaction = guild.get_channel(ConfigData().get_key_int(guild.id, "watchlist"))
         except Exception as e:
             await interaction.guild.owner.send(f"config error in {guild.name}: {e}")
             logging.exception(f"{guild.name}: {e}")
