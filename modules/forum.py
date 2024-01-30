@@ -172,8 +172,6 @@ class Forum(commands.GroupCog, name="forum"):
         """Warns the user and removes the advert; logs the warning in database."""
         if type(warn) is Choice:
             warn = warn.value
-
-        print(warn)
         warnings: dict = ConfigData().get_key(interaction.guild.id, "SEARCH")
         reason = warnings.get(warning_type.upper())
         if reason is None and warning_type.upper() != "CUSTOM":

@@ -500,11 +500,12 @@ class SearchWarningTransactions(ABC):
     def get_total_warnings(userid: int):
         total = 0
         active = 0
-        monthsago = datetime.now() - timedelta(days=120)
+        monthsago = datetime.now() - timedelta(days=90)
         userdata = session.scalars(Select(Warnings).where(Warnings.uid == userid)).all()
         session.close()
         for x in userdata:
-            if x.entry < monthsago:
+            if monthsago > x.entry:
+
                 active += 1
             total += 1
         return total, active

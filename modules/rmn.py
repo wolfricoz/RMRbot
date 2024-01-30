@@ -25,7 +25,7 @@ class moderation(commands.Cog, name="rmn"):
             if x.name.lower() in no:
                 continue
             if current.lower() in x.name:
-                data.append(app_commands.Choice(name=x.name, value=str(x.id)))
+                data.append(app_commands.Choice(name=x.name, value=x.name))
         return data
 
     @app_commands.command(name="partnerapprove")
@@ -34,10 +34,11 @@ class moderation(commands.Cog, name="rmn"):
     async def partner(self, interaction: discord.Interaction, category: str, member: discord.Member, servername: str):
         """Creates partner channel for partnerships."""
         await interaction.response.defer()
-        category = discord.utils.get(interaction.guild.categories, id=int(category))
+        category = discord.utils.get(interaction.guild.categories, name=category)
         partner = discord.utils.get(interaction.guild.roles, id=ConfigData().get_key_int(interaction.guild.id, "partner"))
         channel = await interaction.guild.create_text_channel(servername, category=category)
-        await channel.set_permissions(member, send_messages=True, view_channel=True)
+        overwrite = discord.PermissionOverwrite(send_messages=True, read_messages=True, read_message_history=True)
+        await channel.set_permissions(member, overwrite=overwrite)
         await channel.send(
                 f"{member.mention} Thank you for partnering with RMN. Please post your advert here, with a minimum of 5 tags and a maximum of 15. Don't forget to post our advert in your server!")
         await member.add_roles(partner)
