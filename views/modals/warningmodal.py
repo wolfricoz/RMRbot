@@ -15,7 +15,7 @@ class WarningModal(discord.ui.Modal, title='Official Warning'):
     reason = discord.ui.TextInput(
             label='What is the reason?',
             style=discord.TextStyle.long,
-            placeholder='Type your waning here...',
+            placeholder='Type your warning here...',
             max_length=1000,
     )
 

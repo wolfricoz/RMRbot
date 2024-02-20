@@ -14,6 +14,7 @@ from classes.lobbyprocess import LobbyProcess
 from views.buttons.agebuttons import AgeButtons
 from views.buttons.confirmButtons import confirmAction
 from views.buttons.verifybutton import VerifyButton
+from views.modals import inputmodal
 
 
 class Lobby(commands.GroupCog):
@@ -34,11 +35,11 @@ class Lobby(commands.GroupCog):
                                      ['add', 'update', 'delete', 'get']])
     @permissions.check_app_roles()
     async def database(self, interaction: discord.Interaction, operation: Choice['str'], userid: str, dob: str = None):
-        """One stop shop to handle all age entry management. Only add 1 date of birth per user."""
+        """One stop shop to handle all age entry management. when adding or updating, dob field is required."""
         userid = int(userid)
         age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
         age_log_channel = interaction.guild.get_channel(age_log)
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=True)  # type: ignore
         match operation.value.upper():
             case "UPDATE":
                 if await AgeCalculations.validatedob(dob, interaction) is False:
@@ -66,6 +67,20 @@ class Lobby(commands.GroupCog):
                                                 f"user: <@{user.uid}>\n"
                                                 f"dob: {user.dob.strftime('%m/%d/%Y')}")
 
+    @app_commands.command(name="adduser")
+    @permissions.check_app_roles()
+    async def add_user(self, interaction: discord.Interaction, userid: str, dob: str):
+        """Adds user to the database"""
+        await interaction.response.defer(ephemeral=True)
+        userid = int(userid)
+        age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
+        age_log_channel = interaction.guild.get_channel(age_log)
+        if await AgeCalculations.validatedob(dob, interaction) is False:
+            return
+        UserTransactions.add_user_full(str(userid), dob)
+        await interaction.followup.send(f"<@{userid}> added to the database with dob: {dob}")
+        await LobbyProcess.age_log(age_log_channel, userid, dob, interaction)
+
     @app_commands.command()
     @app_commands.choices(process=[Choice(name=x, value=x) for x in
                                    ["True", "False"]])
@@ -73,7 +88,7 @@ class Lobby(commands.GroupCog):
     async def idverify(self, interaction: discord.Interaction, process: Choice['str'],
                        user: discord.Member, dob: str):
         """ID verifies user. process True will put the user through the lobby."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=True)  # type: ignore
         lobbylog = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
 
         agelog = interaction.guild.get_channel(lobbylog)
@@ -101,23 +116,11 @@ user: {user.mention}
 DOB: {dob}
 UID: {user.id} 
 **ID VERIFIED BY:** {interaction.user}""")
-            # case "GET":
-            #     user = VerificationTransactions.get_id_info(userid)
-            #     if user is None:
-            #         await interaction.followup.send("Not found")
-            #         return
-            #     await interaction.followup.send(f"**__USER INFO__**\n"
-            #                                     f"user: <@{user.uid}>\n"
-            #                                     f"Reason: {user.reason}\n"
-            #                                     f"idcheck: {user.idcheck}\n"
-            #                                     f"idverifier: {user.idverified}\n"
-            #                                     f"verifieddob: {user.verifieddob}\n")
-
     @app_commands.command()
     @permissions.check_app_roles()
     async def returnlobby(self, interaction: discord.Interaction, user: discord.Member):
         """returns user to lobby; removes the roles."""
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         original_user = ConfigData().get_key(interaction.guild.id, "add")
         add_to_user = list(original_user)
         rem_from_user: list = ConfigData().get_key(interaction.guild.id, "rem")
@@ -146,7 +149,7 @@ UID: {user.id}
     async def agecheck(self, interaction: discord.Interaction, dob: str):
         """Checks the age of a dob"""
         age = AgeCalculations.dob_to_age(dob)
-        await interaction.response.send_message(f"As of today {dob} is {age} years old", ephemeral=True)
+        await interaction.response.send_message(f"As of today {dob} is {age} years old", ephemeral=True)  # type: ignore
 
     @commands.command(name="18a")
     @permissions.check_roles()
@@ -214,29 +217,26 @@ UID: {user.id}
                                    {"Yes": "True", "No": "False"}.items()])
     @permissions.check_app_roles()
     async def idcheck(self, interaction: discord.Interaction, operation: Choice['str'], idcheck: Choice['str'],
-                      userid: str, reason: str = None):
+                      userid: str):
         """adds user to id check or removes them"""
         userid = int(userid)
         if idcheck.value == "True":
             idcheck = True
         elif idcheck.value == "False":
             idcheck = False
-        await interaction.response.defer(ephemeral=False)
+        if operation.value.upper() not in ["ADD", "UPDATE"]:
+            await interaction.response.defer(ephemeral=False)
         match operation.value.upper():
             case "UPDATE":
-                if reason is None:
-                    await interaction.followup.send(f"Please include a reason")
-                    return
+                reason = await inputmodal.send_modal(interaction, "Please enter a reason")
                 VerificationTransactions.update_check(userid, reason, idcheck)
                 await interaction.followup.send(
-                        f"<@{userid}>'s userid entry has been updated with reason: {reason} and idcheck: {idcheck}")
+                        f"{interaction.user.mention} has updated <@{userid}>'s userid entry has been updated with idcheck: **{idcheck}** and reason: \n`{reason}`")
             case "ADD":
-                if reason is None:
-                    await interaction.followup.send(f"Please include a reason")
-                    return
+                reason = await inputmodal.send_modal(interaction, "Please enter a reason")
                 VerificationTransactions.add_idcheck(userid, reason, idcheck)
                 await interaction.followup.send(
-                        f"<@{userid}>'s userid entry has been added with reason: {reason} and idcheck: {idcheck}")
+                        f"{interaction.user.mention} has added <@{userid}>'s userid entry has been added with idcheck: **{idcheck}** and reason: \n`{reason}`")
             case "GET":
                 user = VerificationTransactions.get_id_info(userid)
                 if user is None:

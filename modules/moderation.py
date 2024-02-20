@@ -11,6 +11,7 @@ from discord.ext import commands
 import classes.permissions as permissions
 from classes.databaseController import ConfigData, Timers, TimersTransactions, UserTransactions
 from classes.moduser import ModUser
+from views.modals import inputmodal
 from views.paginations.paginate import paginate
 
 
@@ -44,12 +45,16 @@ class moderation(commands.Cog, name="Moderation"):
     @app_commands.autocomplete(bantype=ban_autocompletion)
     @permissions.check_app_roles_admin()
     async def banc(self, interaction: discord.Interaction, bantype: str, member: discord.User = None,
-                   memberid: str = None, *, reason: str = "You have been banned by an admin",
+                   memberid: str = None, *,
                    appeal: Choice[str], idlist: Choice[str]) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
-        await interaction.response.defer(ephemeral=True)
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
-        reason = bans.get(bantype.upper(), reason)
+        reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
+        if bantype.upper() == "CUSTOM":
+            reason = await inputmodal.send_modal(interaction, "Banreason accepted")
+        else:
+            await interaction.response.defer(ephemeral=True)
+
         bot = self.bot
         if memberid is None and member is None:
             await interaction.followup.send("Please fill in the member or memberid field.")

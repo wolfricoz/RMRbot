@@ -37,8 +37,8 @@ class ModUser(ABC):
             for guild in bot.guilds:
                 user2 = await bot.fetch_user(member.id)
                 try:
-                    await guild.ban(user2, reason=reason, delete_message_days=0)
-                    # await interaction.channel.send("BAN DISABLED: TESTING MODE ON.")
+                    # await guild.ban(user2, reason=reason, delete_message_days=0)
+                    await interaction.channel.send("BAN DISABLED: TESTING MODE ON.")
                     # Logs the ban into the correct channel
                     await ModUser.log_ban(interaction, member, reason, guild, typeofaction="banned")
                     rguilds.append(guild.name)

@@ -116,8 +116,6 @@ class Forum(commands.GroupCog, name="forum"):
         await message.channel.delete()
         logging.debug("on_message_delete: finished")
 
-
-
     # Commands start here
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):
