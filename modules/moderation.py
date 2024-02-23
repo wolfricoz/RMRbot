@@ -128,9 +128,7 @@ class moderation(commands.Cog, name="Moderation"):
         """Copies the images from the user's profile"""
         await interaction.response.defer()
         async for message in source.history(limit=amount):
-            print(len(message.attachments))
             if message.attachments:
-                print("has attachements")
                 attachments = [await attachment.to_file() for attachment in message.attachments]
                 await destination.send(files=attachments)
         await interaction.followup.send("Done")
