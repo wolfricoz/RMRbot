@@ -13,7 +13,7 @@ from classes.databaseController import ConfigData, Timers, TimersTransactions, U
 from classes.moduser import ModUser
 from views.modals import inputmodal
 from views.paginations.paginate import paginate
-
+import requests
 
 class moderation(commands.Cog, name="Moderation"):
 
@@ -122,6 +122,18 @@ class moderation(commands.Cog, name="Moderation"):
         await ModUser.log_ban(interaction, member, reason, interaction.guild, typeofaction="searchbanned")
         await interaction.followup.send(f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
 
+    @app_commands.command()
+    @permissions.check_roles()
+    async def copyimages(self, interaction: discord.Interaction, source: discord.TextChannel, destination: discord.TextChannel, amount: int = 1000):
+        """Copies the images from the user's profile"""
+        await interaction.response.defer()
+        async for message in source.history(limit=amount):
+            print(len(message.attachments))
+            if message.attachments:
+                print("has attachements")
+                attachments = [await attachment.to_file() for attachment in message.attachments]
+                await destination.send(files=attachments)
+        await interaction.followup.send("Done")
 
 async def setup(bot: commands.Bot):
     """Adds the cog to the bot."""
