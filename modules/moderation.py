@@ -51,7 +51,7 @@ class moderation(commands.Cog, name="Moderation"):
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
         if bantype.upper() == "CUSTOM":
-            reason = await inputmodal.send_modal(interaction, "Banreason accepted")
+            reason = str(await inputmodal.send_modal(interaction, "Banreason accepted"))
         else:
             await interaction.response.defer(ephemeral=True)
 
