@@ -70,7 +70,7 @@ class VerifyModal(discord.ui.Modal):
                     f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match and has been timed out. User gave {age} but dob indicates {years}\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
-                    f'A staff member will contact you within 24 hours, please wait patiently.',
+                    f'A staff member will contact you soon, please wait patiently.',
                     ephemeral=True)
             return
         # Checks if user has a date of birth in the database, and if the date of births match.
@@ -79,7 +79,7 @@ class VerifyModal(discord.ui.Modal):
                     f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {userdata.dob.strftime('%m/%d/%Y')}\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
-                    f'A staff member will contact you within 24 hours, please wait patiently.',
+                    f'A staff member will contact you soon, please wait patiently.',
                     ephemeral=True)
             return
 
@@ -87,7 +87,7 @@ class VerifyModal(discord.ui.Modal):
         if await AgeCalculations.id_check_or_id_verified(interaction.user, interaction.guild, channel):
             await modlobby.send(f"{interaction.user.mention} gave ages: {age} {dob}, but is on the idlist.")
             await interaction.response.send_message(
-                    f'A staff member will contact you within 24 hours, please wait patiently.', ephemeral=True)
+                    f'A staff member will contact you soon, please wait patiently.', ephemeral=True)
             return
         # Check the age and send the right command/button based upon that.
         command_prefix = AgeCalculations.prefix(age)
@@ -101,11 +101,11 @@ class VerifyModal(discord.ui.Modal):
                 view=AgeButtons(age=age, dob=dob, user=interaction.user))
         try:
             await interaction.response.send_message(
-                    f'Thank you for submitting your age and dob! We will let you through within 24 hours.',
+                    f'Thank you for submitting your age and dob! We will let you through soon.',
                     ephemeral=True)
         except discord.errors.NotFound:
             await interaction.followup.send(
-                    f'Thank you for submitting your age and dob! We will let you through within 24 hours.',
+                    f'Thank you for submitting your age and dob! We will let you through soon.',
                     ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
