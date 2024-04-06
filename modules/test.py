@@ -11,6 +11,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 
+from classes.databaseController import ConfigData
 
 
 class Test(commands.Cog, name="test"):
@@ -137,12 +138,11 @@ class Test(commands.Cog, name="test"):
         print(perf_counter() - start)
 
     # depracated
-    # @commands.command()
-    # @commands.is_owner()
-    # async def update(self, ctx: commands.Context):
-    #     from classes import jsonmaker
-    #     await jsonmaker.guildconfiger.updateconfig(ctx.guild.id)
-    #     await ctx.send('Guild config updated to latest version')
+    @commands.command()
+    @commands.is_owner()
+    async def getconfig(self, ctx: commands.Context):
+        ConfigData().output_to_json()
+        await ctx.send("Config data put in json")
 
     @commands.command()
     @commands.is_owner()
@@ -159,7 +159,15 @@ class Test(commands.Cog, name="test"):
 
         await ctx.send(f"Kicked {count}")
 
-
+    @commands.command(name="cbans")
+    @commands.is_owner()
+    async def checkbans(self, ctx: commands.Context):
+        print("checking bans")
+        async for x in ctx.guild.bans():
+            print(x.reason)
+            match = re.match(r"(((0[0-9])|(1[012]))([\/|\-|.])((0[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2[0123])))", x.reason)
+            if match is not None:
+                await ctx.send(f"{x.user.mention} {x.reason}")
 
 
 async def setup(bot: commands.Bot):
