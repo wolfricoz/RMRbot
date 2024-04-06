@@ -14,7 +14,8 @@ class LobbyProcess(ABC):
     @abstractmethod
     async def approve_user(guild, user, dob, age, staff):
         # checks if user is on the id list
-        if await AgeCalculations.id_check(guild, user):
+        if await AgeCalculations.id_check(guild, user, age, dob):
+
             return
         # updates user's age if it exists, otherwise makes a new entry
         UserTransactions.update_user_dob(user.id, dob)

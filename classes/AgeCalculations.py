@@ -65,7 +65,7 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def id_check(guild, user: discord.Member):
+    async def id_check(guild, user: discord.Member, age, dob):
         userinfo: databases.current.IdVerification = VerificationTransactions.get_id_info(user.id)
         print(guild.id)
         idlog = ConfigData().get_key_int(guild.id, "idlog")
@@ -74,7 +74,8 @@ class AgeCalculations(ABC):
             return False
         if userinfo.idcheck is True:
             await idchannel.send(
-                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
+                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through."
+                    f"lobby debug: age: {age} dob: {dob} (please remove this after verification)")
             return True
         return False
 

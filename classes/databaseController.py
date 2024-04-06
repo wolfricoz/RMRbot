@@ -98,8 +98,6 @@ class DatabaseTransactions(ABC):
         return warning_list, warning_dict
 
 
-
-
 class UserTransactions(ABC):
 
     @staticmethod
@@ -517,7 +515,6 @@ class SearchWarningTransactions(ABC):
         search_warning = Warnings(uid=userid, reason=reason, type="SEARCH")
         session.add(search_warning)
         DatabaseTransactions.commit(session)
-
 
 
 class TimersTransactions(ABC):
