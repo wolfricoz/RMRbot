@@ -163,11 +163,10 @@ class Test(commands.Cog, name="test"):
         async for x in ctx.guild.bans():
             if x.reason is None:
                 continue
-            match = re.search(r"(((0[0-9])|(1[012]))([\/|\-|.])((0[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2[0123])))", x.reason)
+            match = re.search(r"\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b", x.reason)
+
             match2 = re.search(r"THIS USER IS A MINOR", x.reason)
             if match is not None:
-                await ctx.send(f"{x.user.mention} {x.reason}")
-            if match2 is not None:
                 await ctx.send(f"{x.user.mention} {x.reason}")
         await ctx.send("done")
 
