@@ -164,7 +164,8 @@ class Test(commands.Cog, name="test"):
     async def checkbans(self, ctx: commands.Context):
         print("checking bans")
         async for x in ctx.guild.bans():
-            print(x.reason)
+            if x.reason is None:
+                continue
             match = re.match(r"(((0[0-9])|(1[012]))([\/|\-|.])((0[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2[0123])))", x.reason)
             if match is not None:
                 await ctx.send(f"{x.user.mention} {x.reason}")
