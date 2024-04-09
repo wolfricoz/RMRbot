@@ -67,7 +67,7 @@ class VerifyModal(discord.ui.Modal):
         logging.debug(f"userid: {interaction.user.id} age: {age} dob: {dob}")
         if agechecked == 1 or agechecked == -1:
             await channel.send(
-                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match. "
+                    f"[Info]{interaction.user.mention}\'s age does not match. "
                     f"User gave {age} but dob indicates {years}. User may retry.\n")
             await interaction.response.send_message(
                     f'It seems your age does not match the date of birth you provided. Please try again. Please use '
