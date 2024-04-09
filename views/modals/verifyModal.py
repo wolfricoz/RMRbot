@@ -19,7 +19,7 @@ class VerifyModal(discord.ui.Modal):
     # By default, it is required and is a short-style input which is exactly
     # what we want.
     age = discord.ui.TextInput(
-            label='age',
+            label='Current Age (Do not round up or down)',
             placeholder='99',
             max_length=3,
 
@@ -65,9 +65,19 @@ class VerifyModal(discord.ui.Modal):
         # Checks if user is underaged
         agechecked, years = AgeCalculations.agechecker(age, dob)
         logging.debug(f"userid: {interaction.user.id} age: {age} dob: {dob}")
-        if agechecked != 0:
+        if agechecked == 1 or agechecked == -1:
+            await channel.send(
+                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match. "
+                    f"User gave {age} but dob indicates {years}. User may retry.\n")
+            await interaction.response.send_message(
+                    f'It seems your age does not match the date of birth you provided. Please try again. Please use '
+                    f'your CURRENT age.',
+                    ephemeral=True)
+            return
+        if agechecked > 1 or agechecked < -1:
             await idchannel.send(
-                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match and has been timed out. User gave {age} but dob indicates {years}\n"
+                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match and has been timed "
+                    f"out. User gave {age} but dob indicates {years}\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
                     f'A staff member will contact you soon, please wait patiently.',
