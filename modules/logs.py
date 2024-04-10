@@ -8,7 +8,7 @@ from sys import platform
 import discord.utils
 from discord import Interaction
 from discord.app_commands import AppCommandError, command, CheckFailure
-from discord import app_commands
+from discord import app_commands, HTTPException, RateLimited
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -68,6 +68,10 @@ class Logging(commands.Cog):
             await ctx.send("You do not have permission")
         elif isinstance(error, commands.MemberNotFound):
             await ctx.send("User not found")
+        elif isinstance(error, RateLimited):
+            await ctx.send("The bot is currently being rate limited by discord. Please try again later.")
+        elif isinstance(error, HTTPException):
+            await ctx.send("Failed to send message (potentially rate limited?). Please try again later.")
         # elif isinstance(error, commands.CommandInvokeError):
         #     await ctx.send("Command failed: See log.")
         #     await ctx.send(error)
