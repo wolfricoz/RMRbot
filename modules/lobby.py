@@ -239,9 +239,7 @@ UID: {user.id}
                 reason = await inputmodal.send_modal(interaction, "Please enter a reason")
                 VerificationTransactions.update_check(userid, reason, idcheck)
                 await send_embed(interaction, title="User id check updated", body=f"<@{userid}>'s id check has been updated to: {idcheck} with reason: `{reason}`")
-                await interaction.followup.send(
-                    f"{interaction.user.mention} has updated <@{userid}>'s userid entry has been updated with "
-                    f"idcheck: **{idcheck}** and reason: \n`{reason}`")
+
             case "ADD":
                 reason = await inputmodal.send_modal(interaction, "Please enter a reason")
                 VerificationTransactions.add_idcheck(userid, reason, idcheck)
@@ -265,7 +263,7 @@ UID: {user.id}
                 if VerificationTransactions.set_idcheck_to_false(userid) is False:
                     await interaction.followup.send(f"Can't find entry: <@{userid}>")
                     return
-                await send_embed(interaction, title="User id check deleted", body=f"Deleted entry: <@{userid}>")
+                await send_embed(interaction, title="User id check deleted", body=f"Deleted entry: <@{userid}>", location="channel")
 
     # Event
 

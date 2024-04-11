@@ -7,6 +7,8 @@ from discord.utils import get
 
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData
+from views.embeds.SendEmbed import send_embed
+from views.modals.inputmodal import send_modal
 
 
 class LobbyProcess(ABC):
@@ -116,4 +118,4 @@ class LobbyProcess(ABC):
                                    f"DOB: {dob}\n"
                                    f"UID: {userid}\n"
                                    f"Entry updated by: {interaction.user.name}")
-        await interaction.channel.send(f"{operation} <@{userid}>({userid}) date of birth with dob: {dob}")
+        await send_embed(interaction, title="updated user's date of birth", body=f"{operation} <@{userid}>({userid}) date of birth with dob: {dob}", location="channel")
