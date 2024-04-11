@@ -16,6 +16,8 @@ from views.buttons.confirmButtons import confirmAction
 from views.buttons.verifybutton import VerifyButton
 from views.modals import inputmodal
 
+from views.embeds.SendEmbed import send_embed
+
 
 class Lobby(commands.GroupCog):
     def __init__(self, bot):
@@ -45,27 +47,30 @@ class Lobby(commands.GroupCog):
                 if await AgeCalculations.validatedob(dob, interaction) is False:
                     return
                 UserTransactions.update_user_dob(userid, dob)
-                await interaction.followup.send(f"<@{userid}>'s dob updated to: {dob}")
+                await send_embed(interaction, title="Database entry updated",
+                                 body=f"<@{userid}>'s database entry has been updated to: {dob}")
                 await LobbyProcess.age_log(age_log_channel, userid, dob, interaction, "updated")
             case "DELETE":
                 if permissions.check_admin(interaction.user) is False:
                     await interaction.followup.send("You are not an admin")
                     return
                 if UserTransactions.user_delete(userid) is False:
-                    await interaction.followup.send(f"Can't find entry: <@{userid}>")
+                    await send_embed(interaction, title="Database entry not found",
+                                     body=f"Can't find entry: <@{userid}>")
                     return
-                await interaction.followup.send(f"Deleted entry: <@{userid}>")
+                await send_embed(interaction, title="Database entry deleted", body=f"Deleted entry: <@{userid}>")
             case "ADD":
                 if await AgeCalculations.validatedob(dob, interaction) is False:
                     return
                 UserTransactions.add_user_full(str(userid), dob)
-                await interaction.followup.send(f"<@{userid}> added to the database with dob: {dob}")
+                await send_embed(interaction, title="Database entry added",
+                                 body=f"<@{userid}> added to the database with dob: {dob}")
                 await LobbyProcess.age_log(age_log_channel, userid, dob, interaction)
             case "GET":
                 user = UserTransactions.get_user(userid)
-                await interaction.followup.send(f"**__USER INFO__**\n"
-                                                f"user: <@{user.uid}>\n"
-                                                f"dob: {user.dob.strftime('%m/%d/%Y')}")
+                await send_embed(interaction, title="Database entry", body=f"**__USER INFO__**\n"
+                                                                           f"user: <@{user.uid}>\n"
+                                                                           f"dob: {user.dob.strftime('%m/%d/%Y')}")
 
     @app_commands.command(name="adduser")
     @permissions.check_app_roles()
@@ -99,7 +104,7 @@ class Lobby(commands.GroupCog):
                 print("true")
                 VerificationTransactions.idverify_update(user.id, dob)
                 await interaction.followup.send(
-                        f"{user.mention} has been ID verified with date of birth: {dob}")
+                    f"{user.mention} has been ID verified with date of birth: {dob}")
                 await agelog.send(f"""**USER ID VERIFICATION**
 user: {user.mention}
 DOB: {dob}
@@ -110,12 +115,13 @@ UID: {user.id}
             case "FALSE":
                 VerificationTransactions.idverify_update(user.id, dob)
                 await interaction.followup.send(
-                        f"{user.mention} has been ID verified with date of birth: {dob}")
+                    f"{user.mention} has been ID verified with date of birth: {dob}")
                 await agelog.send(f"""**USER ID VERIFICATION**
 user: {user.mention}
 DOB: {dob}
 UID: {user.id} 
 **ID VERIFIED BY:** {interaction.user}""")
+
     @app_commands.command()
     @permissions.check_app_roles()
     async def returnlobby(self, interaction: discord.Interaction, user: discord.Member):
@@ -141,8 +147,7 @@ UID: {user.id}
             rm.append(r)
         await user.remove_roles(*rm, reason="returning to lobby")
         await user.add_roles(*ra, reason="returning to lobby")
-        await interaction.followup.send(
-                f"{user.mention} has been moved back to the lobby by {interaction.user.mention}")
+        await send_embed(interaction, title="User returned to lobby", body=f"{user.mention} has been moved back to the lobby by {interaction.user.mention}")
 
     @app_commands.command()
     @permissions.check_app_roles()
@@ -186,7 +191,9 @@ UID: {user.id}
             await interaction.channel.send("Max days is 14, setting to 14")
 
         view = confirmAction()
-        await view.send_message(interaction, f"Are you sure you want to purge the lobby of users that have not been processed in the last {days} days?")
+        await view.send_message(interaction,
+                                f"Are you sure you want to purge the lobby of users that have not been processed in "
+                                f"the last {days} days?")
         await view.wait()
         if view.confirmed is False:
             await interaction.followup.send("Purge cancelled")
@@ -207,7 +214,8 @@ UID: {user.id}
             str_kicked = "\n".join(kicked)
             file.write(f"these users were removed during the purge:\n")
             file.write(str_kicked)
-        await interaction.channel.send(f"{interaction.user.mention} Kicked {len(kicked)}", file=discord.File(file.name, "kicked.txt"))
+        await interaction.channel.send(f"{interaction.user.mention} Kicked {len(kicked)}",
+                                       file=discord.File(file.name, "kicked.txt"))
         os.remove("config/kicked.txt")
 
     @app_commands.command()
@@ -230,24 +238,26 @@ UID: {user.id}
             case "UPDATE":
                 reason = await inputmodal.send_modal(interaction, "Please enter a reason")
                 VerificationTransactions.update_check(userid, reason, idcheck)
+                await send_embed(interaction, title="User id check updated", body=f"<@{userid}>'s id check has been updated to: {idcheck} with reason: `{reason}`")
                 await interaction.followup.send(
-                        f"{interaction.user.mention} has updated <@{userid}>'s userid entry has been updated with idcheck: **{idcheck}** and reason: \n`{reason}`")
+                    f"{interaction.user.mention} has updated <@{userid}>'s userid entry has been updated with "
+                    f"idcheck: **{idcheck}** and reason: \n`{reason}`")
             case "ADD":
                 reason = await inputmodal.send_modal(interaction, "Please enter a reason")
                 VerificationTransactions.add_idcheck(userid, reason, idcheck)
-                await interaction.followup.send(
-                        f"{interaction.user.mention} has added <@{userid}>'s userid entry has been added with idcheck: **{idcheck}** and reason: \n`{reason}`")
+                await send_embed(interaction, title="User id check added", body=f"<@{userid}>'s id check has been added with idcheck: {idcheck} and reason: `{reason}`")
             case "GET":
                 user = VerificationTransactions.get_id_info(userid)
                 if user is None:
                     await interaction.followup.send("Not found")
                     return
-                await interaction.followup.send(f"**__USER INFO__**\n"
+                await send_embed(interaction, title="User id check info", body="**__USER INFO__**\n"
                                                 f"user: <@{user.uid}>\n"
                                                 f"Reason: {user.reason}\n"
                                                 f"idcheck: {user.idcheck}\n"
                                                 f"idverifier: {user.idverified}\n"
                                                 f"verifieddob: {user.verifieddob}\n")
+
             case "DELETE":
                 if permissions.check_admin(interaction.user) is False:
                     await interaction.followup.send("You are not an admin")
@@ -255,7 +265,7 @@ UID: {user.id}
                 if VerificationTransactions.set_idcheck_to_false(userid) is False:
                     await interaction.followup.send(f"Can't find entry: <@{userid}>")
                     return
-                await interaction.followup.send(f"Deleted entry: <@{userid}>")
+                await send_embed(interaction, title="User id check deleted", body=f"Deleted entry: <@{userid}>")
 
     # Event
 
