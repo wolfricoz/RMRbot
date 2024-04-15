@@ -7,7 +7,6 @@ async def send_embed(interaction: discord.Interaction, title: str, body: str, lo
         embed.set_footer(text=interaction.command.name)
     except:
         pass
-    embed.set_footer(text=interaction.command.name)
     if location.lower() == "followup":
         await interaction.followup.send(embed=embed)
     if location.lower() == "channel":
