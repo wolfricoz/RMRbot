@@ -14,3 +14,4 @@ async def send_embed(interaction: discord.Interaction, title: str, body: str, lo
         await interaction.user.send(embed=embed)
     if location.lower() == "response":
         await interaction.response.send_message(embed=embed)
+
