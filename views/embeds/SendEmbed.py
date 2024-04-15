@@ -3,7 +3,7 @@ import discord
 
 async def send_embed(interaction: discord.Interaction, title: str, body: str, location:str = "followup"):
     embed = discord.Embed(title=title, description=body)
-    if interaction.command.name is not None:
+    if interaction.command is not None and interaction.command.name is not None:
         embed.set_footer(text=interaction.command.name)
     embed.set_footer(text=interaction.command.name)
     if location.lower() == "followup":
