@@ -77,8 +77,11 @@ class Forum(commands.GroupCog, name="forum"):
             return
         if message.channel.type != discord.ChannelType.public_thread or forum.id not in forums:
             return
+        if message.id == message.channel.id:
+            return
         if match:
             remind = await message.channel.send(f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. This message will he removed in 60 seconds so you can bump!")
+            print(f"bump request from {message.author} in {message.channel}")
             await asyncio.sleep(60)
             try:
                 await message.delete()
