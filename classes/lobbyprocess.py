@@ -87,7 +87,10 @@ class LobbyProcess(ABC):
         async for message in messages:
             if message.author == user or user in message.mentions and count < 10:
                 count += 1
-                await message.delete()
+                try:
+                    await message.delete()
+                except discord.NotFound:
+                    pass
         channel = guild.get_channel(int(lobbymod))
         messages = channel.history(limit=100)
         count = 0
@@ -109,6 +112,10 @@ class LobbyProcess(ABC):
         general = ConfigData().get_key(guild.id, "general")
         message = ConfigData().get_key(guild.id, "welcomemessage")
         channel = guild.get_channel(int(general))
+        async for message in channel.history(limit=20):
+            if message.author.bot and user in message.mentions:
+                print("welcome message already sent")
+                return
         await channel.send(f"Welcome to {guild.name} {user.mention}! {message}")
 
     @staticmethod
