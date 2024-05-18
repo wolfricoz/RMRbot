@@ -112,8 +112,8 @@ class LobbyProcess(ABC):
         general = ConfigData().get_key(guild.id, "general")
         message = ConfigData().get_key(guild.id, "welcomemessage")
         channel = guild.get_channel(int(general))
-        async for message in channel.history(limit=20):
-            if message.author.bot and user in message.mentions:
+        async for cmessage in channel.history(limit=20):
+            if cmessage.author.bot and user in cmessage.mentions:
                 print("welcome message already sent")
                 return
         await channel.send(f"Welcome to {guild.name} {user.mention}! {message}")
