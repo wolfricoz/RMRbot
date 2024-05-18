@@ -208,10 +208,9 @@ class Tasks(commands.GroupCog):
         count = 0
         for guild in self.bot.guilds:
             invite_channel_id = ConfigData().get_key_or_none(guild.id, "checkinvites")
-            invite_channel = self.bot.get_channel(int(invite_channel_id))
-            if invite_channel is None:
-                print(f"Invite channel not found for {guild.name}")
+            if invite_channel_id is None:
                 continue
+            invite_channel = self.bot.get_channel(int(invite_channel_id))
             for channel in guild.channels:
                 await asyncio.sleep(60)
                 if channel.type != discord.ChannelType.text:
