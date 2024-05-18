@@ -41,7 +41,9 @@ with open(logfile, 'a') as f:
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.WARN)
-handler = logging.FileHandler(filename=logfile, encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename=logfile,
+                              encoding='utf-8',
+                              mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 alogger = logging.getLogger('sqlalchemy')
