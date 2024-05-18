@@ -207,7 +207,8 @@ class Tasks(commands.GroupCog):
         logging.info("Checking invites")
         count = 0
         for guild in self.bot.guilds:
-            invite_channel = self.bot.get_channel(int(ConfigData().get_key_or_none(guild.id, "checkinvites")))
+            invite_channel_id = ConfigData().get_key_or_none(guild.id, "checkinvites")
+            invite_channel = self.bot.get_channel(int(invite_channel_id))
             if invite_channel is None:
                 print(f"Invite channel not found for {guild.name}")
                 continue
