@@ -179,16 +179,20 @@ class ForumAutoMod(ABC):
             return
         if header is None:
             await message.author.send(
-                    """Your advert has been removed because it does not have a header. Please re-post with a header.
+                    """Your advert has been removed because it does not have a header or your header does not follow the template below. Please re-post with a (correct) header.
 ```text
 All characters are (ages)+
-(optional) Tags:
-(optional) Pairings:
+(optional) Tags: (Your tags here!)
+(optional) Pairings: (Your pairings here!)
 (Any other information you want to stand out!)
 -----------------------------------
-Your advert here
+(Your advert here)
 ```
-
+Common Errors:
+* This goes in the body of your post above your advert, not in the title.
+* You may have altered 'all charact ers are', this will cause it to fail as I look for this specifically.
+* You may have forgotten the line of dashes (-)
+* It is highly recommended to only change the information in the (brackets)
 You can use this website to check your header: https://regex101.com/r/HYkkf9/2
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
 """)
