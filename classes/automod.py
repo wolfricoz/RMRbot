@@ -190,7 +190,7 @@ All characters are (ages)+
 ```
 Common Errors:
 * This goes in the body of your post above your advert, not in the title.
-* You may have altered 'all charact ers are', this will cause it to fail as I look for this specifically.
+* You may have altered 'all characters are', this will cause it to fail as I look for this specifically.
 * You may have forgotten the line of dashes (-)
 * It is highly recommended to only change the information in the (brackets)
 You can use this website to check your header: https://regex101.com/r/HYkkf9/2
