@@ -56,6 +56,31 @@ class Forum(commands.GroupCog, name="forum"):
         await ForumAutoMod.info(forum_channel, thread, msg)
         # await ForumAutoMod.age(msg, botmsg)
 
+    @commands.Cog.listener('on_thread_create')
+    async def on_profile_create(self, thread: discord.Thread):
+        key = ConfigData().get_key_int(thread.guild.id, "rpprofiles")
+        rpprofiles = thread.guild.get_channel(key)
+        print(rpprofiles)
+        if rpprofiles is None or rpprofiles.type != discord.ChannelType.forum or thread.parent_id != rpprofiles.id:
+            return
+        pattern = r"(?:\*?\*?Name:\*?\*? (?:.*))?\n(?:\*?\*?Pronouns:\*?\*? (?:.*))?\n(?:\*?\*?Timezone:\*?\*? (?:.*))?\n(?:\*?\*?Availability:\*?\*? (?:.*))?\n(?:\*?\*?Preferred Character Age:\*?\*? (\d+)\+?)?\n(?:\*?\*?Preferred Writer Age:\*?\*? (\d+)\+?)?\n(?:\*?\*?Preferred Genres:\*?\*? (?:(?:\n\*? .*)*))?\n(?:\*?\*?Fandoms:\*?\*? (?:(?:\n\*? .*)*))?\n(?:\*?\*?Preferred Character Gender Pairings:\*?\*? (?:.*))?\n(?:\*?\*?Preferred Writer Gender:\*?\*? (?:.*))?\n(?:\*?\*?Preferred Point of View:\*?\*? (?:.*))?\n(?:\*?\*?Average writing length\*?\*?: (?:.*))?\n(?:\*?\*?NSFW or SFW\?\*?\*? (?:.*))"
+        text = await thread.fetch_message(thread.id)
+        match = re.fullmatch(pattern, text.content, re.DOTALL)
+        modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
+        if match is None:
+            await modchannel.send(f"{thread.owner.mention} has posted an invalid profile in {thread.mention}.")
+            return
+        if int(match.group(1)) < 18 or int(match.group(2)) < 18:
+            await modchannel.send(f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
+                                  f"\nPreferred Character Age: {match.group(1)}\nPreferred Writer Age: {match.group(2)}")
+            return
+        await modchannel.send(f"{thread.owner.mention} has posted a valid profile in {thread.mention}.")
+
+
+
+
+
+
     @commands.Cog.listener()
     async def on_message(self, message):
         """Checks if user wants to bump"""

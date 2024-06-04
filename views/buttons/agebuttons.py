@@ -40,6 +40,27 @@ class AgeButtons(discord.ui.View):
                 f"<@&{admin[0]}> {interaction.user.mention} has flagged {self.user.mention} for manual ID.")
         return
 
+    @discord.ui.button(label="NSFW Warning", style=discord.ButtonStyle.danger, custom_id="NSFW")
+    async def nsfw_warning(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Flags user for nsfw warning."""
+        await self.disable_buttons(interaction, button)
+        if self.user is None:
+            await interaction.followup.send('The bot has restarted and the data of this button is missing. Please manually report user to admins',
+                                            ephemeral=True)
+        await interaction.followup.send('User flagged for NSFW Warning.', ephemeral=True)
+        warning = """**NSFW Warning**\n
+Hello, this is the moderation team for Roleplay Meets: Reborn and Roleplay Meets: Network. As Discord TOS prohibits NSFW content anywhere that can be accessed without an age gate, we will have to ask that you inspect your profile and remove any NSFW content. This includes but is not limited to: 
+* NSFW profile pictures 
+* NSFW usernames 
+* NSFW Biographies
+* NSFW status messages
+* and NSFW game activity. 
+
+Once you've made these changes you may resubmit your age and date of birth. Thank you for your cooperation."""
+        await self.user.send(warning)
+
+        return
+
     @discord.ui.button(label="add to db", style=discord.ButtonStyle.primary, custom_id="add")
     async def add_to_db(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Adds user to db"""

@@ -35,7 +35,7 @@ class config(commands.GroupCog, name="config"):
 
     messagechoices = ['welcomemessage', "lobbywelcome", "reminder"]
     channelchoices = ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
-                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "blog", "automodlog", "watchlist", "checkinvites"]
+                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "blog", "automodlog", "watchlist", "checkinvites", "rpprofiles"]
     rolechoices = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW",
                    "Partner role": "partner", "Searchban role": "posttimeout"}
 
@@ -102,7 +102,7 @@ class config(commands.GroupCog, name="config"):
     @app_commands.choices(action=[Choice(name=x, value=x) for x in ["set", "remove"]])
     @app_commands.checks.has_permissions(manage_guild=True)
     async def channels(self, interaction: discord.Interaction, key: Choice[str], action: Choice[str],
-                       value: discord.TextChannel = None):
+                       value: discord.TextChannel|discord.ForumChannel = None):
         """adds the channels to the config, you can only add 1 value per option."""
         await interaction.response.defer(ephemeral=True)
         if value is not None:
