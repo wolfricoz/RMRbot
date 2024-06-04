@@ -15,21 +15,23 @@ class AgeButtons(discord.ui.View):
     @discord.ui.button(label="Allow", style=discord.ButtonStyle.green, custom_id="allow")
     async def allow(self, interaction: discord.Interaction, button: discord.ui.Button):
         """starts approving process"""
+        await self.disable_buttons(interaction, button)
         if self.age is None or self.dob is None or self.user is None:
-            await interaction.response.send_message('The bot has restarted and the data of this button is missing. Please use the command.', ephemeral=True)
+            await interaction.followup.send('The bot has restarted and the data of this button is missing. Please use the command.', ephemeral=True)
             return
-        await interaction.response.send_message('User approved.', ephemeral=True)
-        button.disabled = True
+
+        await interaction.followup.send("User approved.", ephemeral=True)
         # Share this with the age commands
         await LobbyProcess.approve_user(interaction.guild, self.user, self.dob, self.age, interaction.user.name)
 
     @discord.ui.button(label="Manual ID Check", style=discord.ButtonStyle.red, custom_id="ID")
     async def manual_id(self, interaction: discord.Interaction, button: discord.ui.Button):
         """Flags user for manual id."""
+        await self.disable_buttons(interaction, button)
         if self.user is None:
-            await interaction.response.send_message('The bot has restarted and the data of this button is missing. Please manually report user to admins',
-                                                    ephemeral=True)
-        await interaction.response.send_message('User flagged for manual ID.', ephemeral=True)
+            await interaction.followup.send('The bot has restarted and the data of this button is missing. Please manually report user to admins',
+                                            ephemeral=True)
+        await interaction.followup.send('User flagged for manual ID.', ephemeral=True)
         idcheck = ConfigData().get_key_int(interaction.guild.id, "idlog")
         admin = ConfigData().get_key(interaction.guild.id, "admin")
         idlog = interaction.guild.get_channel(idcheck)
@@ -43,16 +45,16 @@ class AgeButtons(discord.ui.View):
         """Adds user to db"""
         age_log = ConfigData().get_key_int(interaction.guild.id, "lobbylog")
         age_log_channel = interaction.guild.get_channel(age_log)
+        await self.disable_buttons(interaction, button)
         if self.user is None:
-            await interaction.response.send_message('The bot has restarted and the data of this button is missing. Please add the user manually.',
-                                                    ephemeral=True)
+            await interaction.followup.send('The bot has restarted and the data of this button is missing. Please add the user manually.',
+                                            ephemeral=True)
         await LobbyProcess.age_log(age_log_channel, self.user.id, self.dob, interaction)
-        self.disable_buttons()
         await interaction.message.add_reaction("✅")
-        await interaction.response.send_message('User added to database.', ephemeral=True)
+        await interaction.followup.send('User added to database.', ephemeral=True)
         return
 
-    def disable_buttons(self):
+    async def disable_buttons(self, interaction, button: discord.ui.Button = None):
         """disables buttons"""
         self.manual_id.disabled = True
         self.manual_id.style = discord.ButtonStyle.grey
@@ -62,3 +64,5 @@ class AgeButtons(discord.ui.View):
 
         self.add_to_db.disabled = True
         self.add_to_db.style = discord.ButtonStyle.grey
+        button.style = discord.ButtonStyle.green
+        await interaction.response.edit_message(view=self)

@@ -39,6 +39,7 @@ class Tasks(commands.GroupCog):
         self.search_ban_check.start()
         self.check_users_expiration.start()
         self.unarchiver.start()
+        self.check_invites_task.start()
 
     def cog_unload(self):
         """unloads tasks"""
@@ -47,6 +48,7 @@ class Tasks(commands.GroupCog):
         self.search_ban_check.cancel()
         self.check_users_expiration.cancel()
         self.unarchiver.cancel()
+        self.check_invites_task.cancel()
 
     @tasks.loop(hours=3)
     async def config_reload(self):
@@ -198,6 +200,49 @@ class Tasks(commands.GroupCog):
                     logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
                     await thread.delete()
 
+    @tasks.loop(hours=24)
+    async def check_invites_task(self):
+        """Checks if the invite is still valid."""
+        invite_pattern = r"(https?://)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com/invite)/[a-zA-Z0-9\-]+"
+        logging.info("Checking invites")
+        count = 0
+        for guild in self.bot.guilds:
+            invite_channel_id = ConfigData().get_key_or_none(guild.id, "checkinvites")
+            if invite_channel_id is None:
+                continue
+            invite_channel = self.bot.get_channel(int(invite_channel_id))
+            for channel in guild.channels:
+                await asyncio.sleep(60)
+                if channel.type != discord.ChannelType.text:
+                    continue
+                async for message in channel.history(limit=10):
+                    if message.author.bot:
+                        continue
+
+                    match = re.search(invite_pattern, message.content)
+                    if match:
+                        invite_link = match.group()
+                        try:
+                            await self.bot.fetch_invite(invite_link)
+                        except discord.HTTPException or discord.NotFound:
+                            await invite_channel.send(f"The invite link {invite_link} in {channel.mention} is invalid or expired.")
+        logging.info(f"Finished checking all invites, found {count} invites.")
+
+    @tasks.loop(hours=24)
+    async def reload_logs(self):
+        """Reloads the logs module at 1am every day."""
+        if self.reload_logs.current_loop == 0:
+            return
+        # Calculate how long we need to wait until 1am
+        now = datetime.now()
+        future = datetime(now.year, now.month, now.day, 1, 0)
+        if now.hour >= 1:  # If it's past 1am, set target to 1am tomorrow
+            future += timedelta(days=1)
+        await discord.utils.sleep_until(future)  # Sleep until the specified time
+
+        # Reload the logs module
+        await self.bot.reload_extension("logs")
+
     @unarchiver.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):
         await self.bot.wait_until_ready()
@@ -216,6 +261,13 @@ class Tasks(commands.GroupCog):
         await interaction.response.send_message("[Debug]Checking all searchbans.")
         self.search_ban_check.restart()
 
+    @app_commands.command(name="checkinvites")
+    @permissions.check_app_roles_admin()
+    async def check_invites(self, interaction: discord.Interaction):
+        """forces the automatic invite check to start; normally runs every hour"""
+        await interaction.response.send_message("[Debug]Checking all invites.")
+        self.check_invites_task.restart()
+
     @search_ban_check.before_loop
     async def before_sbc(self):
         """stops event from starting before the bot has fully loaded"""
@@ -233,6 +285,11 @@ class Tasks(commands.GroupCog):
 
     @config_reload.before_loop  # it's called before the actual task runs
     async def before_checkactiv(self):
+        """stops event from starting before the bot has fully loaded"""
+        await self.bot.wait_until_ready()
+
+    @check_invites_task.before_loop
+    async def before_checkinvites(self):
         """stops event from starting before the bot has fully loaded"""
         await self.bot.wait_until_ready()
 

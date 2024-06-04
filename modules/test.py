@@ -1,4 +1,5 @@
 """This module is a test module; the code in here may be messy or incomplete. It also holds various tools I may use."""
+import asyncio
 import datetime
 import json
 import os
@@ -169,6 +170,25 @@ class Test(commands.Cog, name="test"):
             if match is not None:
                 await ctx.send(f"{x.user.mention} {x.reason}")
         await ctx.send("done")
+
+    @commands.command(name="checkinvite")
+    @commands.is_owner()
+    async def checkinv(self, ctx: commands.Context):
+        invite_pattern = r"(https?://)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com/invite)/[a-zA-Z0-9\-]+"
+
+
+        messages = ctx.channel.history(limit=1000)
+        async for message in messages:
+            await asyncio.sleep(30)
+            match = re.search(invite_pattern, message.content)
+            if match:
+                invite_link = match.group()
+                try:
+                    invite = await self.bot.fetch_invite(invite_link)
+                    print(f"The invite link {invite_link} is valid.")
+                except discord.HTTPException:
+                    print(f"The invite link {invite_link} is invalid or expired.")
+
 
 
 async def setup(bot: commands.Bot):
