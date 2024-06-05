@@ -95,7 +95,7 @@ class VerifyModal(discord.ui.Modal):
             return
 
         # Check if user needs to ID or has previously ID'd
-        if await AgeCalculations.id_check_or_id_verified(interaction.user, interaction.guild, channel):
+        if await AgeCalculations.id_check_or_id_verified(interaction.user, interaction.guild, channel, age=age, dob=dob) is True:
             await modlobby.send(f"{interaction.user.mention} gave ages: {age} {dob}, but is on the idlist.")
             await interaction.response.send_message(
                     f'A staff member will contact you soon, please wait patiently.', ephemeral=True)

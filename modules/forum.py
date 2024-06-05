@@ -63,23 +63,35 @@ class Forum(commands.GroupCog, name="forum"):
         print(rpprofiles)
         if rpprofiles is None or rpprofiles.type != discord.ChannelType.forum or thread.parent_id != rpprofiles.id:
             return
-        pattern = r"(?:\*?\*?Name:\*?\*? (?:.*))?\n(?:\*?\*?Pronouns:\*?\*? (?:.*))?\n(?:\*?\*?Timezone:\*?\*? (?:.*))?\n(?:\*?\*?Availability:\*?\*? (?:.*))?\n(?:\*?\*?Preferred Character Age:\*?\*? (\d+)\+?)?\n(?:\*?\*?Preferred Writer Age:\*?\*? (\d+)\+?)?\n(?:\*?\*?Preferred Genres:\*?\*? (?:(?:\n\*? .*)*))?\n(?:\*?\*?Fandoms:\*?\*? (?:(?:\n\*? .*)*))?\n(?:\*?\*?Preferred Character Gender Pairings:\*?\*? (?:.*))?\n(?:\*?\*?Preferred Writer Gender:\*?\*? (?:.*))?\n(?:\*?\*?Preferred Point of View:\*?\*? (?:.*))?\n(?:\*?\*?Average writing length\*?\*?: (?:.*))?\n(?:\*?\*?NSFW or SFW\?\*?\*? (?:.*))"
+        items = [
+            r"\*?\*?Name:\*?\*?:?(?:.*)",
+            r"\*?\*?Pronouns:\*?\*?:?(?:.*)",
+            r"\*?\*?Timezone:\*?\*?:?(?:.*)",
+            r"\*?\*?Availability:\*?\*?:?(?:.*)",
+            r"\*?\*?Preferred Character Age:\*?\*?:?.(\d+)\+?!?",
+            r"\*?\*?Preferred Writer Age:\*?\*?:?.(\d+)\+?!?",
+            r"\*?\*?Preferred Genres:\*?\*?:?(?:(?:\n\*? .*)*)",
+            r"\*?\*?Preferred Character Gender Pairings:\*?\*?:?(?:.*)",
+            r"\*?\*?Preferred Writer Gender:\*?\*?:?(?:.*)",
+            r"\*?\*?Preferred Point of View:\*?\*?:?(?:.*)",
+            r"\*?\*?Average writing length\*?\*?:?(?:.*)",
+            r"\*?\*?NSFW or SFW\?\*?\*?:?(?:.*)"
+        ]
         text = await thread.fetch_message(thread.id)
-        match = re.fullmatch(pattern, text.content, re.DOTALL)
-        modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
-        if match is None:
-            await modchannel.send(f"{thread.owner.mention} has posted an invalid profile in {thread.mention}.")
-            return
-        if int(match.group(1)) < 18 or int(match.group(2)) < 18:
+        modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advermod"))
+
+        for item in items:
+            match = re.search(item, text.content)
+            if match is None:
+                await modchannel.send(f"{thread.owner.mention} has posted an invalid profile in {thread.mention}. it failed at {item}")
+                return
+        character_age = int(re.search(r"\*?\*?Preferred Character Age:\*?\*?:?.(\d+)\+?!?", text.content, re.DOTALL).group(1))
+        writer_age = int(re.search(r"\*?\*?Preferred Writer Age:\*?\*?:?.(\d+)\+?!?", text.content, re.DOTALL).group(1))
+        if character_age < 18 or writer_age < 18:
             await modchannel.send(f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
-                                  f"\nPreferred Character Age: {match.group(1)}\nPreferred Writer Age: {match.group(2)}")
+                                  f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
             return
-        await modchannel.send(f"{thread.owner.mention} has posted a valid profile in {thread.mention}.")
-
-
-
-
-
+        await modchannel.send(f"{thread.owner.mention} has posted a valid profile in {thread.mention}. Please check if I was correct and approve it.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
