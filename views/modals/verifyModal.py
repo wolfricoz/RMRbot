@@ -40,19 +40,17 @@ class VerifyModal(discord.ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         userdata: databases.current.Users = UserTransactions.get_user(interaction.user.id)
-        modlobby = ConfigData().get_key_int(interaction.guild.id, "lobbymod")
-        idlog = ConfigData().get_key_int(interaction.guild.id, "idlog")
+        modlobby = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "lobbymod"))
         admin = ConfigData().get_key(interaction.guild.id, "admin")
-        channel = interaction.guild.get_channel(modlobby)
-        idchannel = interaction.guild.get_channel(idlog)
+        idchannel = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "idlog"))
         age = int(self.age.value)
         # validates inputs with regex
-        if await AgeCalculations.infocheck(interaction, self.age.value, self.dateofbirth.value, channel) is False:
+        if await AgeCalculations.infocheck(interaction, self.age.value, self.dateofbirth.value, modlobby) is False:
             return
         dob = self.dateofbirth.value.replace("-", "/").replace(".", "/")
         # Checks if date of birth and age match
         if age < 18:
-            await channel.send(
+            await modlobby.send(
                     f"[Info] User {interaction.user.mention}\'s gave an age below 18 and was added to the ID list.\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
@@ -66,7 +64,7 @@ class VerifyModal(discord.ui.Modal):
         agechecked, years = AgeCalculations.agechecker(age, dob)
         logging.debug(f"userid: {interaction.user.id} age: {age} dob: {dob}")
         if agechecked == 1 or agechecked == -1:
-            await channel.send(
+            await modlobby.send(
                     f"[Info]{interaction.user.mention}\'s age does not match. "
                     f"User gave {age} but dob indicates {years}. User may retry.\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
@@ -95,7 +93,7 @@ class VerifyModal(discord.ui.Modal):
             return
 
         # Check if user needs to ID or has previously ID'd
-        if await AgeCalculations.id_check_or_id_verified(interaction.user, interaction.guild, channel, age=age, dob=dob) is True:
+        if await AgeCalculations.id_check_or_id_verified(interaction.user, interaction.guild, modlobby, age=age, dob=dob) is True:
             await modlobby.send(f"{interaction.user.mention} gave ages: {age} {dob}, but is on the idlist.")
             await interaction.response.send_message(
                     f'A staff member will contact you soon, please wait patiently.', ephemeral=True)
@@ -103,9 +101,9 @@ class VerifyModal(discord.ui.Modal):
         # Check the age and send the right command/button based upon that.
         command_prefix = AgeCalculations.prefix(age)
         # Check Chat History
-        await AgeCalculations.check_history(interaction.user, channel)
+        await AgeCalculations.check_history(interaction.user, modlobby)
         # Sends the buttons and information to lobby channel
-        await channel.send(
+        await modlobby.send(
                 f"\n{interaction.user.mention} has given {age} {dob}. You can let them through with the buttons below"
                 f"\n"
                 f"[LOBBY DEBUG] `?{command_prefix} {interaction.user.mention} {age} {dob}`",
