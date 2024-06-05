@@ -51,7 +51,7 @@ class AgeButtons(discord.ui.View):
         warning = """**NSFW Warning**\n
 Hello, this is the moderation team for Roleplay Meets: Reborn and Roleplay Meets: Network. As Discord TOS prohibits NSFW content anywhere that can be accessed without an age gate, we will have to ask that you inspect your profile and remove any NSFW content. This includes but is not limited to: 
 * NSFW profile pictures 
-* NSFW usernames 
+* NSFW display names
 * NSFW Biographies
 * NSFW status messages
 * and NSFW game activity. 
