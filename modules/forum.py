@@ -78,7 +78,7 @@ class Forum(commands.GroupCog, name="forum"):
             r"\*?\*?NSFW or SFW\?\*?\*?:?(?:.*)"
         ]
         text = await thread.fetch_message(thread.id)
-        modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advermod"))
+        modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
 
         for item in items:
             match = re.search(item, text.content)
