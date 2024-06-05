@@ -17,7 +17,8 @@ class AgeButtons(discord.ui.View):
         """starts approving process"""
         await self.disable_buttons(interaction, button)
         if self.age is None or self.dob is None or self.user is None:
-            await interaction.followup.send('The bot has restarted and the data of this button is missing. Please use the command.', ephemeral=True)
+            await interaction.followup.send('The bot has restarted and the data of this button is missing. Please use '
+                                            'the command.', ephemeral=True)
             return
 
         await interaction.followup.send("User approved.", ephemeral=True)
@@ -85,5 +86,9 @@ Once you've made these changes you may resubmit your age and date of birth. Than
 
         self.add_to_db.disabled = True
         self.add_to_db.style = discord.ButtonStyle.grey
+
+        self.nsfw_warning.disabled = True
+        self.nsfw_warning.style = discord.ButtonStyle.grey
+
         button.style = discord.ButtonStyle.green
         await interaction.response.edit_message(view=self)
