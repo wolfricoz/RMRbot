@@ -5,6 +5,7 @@ import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 
+import asyncio
 import discord
 import pytz
 
@@ -35,6 +36,7 @@ class ForumAutoMod(ABC):
         for a in forum.available_tags:
             if a.name == "New":
                 await thread.add_tags(a, reason="new post")
+                logging.info(f"New tag added to {thread.name} for {thread.name}")
         botmessage = await thread.send(
                 f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
                 f"\n\n"
@@ -58,6 +60,7 @@ class ForumAutoMod(ABC):
 
             # print(f"[debugging] adding tags to {thread.name}: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
             await thread.add_tags(*counted_tags, reason=f"Automod applied {fm}")
+            logging.info(f"Automod applied {fm} to {thread.name}")
             await thread.send(
                     f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!")
 
@@ -89,7 +92,6 @@ class ForumAutoMod(ABC):
                     break
 
                 timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
-                logging.info(timeinfo)
                 try:
                     await interaction.user.send(
                             f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
@@ -152,6 +154,12 @@ class ForumAutoMod(ABC):
             await thread.send(embed=embed)
         except discord.NotFound:
             print(f"thread not found, {thread}")
+        except discord.Forbidden:
+            await asyncio.sleep(5)
+            try:
+                await thread.send(embed=embed)
+            except Exception as e:
+                logging.error(e)
 
     @staticmethod
     @abstractmethod
@@ -164,6 +172,7 @@ class ForumAutoMod(ABC):
             for tag in tags:
                 if tag.name in remove:
                     await thread.remove_tags(tag)
+                    logging.info(f"Removed tag {tag.name} for {thread.name}")
                     found = True
             if not found:
                 await thread.remove_tags(tags[0])

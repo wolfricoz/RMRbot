@@ -241,6 +241,7 @@ class Tasks(commands.GroupCog):
         await discord.utils.sleep_until(future)  # Sleep until the specified time
 
         # Reload the logs module
+        logging.info("Reloading logs module")
         await self.bot.reload_extension("logs")
 
     @unarchiver.before_loop  # it's called before the actual task runs
