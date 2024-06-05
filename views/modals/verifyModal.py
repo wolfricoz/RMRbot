@@ -59,7 +59,7 @@ class VerifyModal(discord.ui.Modal):
                     f'Unfortunately you are too young for our server. If you are 17 you may wait in the lobby.',
                     ephemeral=True)
             VerificationTransactions.set_idcheck_to_true(interaction.user.id,
-                                                         f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18")
+                                                         f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18. The user gave the age of {age}, due to GDPR we are unable to log the date of birth.")
             logging.debug(f"userid: {interaction.user.id} gave an age below 18 and was added to the ID list. Age given: {age}. Dob is NOT logged")
             return
         # Checks if user is underaged

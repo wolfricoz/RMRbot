@@ -46,20 +46,25 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    async def id_check_or_id_verified(user: discord.Member, guild, channel, send_message=True):
+    async def id_check_or_id_verified(user: discord.Member, guild, channel, send_message=True, age=None, dob=None):
         userinfo: databases.current.IdVerification = VerificationTransactions.get_id_info(user.id)
         idlog = ConfigData().get_key_int(guild.id, "idlog")
         idchannel = guild.get_channel(idlog)
         if userinfo is None:
             return False
         if userinfo.idverified is True and userinfo.verifieddob is not None and send_message is True:
-            await channel.send(f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
+            await channel.send(
+                f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             logging.debug(f"{user} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             return False
         if userinfo.idcheck is True:
             await idchannel.send(
-                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
-            logging.debug(f"{user} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through.")
+                f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user "
+                f"before letting them through."
+                f"\n[DEBUG] age: {age} dob: {dob} (please remove this after verification if underage)")
+            logging.debug(
+                f"{user} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them "
+                f"through.")
             return True
         return False
 
@@ -74,27 +79,30 @@ class AgeCalculations(ABC):
             return False
         if userinfo.idcheck is True:
             await idchannel.send(
-                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them through."
-                    f"lobby debug: age: {age} dob: {dob} (please remove this after verification)")
+                f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before "
+                f"letting them through."
+                f"lobby debug: age: {age} dob: {dob} (please remove this after verification)")
             return True
         return False
 
     @staticmethod
     @abstractmethod
-    async def infocheck(interaction: discord.Interaction, age: str, dateofbirth: str, channel: discord.TextChannel, location="Lobby"):
+    async def infocheck(interaction: discord.Interaction, age: str, dateofbirth: str, channel: discord.TextChannel,
+                        location="Lobby"):
         agevalid = re.match(r'[0-9]*$', age)
         if agevalid is None:
             await interaction.response.send_message('Please fill in your age in numbers.', ephemeral=True)
             await channel.send(
-                    f"{interaction.user.mention} failed in verification at age: {age} {dateofbirth}")
+                f"{interaction.user.mention} failed in verification at age: {age} {dateofbirth}")
             return False
-        redob = r"(((0[0-9])|(1[012]))([\/|\-|.])((0[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2[0123])))"
+        redob = (r"(((0[0-9])|(1[012]))([\/|\-|.])((0[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2["
+                 r"0123])))")
         dobvalid = re.match(redob, dateofbirth)
         if dobvalid is None:
             await interaction.response.send_message(
-                    'Please fill in your date of birth as with the format: mm/dd/yyyy.', ephemeral=True)
+                'Please fill in your date of birth as with the format: mm/dd/yyyy.', ephemeral=True)
             await channel.send(
-                    f"[{location} info] {interaction.user.mention} failed in verification at date of birth: {age} {dateofbirth}")
+                f"[{location} info] {interaction.user.mention} failed in verification at date of birth: {age} {dateofbirth}")
             return False
         return True
 
