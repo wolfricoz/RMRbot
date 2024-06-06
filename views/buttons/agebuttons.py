@@ -55,6 +55,8 @@ Hello, this is the moderation team for Roleplay Meets: Reborn and Roleplay Meets
 * NSFW display names
 * NSFW Biographies
 * NSFW status messages
+* NSFW Banners
+* NSFW Pronouns
 * and NSFW game activity. 
 
 Once you've made these changes you may resubmit your age and date of birth. Thank you for your cooperation."""
