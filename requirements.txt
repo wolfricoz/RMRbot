@@ -7,3 +7,4 @@ python-dateutil>=2.9.0.post0
 Levenshtein>=0.25.1
 asyncio>=3.4.3
 requests>=2.32.3
+pycurl>=7.45.3
