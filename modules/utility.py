@@ -35,7 +35,7 @@ class Utility(commands.Cog):
                 if thread.owner.name not in users:
                     users.append(thread.owner.name)
         with open("forumusers.txt", "w") as f:
-            f.write("Forum users:")
+            f.write("Forum users: \n")
             f.write("\n".join([x for x in users]))
 
         await interaction.response.send_message(f"Here are all users in the forums:", file=discord.File("forumusers.txt"))
