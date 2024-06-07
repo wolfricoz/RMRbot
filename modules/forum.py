@@ -82,7 +82,7 @@ class Forum(commands.GroupCog, name="forum"):
             r"\*?\*?Preferred Character Age:?\*?\*?:?\D+(\d+).*",
             r"\*?\*?Preferred Writer Age:?\*?\*?:?\D+(\d+).*",
         ]
-        items = items + ages
+        items += ages
         text = await thread.fetch_message(thread.id)
         modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
 
@@ -100,7 +100,8 @@ class Forum(commands.GroupCog, name="forum"):
                 f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
             return
         await modchannel.send(
-            f"{thread.owner.mention} has posted a valid profile in {thread.mention}. Please check if I was correct and approve it.")
+            f"{thread.owner.mention} has posted a valid profile in {thread.mention}. Please check if I was correct "
+            f"and approve it.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -127,7 +128,8 @@ class Forum(commands.GroupCog, name="forum"):
             return
         if match:
             remind = await message.channel.send(
-                f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. This message will he removed in 60 seconds so you can bump!")
+                f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. "
+                f"This message will he removed in 60 seconds so you can bump!")
             await asyncio.sleep(60)
             try:
                 await message.delete()
@@ -135,7 +137,8 @@ class Forum(commands.GroupCog, name="forum"):
                 pass
             await remind.delete()
 
-    # Could be replaced with on_raw_message_delete, however currently we have a task running to delete the threads without message doing the same effectively. Potentially useful to remember for future.
+    # Could be replaced with on_raw_message_delete, however currently we have a task running to delete the threads
+    # without message doing the same effectively. Potentially useful to remember for future.
     @commands.Cog.listener("on_message_delete")
     async def on_message_delete(self, message: discord.Message):
         """Removes the thread if the main message is removed."""
@@ -157,7 +160,8 @@ class Forum(commands.GroupCog, name="forum"):
         mod_channel_id = ConfigData().get_key_int(message.guild.id, 'removallog')
         mod_channel = self.bot.get_channel(mod_channel_id)
         await mod_channel.send(
-            f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:")
+            f"{message.author.mention} removed main post from {message.channel.mention}, "
+            f"formerly known as `{message.channel}`. Message content:")
         count = 0
         while count < len(message.content):
             await mod_channel.send(message.content[count:count + 1500])
@@ -166,6 +170,7 @@ class Forum(commands.GroupCog, name="forum"):
         logging.debug("on_message_delete: finished")
 
     # Commands start here
+    # noinspection PyUnresolvedReferences
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):
         """Allows you to bump your advert every 72 hours."""
@@ -294,7 +299,8 @@ class Forum(commands.GroupCog, name="forum"):
                 try:
                     thread_message = await thread.fetch_message(thread.id)
                     await Advert.send_advert_to_user(interaction, thread_message,
-                                                     "Your advert has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!",
+                                                     "Your advert has been removed due to a purge; you may repost "
+                                                     "them once the purge has finished. Thank you for using RMR!",
                                                      "purge")
                     await thread.delete()
                     amount += 1
@@ -312,7 +318,9 @@ class Forum(commands.GroupCog, name="forum"):
                 try:
                     thread_message = await thread.fetch_message(thread.id)
                     await Advert.send_advert_to_user(interaction, thread_message,
-                                                     f"Your advert `{thread.name}` has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!\nYour advert:",
+                                                     f"Your advert `{thread.name}` has been removed due to a purge;"
+                                                     f"you may repost them once the purge has finished. Thank you for "
+                                                     f"using RMR!\nYour advert:",
                                                      "purge")
                     await thread.delete()
                     amount += 1
