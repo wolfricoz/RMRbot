@@ -79,8 +79,8 @@ class Forum(commands.GroupCog, name="forum"):
             r"\*?\*?NSFW or SFW\??\*?\*?:?(?:.*)"
         ]
         ages = [
-            r"\*?\*?Preferred Character Age:?\*?\*?:?\s+(\d+).*",
-            r"\*?\*?Preferred Writer Age:?\*?\*?:?\s+(\d+).*",
+            r"\*?\*?Preferred Character Age:?\*?\*?:?\D+(\d+).*",
+            r"\*?\*?Preferred Writer Age:?\*?\*?:?\D+(\d+).*",
         ]
         items = items + ages
         text = await thread.fetch_message(thread.id)

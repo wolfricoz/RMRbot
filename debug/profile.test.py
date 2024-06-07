@@ -1,5 +1,6 @@
 import re
 
+
 def check(text):
     items = [
         r"\*?\*?Name:?\*?\*?:?(?:.*)",
@@ -14,8 +15,8 @@ def check(text):
         r"\*?\*?NSFW or SFW\??\*?\*?:?(?:.*)"
     ]
     ages = [
-        r"\*?\*?Preferred Character Age:?\*?\*?:?\s+(\d+).*",
-        r"\*?\*?Preferred Writer Age:?\*?\*?:?\s+(\d+).*",
+        r"\*?\*?Preferred Character Age:?\*?\*?:?\D+(\d+).*",
+        r"\*?\*?Preferred Writer Age:?\*?\*?:?\D+(\d+).*",
     ]
     items = items + ages
     for item in items:
@@ -114,7 +115,6 @@ test5 = """**Name:** Miss Undutchable
 """
 run_test(test5, "test5", "under 18")
 
-
 test6 = """**Name**: Angelina 
 **Pronouns**: she/her
 **Timezone**: eastern daylight time
@@ -132,3 +132,22 @@ test6 = """**Name**: Angelina
 **NSFW or SFW**?- both depending on how the story goes"""
 
 run_test(test6, "test6")
+
+test7 = """**Name:** dëamon
+**Pronouns:** he/him
+**Timezone:** cet/cest
+**Availability:**
+**Preferred Character Age:** around 20-23
+**Preferred Writer Age:** 18-27
+**Preferred Genres:** slice of life, modern, comedy, romance 
+
+**Fandoms:** not any in particular 
+**Preferred Character Gender Pairings:** m/a
+**Preferred Writer Gender:** doesn’t matter
+**Preferred Point of View:** 3rd person, present 
+**Average writing length**: I’m more of a short writer 
+**NSFW or SFW?**
+both is okay
+"""
+
+run_test(test7, "test7")
