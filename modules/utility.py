@@ -9,6 +9,7 @@ from classes.databaseController import ConfigData
 from views.modals.warningmodal import WarningModal
 from views.paginations.paginate import paginate
 import classes.automod as automod
+import pycurl
 
 # the base for a cog.
 # noinspection PyUnresolvedReferences
@@ -34,7 +35,12 @@ class Utility(commands.Cog):
             for thread in forum.threads:
                 if thread.owner.name not in users:
                     users.append(thread.owner.name)
-        with open("forumusers.txt", "w") as f:
+        with pycurl.Curl() as c:
+            c.setopt(c.URL, "https://roleplaymeets.com/api/getpostsusernames")
+            c.setopt(c.WRITEDATA, "forumusers.txt")
+            c.perform()
+
+        with open("forumusers.txt", "a") as f:
             f.write("Forum users: \n")
             f.write("\n".join([x for x in users]))
 
