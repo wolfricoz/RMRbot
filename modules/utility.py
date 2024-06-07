@@ -11,6 +11,7 @@ from views.paginations.paginate import paginate
 import classes.automod as automod
 import pycurl
 from io import BytesIO
+import certifi
 # the base for a cog.
 # noinspection PyUnresolvedReferences
 class Utility(commands.Cog):
@@ -39,6 +40,7 @@ class Utility(commands.Cog):
         c = pycurl.Curl()
         c.setopt(c.URL, "https://roleplaymeets.com/api/getpostsusernames")
         c.setopt(c.WRITEDATA, rmrwebsite)
+        c.setopt(c.CAINFO, certifi.where())
         c.perform()
         c.close()
         rmrwebsite = rmrwebsite.getvalue().decode("utf-8").replace('[', "").replace(']', "").replace('"', "").split(',')
