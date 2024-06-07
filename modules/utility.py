@@ -10,14 +10,14 @@ from views.modals.warningmodal import WarningModal
 from views.paginations.paginate import paginate
 import classes.automod as automod
 import pycurl
-
+from io import BytesIO
 # the base for a cog.
 # noinspection PyUnresolvedReferences
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="forumusers")
+    @app_commands.command(name="giveawayusers")
     @permissions.check_app_roles()
     async def forumusers(self, interaction: discord.Interaction):
         """Get a list of forum users"""
@@ -35,14 +35,18 @@ class Utility(commands.Cog):
             for thread in forum.threads:
                 if thread.owner.name not in users:
                     users.append(thread.owner.name)
-        with pycurl.Curl() as c:
-            c.setopt(c.URL, "https://roleplaymeets.com/api/getpostsusernames")
-            c.setopt(c.WRITEDATA, "forumusers.txt")
-            c.perform()
-
-        with open("forumusers.txt", "a") as f:
+        rmrwebsite = BytesIO()
+        c = pycurl.Curl()
+        c.setopt(c.URL, "https://roleplaymeets.com/api/getpostsusernames")
+        c.setopt(c.WRITEDATA, rmrwebsite)
+        c.perform()
+        c.close()
+        rmrwebsite = rmrwebsite.getvalue().decode("utf-8").replace('[', "").replace(']', "").replace('"', "").split(',')
+        with open("forumusers.txt", "w") as f:
             f.write("Forum users: \n")
             f.write("\n".join([x for x in users]))
+            f.write("\n\nRoleplay Meets Website Users: \n")
+            f.write("\n".join([x for x in rmrwebsite]))
 
         await interaction.response.send_message(f"Here are all users in the forums:", file=discord.File("forumusers.txt"))
 
