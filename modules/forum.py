@@ -40,17 +40,20 @@ class Forum(commands.GroupCog, name="forum"):
 
         msg: discord.Message = await ForumAutoMod.get_message(thread)
         if msg is None:
-            await automod_log(bot, thread.guild.id, f"Message not found in {thread.name} posted by {thread.owner.mention}", "automodlog")
+            await automod_log(bot, thread.guild.id,
+                              f"Message not found in {thread.name} posted by {thread.owner.mention}", "automodlog")
             await ForumAutoMod.reminder(thread, thread.guild.id)
             return
 
         header_status = await ForumAutoMod.check_header(msg, thread)
         duplicate_status = await ForumAutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)
         if header_status:
-            await automod_log(bot, thread.guild.id, f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog")
+            await automod_log(bot, thread.guild.id,
+                              f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog")
             return
         if duplicate_status:
-            await automod_log(bot, thread.guild.id, f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog")
+            await automod_log(bot, thread.guild.id,
+                              f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog")
             return
         await ForumAutoMod.reminder(thread, thread.guild.id)
         await ForumAutoMod.info(forum_channel, thread, msg)
@@ -64,34 +67,41 @@ class Forum(commands.GroupCog, name="forum"):
         if rpprofiles is None or rpprofiles.type != discord.ChannelType.forum or thread.parent_id != rpprofiles.id:
             return
         items = [
-            r"\*?\*?Name:\*?\*?:?(?:.*)",
-            r"\*?\*?Pronouns:\*?\*?:?(?:.*)",
-            r"\*?\*?Timezone:\*?\*?:?(?:.*)",
-            r"\*?\*?Availability:\*?\*?:?(?:.*)",
-            r"\*?\*?Preferred Character Age:\*?\*?:?.(\d+)\+?!?",
-            r"\*?\*?Preferred Writer Age:\*?\*?:?.(\d+)\+?!?",
-            r"\*?\*?Preferred Genres:\*?\*?:?(?:(?:\n\*? .*)*)",
-            r"\*?\*?Preferred Character Gender Pairings:\*?\*?:?(?:.*)",
-            r"\*?\*?Preferred Writer Gender:\*?\*?:?(?:.*)",
-            r"\*?\*?Preferred Point of View:\*?\*?:?(?:.*)",
-            r"\*?\*?Average writing length\*?\*?:?(?:.*)",
-            r"\*?\*?NSFW or SFW\?\*?\*?:?(?:.*)"
+            r"\*?\*?Name:?\*?\*?:?(?:.*)",
+            r"\*?\*?Pronouns:?\*?\*?:?(?:.*)",
+            r"\*?\*?Timezone:?\*?\*?:?(?:.*)",
+            r"\*?\*?Availability:?\*?\*?:?(?:.*)",
+            r"\*?\*?Preferred Genres:?\*?\*?:?(?:(?:\n\*? .*)*)",
+            r"\*?\*?Preferred Character Gender Pairings:?\*?\*?:?(?:.*)",
+            r"\*?\*?Preferred Writer Gender:?\*?\*?:?(?:.*)",
+            r"\*?\*?Preferred Point of View:?\*?\*?:?(?:.*)",
+            r"\*?\*?Average writing length:?\*?\*?:?(?:.*)",
+            r"\*?\*?NSFW or SFW\??\*?\*?:?(?:.*)"
         ]
+        ages = [
+            r"\*?\*?Preferred Character Age:?\*?\*?:?\D+(\d+).*",
+            r"\*?\*?Preferred Writer Age:?\*?\*?:?\D+(\d+).*",
+        ]
+        items += ages
         text = await thread.fetch_message(thread.id)
         modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
 
         for item in items:
             match = re.search(item, text.content)
             if match is None:
-                await modchannel.send(f"{thread.owner.mention} has posted an invalid profile in {thread.mention}. it failed at {item}")
+                await modchannel.send(
+                    f"{thread.owner.mention} has posted an invalid profile in {thread.mention}. it failed at {item}")
                 return
-        character_age = int(re.search(r"\*?\*?Preferred Character Age:\*?\*?:?.(\d+)\+?!?", text.content, re.DOTALL).group(1))
-        writer_age = int(re.search(r"\*?\*?Preferred Writer Age:\*?\*?:?.(\d+)\+?!?", text.content, re.DOTALL).group(1))
+        character_age = int(re.search(ages[0], text.content, re.DOTALL).group(1))
+        writer_age = int(re.search(ages[1], text.content, re.DOTALL).group(1))
         if character_age < 18 or writer_age < 18:
-            await modchannel.send(f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
-                                  f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
+            await modchannel.send(
+                f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
+                f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
             return
-        await modchannel.send(f"{thread.owner.mention} has posted a valid profile in {thread.mention}. Please check if I was correct and approve it.")
+        await modchannel.send(
+            f"{thread.owner.mention} has posted a valid profile in {thread.mention}. Please check if I was correct "
+            f"and approve it.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -117,7 +127,9 @@ class Forum(commands.GroupCog, name="forum"):
         if message.id == message.channel.id:
             return
         if match:
-            remind = await message.channel.send(f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. This message will he removed in 60 seconds so you can bump!")
+            remind = await message.channel.send(
+                f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. "
+                f"This message will he removed in 60 seconds so you can bump!")
             await asyncio.sleep(60)
             try:
                 await message.delete()
@@ -125,7 +137,8 @@ class Forum(commands.GroupCog, name="forum"):
                 pass
             await remind.delete()
 
-    # Could be replaced with on_raw_message_delete, however currently we have a task running to delete the threads without message doing the same effectively. Potentially useful to remember for future.
+    # Could be replaced with on_raw_message_delete, however currently we have a task running to delete the threads
+    # without message doing the same effectively. Potentially useful to remember for future.
     @commands.Cog.listener("on_message_delete")
     async def on_message_delete(self, message: discord.Message):
         """Removes the thread if the main message is removed."""
@@ -147,7 +160,8 @@ class Forum(commands.GroupCog, name="forum"):
         mod_channel_id = ConfigData().get_key_int(message.guild.id, 'removallog')
         mod_channel = self.bot.get_channel(mod_channel_id)
         await mod_channel.send(
-                f"{message.author.mention} removed main post from {message.channel.mention}, formerly known as `{message.channel}`. Message content:")
+            f"{message.author.mention} removed main post from {message.channel.mention}, "
+            f"formerly known as `{message.channel}`. Message content:")
         count = 0
         while count < len(message.content):
             await mod_channel.send(message.content[count:count + 1500])
@@ -156,6 +170,7 @@ class Forum(commands.GroupCog, name="forum"):
         logging.debug("on_message_delete: finished")
 
     # Commands start here
+    # noinspection PyUnresolvedReferences
     @app_commands.command(name="bump", description="Bumps your post!")
     async def bump(self, interaction: discord.Interaction):
         """Allows you to bump your advert every 72 hours."""
@@ -185,12 +200,13 @@ class Forum(commands.GroupCog, name="forum"):
             with open('advert.txt', 'w', encoding='utf-16') as f:
                 f.write(m.content)
             await interaction.user.send(
-                    f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
-                    file=discord.File(f.name, f"{m.channel}.txt"))
+                f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
+                file=discord.File(f.name, f"{m.channel}.txt"))
         await thread.delete()
         os.remove(f.name)
 
-    async def search_commands_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[str]]:
+    async def search_commands_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[
+        app_commands.Choice[str]]:
         """generates the options for autocomplete."""
         data = []
         search_commands = ConfigData().get_key(interaction.guild.id, "SEARCH")
@@ -205,7 +221,8 @@ class Forum(commands.GroupCog, name="forum"):
     @permissions.check_app_roles()
     @app_commands.autocomplete(warning_type=search_commands_autocompletion)
     @app_commands.choices(warn=[Choice(name=x, value=x) for x in ['Yes', 'No']])
-    async def warn(self, interaction: discord.Interaction, warning_type: str, thread_message: str = None, warn: Choice[str] = "Yes") -> None:
+    async def warn(self, interaction: discord.Interaction, warning_type: str, thread_message: str = None,
+                   warn: Choice[str] = "Yes") -> None:
         """Warns the user and removes the advert; logs the warning in database."""
         if type(warn) is Choice:
             warn = warn.value
@@ -220,7 +237,8 @@ class Forum(commands.GroupCog, name="forum"):
         thread_message, thread_channel = await Advert.get_message(thread_message, interaction)
         bot = self.bot
         if warning_type.upper() == "CUSTOM":
-            await interaction.response.send_modal(Custom(bot=bot, thread=thread_message, thread_channel=thread_channel, warn=warn))
+            await interaction.response.send_modal(
+                Custom(bot=bot, thread=thread_message, thread_channel=thread_channel, warn=warn))
             return
         await interaction.response.defer(ephemeral=True)
         lc = ConfigData().get_key_int(interaction.guild.id, "ADVERTLOG")
@@ -230,7 +248,8 @@ class Forum(commands.GroupCog, name="forum"):
         user = thread_message.author
 
         # adds warning to database
-        warning = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel, warn)
+        warning = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel,
+                                               warn)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread_message, loggingchannel)
         reminder = "**__The removed advert: (Please make the required changes before reposting.)__**"
@@ -257,7 +276,8 @@ class Forum(commands.GroupCog, name="forum"):
     async def purge(self, interaction: discord.Interaction):
         """Purges all threads in the search forums."""
         view = confirmAction()
-        await view.send_message(interaction, f"Are you sure you want to purge **ALL** of adverts in the search channels?")
+        await view.send_message(interaction,
+                                f"Are you sure you want to purge **ALL** of adverts in the search channels?")
         await view.wait()
         if view.confirmed is False:
             await interaction.followup.send("Purge cancelled")
@@ -278,7 +298,10 @@ class Forum(commands.GroupCog, name="forum"):
                     pass
                 try:
                     thread_message = await thread.fetch_message(thread.id)
-                    await Advert.send_advert_to_user(interaction, thread_message, "Your advert has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!", "purge")
+                    await Advert.send_advert_to_user(interaction, thread_message,
+                                                     "Your advert has been removed due to a purge; you may repost "
+                                                     "them once the purge has finished. Thank you for using RMR!",
+                                                     "purge")
                     await thread.delete()
                     amount += 1
                 except discord.NotFound:
@@ -294,7 +317,10 @@ class Forum(commands.GroupCog, name="forum"):
                     pass
                 try:
                     thread_message = await thread.fetch_message(thread.id)
-                    await Advert.send_advert_to_user(interaction, thread_message, f"Your advert `{thread.name}` has been removed due to a purge; you may repost them once the purge has finished. Thank you for using RMR!\nYour advert:",
+                    await Advert.send_advert_to_user(interaction, thread_message,
+                                                     f"Your advert `{thread.name}` has been removed due to a purge;"
+                                                     f"you may repost them once the purge has finished. Thank you for "
+                                                     f"using RMR!\nYour advert:",
                                                      "purge")
                     await thread.delete()
                     amount += 1

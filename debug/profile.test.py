@@ -3,26 +3,28 @@ import re
 
 def check(text):
     items = [
-        r"\*?\*?Name:\*?\*?:?(?:.*)",
-        r"\*?\*?Pronouns:\*?\*?:?(?:.*)",
-        r"\*?\*?Timezone:\*?\*?:?(?:.*)",
-        r"\*?\*?Availability:\*?\*?:?(?:.*)",
-        r"\*?\*?Preferred Character Age:\*?\*?:?.(\d+)\+?!?",
-        r"\*?\*?Preferred Writer Age:\*?\*?:?.(\d+)\+?!?",
-        r"\*?\*?Preferred Genres:\*?\*?:?(?:(?:\n\*? .*)*)",
-        r"\*?\*?Preferred Character Gender Pairings:\*?\*?:?(?:.*)",
-        r"\*?\*?Preferred Writer Gender:\*?\*?:?(?:.*)",
-        r"\*?\*?Preferred Point of View:\*?\*?:?(?:.*)",
-        r"\*?\*?Average writing length\*?\*?:?(?:.*)",
-        r"\*?\*?NSFW or SFW\?\*?\*?:?(?:.*)"
+        r"\*?\*?Name:?\*?\*?:?(?:.*)",
+        r"\*?\*?Pronouns:?\*?\*?:?(?:.*)",
+        r"\*?\*?Timezone:?\*?\*?:?(?:.*)",
+        r"\*?\*?Availability:?\*?\*?:?(?:.*)",
+        r"\*?\*?Preferred Genres:?\*?\*?:?(?:(?:\n\*? .*)*)",
+        r"\*?\*?Preferred Character Gender Pairings:?\*?\*?:?(?:.*)",
+        r"\*?\*?Preferred Writer Gender:?\*?\*?:?(?:.*)",
+        r"\*?\*?Preferred Point of View:?\*?\*?:?(?:.*)",
+        r"\*?\*?Average writing length:?\*?\*?:?(?:.*)",
+        r"\*?\*?NSFW or SFW\??\*?\*?:?(?:.*)"
     ]
-
+    ages = [
+        r"\*?\*?Preferred Character Age:?\*?\*?:?\D+(\d+).*",
+        r"\*?\*?Preferred Writer Age:?\*?\*?:?\D+(\d+).*",
+    ]
+    items = items + ages
     for item in items:
         match = re.search(item, text)
         if match is None:
             return f"no match at {item}"
-    character_age = int(re.search(r"\*?\*?Preferred Character Age:\*?\*?:?.(\d+)\+?!?", text, re.DOTALL).group(1))
-    writer_age = int(re.search(r"\*?\*?Preferred Writer Age:\*?\*?:?.(\d+)\+?!?", text, re.DOTALL).group(1))
+    character_age = int(re.search(ages[0], text, re.DOTALL).group(1))
+    writer_age = int(re.search(ages[1], text, re.DOTALL).group(1))
 
     if character_age < 18 or writer_age < 18:
         return "under 18"
@@ -96,7 +98,7 @@ test4 = """**Name:** Miss Undutchable
 **Preferred Point of View:** 3rd person, past tense
 **Average writing length:** At least one good paragraph (can do multi on openers and depending on how motivated and inspired I am)
 """
-run_test(test4, "test4", "no match at \*?\*?NSFW or SFW\?\*?\*?:?(?:.*)")
+run_test(test4, "test4", "no match at \*?\*?NSFW or SFW\??\*?\*?:?(?:.*)")
 test5 = """**Name:** Miss Undutchable
 **Pronouns:** She/her
 **Timezone:** CET
@@ -113,4 +115,39 @@ test5 = """**Name:** Miss Undutchable
 """
 run_test(test5, "test5", "under 18")
 
+test6 = """**Name**: Angelina 
+**Pronouns**: she/her
+**Timezone**: eastern daylight time
+**Availability**: pretty much 24/7 
+**Preferred Character Age**:  18+
+**Preferred Writer Age**: 18 but no older then 30
+**Preferred Genres**: Fantasy (medieval or modern), slice of life, supernatural 
+• Genre - Pairings: N/A
+**Fandoms**: dont really have any 
+• Fandom - Pairings: N/A
+**Preferred Character Gender Pairings**: male and female 
+**Preferred Writer Gender**: M
+**Preferred Point of View**: first person
+**Average writing length**: at least 7-10 sentences long- i like very detailed rp 
+**NSFW or SFW**?- both depending on how the story goes"""
 
+run_test(test6, "test6")
+
+test7 = """**Name:** dëamon
+**Pronouns:** he/him
+**Timezone:** cet/cest
+**Availability:**
+**Preferred Character Age:** around 20-23
+**Preferred Writer Age:** 18-27
+**Preferred Genres:** slice of life, modern, comedy, romance 
+
+**Fandoms:** not any in particular 
+**Preferred Character Gender Pairings:** m/a
+**Preferred Writer Gender:** doesn’t matter
+**Preferred Point of View:** 3rd person, present 
+**Average writing length**: I’m more of a short writer 
+**NSFW or SFW?**
+both is okay
+"""
+
+run_test(test7, "test7")
