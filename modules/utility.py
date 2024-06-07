@@ -21,16 +21,24 @@ class Utility(commands.Cog):
     async def forumusers(self, interaction: discord.Interaction):
         """Get a list of forum users"""
         forums = automod.ForumAutoMod.config(interaction.guild.id)
+        users = []
         for x in forums:
             forum: discord.ForumChannel = interaction.guild.get_channel(int(x))
             if forum is None:
                 print(f"Forum channel {x} not found.")
                 continue
-            if forum.type != discord.ForumChannel:
+            if not isinstance(forum, discord.ForumChannel):
+                print(f"Channel {x} is not a forum channel. it is a {forum.type}")
                 continue
             print(f"Forum: {forum.name}")
             for thread in forum.threads:
-                print(thread.owner.name)
+                if thread.owner.name not in users:
+                    users.append(thread.owner.name)
+        with open("forumusers.txt", "w") as f:
+            f.write("Forum users:")
+            f.write("\n".join([x for x in users]))
+
+        await interaction.response.send_message(f"Here are all users in the forums:", file=discord.File("forumusers.txt"))
 
 
 
