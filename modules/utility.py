@@ -34,8 +34,11 @@ class Utility(commands.Cog):
                 continue
             print(f"Forum: {forum.name}")
             for thread in forum.threads:
-                if thread.owner.name not in users:
-                    users.append(thread.owner.name)
+                try:
+                    if thread.owner.name not in users:
+                        users.append(thread.owner.name)
+                except AttributeError:
+                    await interaction.channel.send(f"Thread has no owner: {thread.jump_url} in {forum.name}")
         rmrwebsite = BytesIO()
         c = pycurl.Curl()
         c.setopt(c.URL, "https://roleplaymeets.com/api/getpostsusernames")
