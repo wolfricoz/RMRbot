@@ -63,7 +63,6 @@ class Forum(commands.GroupCog, name="forum"):
     async def on_profile_create(self, thread: discord.Thread):
         key = ConfigData().get_key_int(thread.guild.id, "rpprofiles")
         rpprofiles = thread.guild.get_channel(key)
-        print(rpprofiles)
         if rpprofiles is None or rpprofiles.type != discord.ChannelType.forum or thread.parent_id != rpprofiles.id:
             return
         items = [
@@ -85,23 +84,33 @@ class Forum(commands.GroupCog, name="forum"):
         items += ages
         text = await thread.fetch_message(thread.id)
         modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
-
+        forum = self.bot.get_channel(thread.parent_id)
         for item in items:
             match = re.search(item, text.content)
             if match is None:
-                await modchannel.send(
-                    f"{thread.owner.mention} has posted an invalid profile in {thread.mention}. it failed at {item}")
+                await automod_log(self.bot, thread.guild.id,
+                                  f"{thread.owner.mention} Failed to follow the profile template in {thread.name}. it failed at {item}", "automodlog")
+                await Advert.send_advert_to_user(thread, text, "Your advert:", "no")
+                await thread.delete()
                 return
         character_age = int(re.search(ages[0], text.content, re.DOTALL).group(1))
         writer_age = int(re.search(ages[1], text.content, re.DOTALL).group(1))
         if character_age < 18 or writer_age < 18:
             await modchannel.send(
-                f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
-                f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
+                    f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
+                    f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
+            for a in forum.available_tags:
+                if a.name == "New":
+                    await thread.remove_tags(a)
+                if a.name == "Waiting":
+                    await thread.add_tags(a)
             return
-        await modchannel.send(
-            f"{thread.owner.mention} has posted a valid profile in {thread.mention}. Please check if I was correct "
-            f"and approve it.")
+        await ForumAutoMod.checktags(thread)
+        for a in forum.available_tags:
+            if a.name == "New":
+                await thread.remove_tags(a)
+            if a.name == "Approved":
+                await thread.add_tags(a)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -128,8 +137,8 @@ class Forum(commands.GroupCog, name="forum"):
             return
         if match:
             remind = await message.channel.send(
-                f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. "
-                f"This message will he removed in 60 seconds so you can bump!")
+                    f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. "
+                    f"This message will he removed in 60 seconds so you can bump!")
             await asyncio.sleep(60)
             try:
                 await message.delete()
@@ -160,8 +169,8 @@ class Forum(commands.GroupCog, name="forum"):
         mod_channel_id = ConfigData().get_key_int(message.guild.id, 'removallog')
         mod_channel = self.bot.get_channel(mod_channel_id)
         await mod_channel.send(
-            f"{message.author.mention} removed main post from {message.channel.mention}, "
-            f"formerly known as `{message.channel}`. Message content:")
+                f"{message.author.mention} removed main post from {message.channel.mention}, "
+                f"formerly known as `{message.channel}`. Message content:")
         count = 0
         while count < len(message.content):
             await mod_channel.send(message.content[count:count + 1500])
@@ -200,8 +209,8 @@ class Forum(commands.GroupCog, name="forum"):
             with open('advert.txt', 'w', encoding='utf-16') as f:
                 f.write(m.content)
             await interaction.user.send(
-                f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
-                file=discord.File(f.name, f"{m.channel}.txt"))
+                    f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
+                    file=discord.File(f.name, f"{m.channel}.txt"))
         await thread.delete()
         os.remove(f.name)
 
@@ -238,7 +247,7 @@ class Forum(commands.GroupCog, name="forum"):
         bot = self.bot
         if warning_type.upper() == "CUSTOM":
             await interaction.response.send_modal(
-                Custom(bot=bot, thread=thread_message, thread_channel=thread_channel, warn=warn))
+                    Custom(bot=bot, thread=thread_message, thread_channel=thread_channel, warn=warn))
             return
         await interaction.response.defer(ephemeral=True)
         lc = ConfigData().get_key_int(interaction.guild.id, "ADVERTLOG")

@@ -92,6 +92,5 @@ Once you've made these changes you may resubmit your age and date of birth. Than
         self.nsfw_warning.disabled = True
         self.nsfw_warning.style = discord.ButtonStyle.grey
 
-
         button.style = discord.ButtonStyle.green
         await interaction.response.edit_message(view=self)
