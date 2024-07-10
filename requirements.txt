@@ -9,3 +9,4 @@ asyncio>=3.4.3
 requests>=2.32.3
 pycurl>=7.45.3
 certifi>=2023.7.22
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
