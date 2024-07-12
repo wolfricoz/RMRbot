@@ -1,4 +1,5 @@
 """all moderation commands, except for warnings."""
+import asyncio
 import datetime
 import typing
 
@@ -9,17 +10,16 @@ from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData, Timers, TimersTransactions, UserTransactions
+from classes.databaseController import ConfigData, TimersTransactions, UserTransactions
 from classes.moduser import ModUser
 from views.modals import inputmodal
 from views.paginations.paginate import paginate
-import requests
+
 
 class moderation(commands.Cog, name="Moderation"):
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-
 
     async def ban_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[app_commands.Choice[str]]:
         """generates the ban autocompletion"""
@@ -66,6 +66,41 @@ class moderation(commands.Cog, name="Moderation"):
                 return
             member = await self.bot.fetch_user(int(memberid))
             await ModUser.ban_user(interaction, member, bot, reason, appeal, idlist)
+
+    @app_commands.command(name="mass_ban", description="ADMIN: mass bans the users. Please separate the userids with a comma. Two second delay per ban.")
+    @app_commands.choices(
+            appeal=[
+                Choice(name="Yes", value="To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com"),
+                Choice(name="No", value="This ban is permanent and can not be appealed.")
+            ],
+            idlist=[
+                Choice(name="Yes", value="yes"),
+                Choice(name="No", value="no")
+            ]
+    )
+    @app_commands.autocomplete(bantype=ban_autocompletion)
+    @permissions.check_app_roles_admin()
+    async def mass_ban(self, interaction: discord.Interaction, bantype: str,
+                       memberids: str = None, *,
+                       appeal: Choice[str], idlist: Choice[str]) -> None:
+        """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
+        bot = self.bot
+        memberids = [x for x in memberids.replace(' ', '').split(",") if await bot.fetch_user(int(x)) is not None]
+        bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
+        reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
+        if bantype.upper() == "CUSTOM":
+            reason = str(await inputmodal.send_modal(interaction, "Banreason accepted"))
+        else:
+            await interaction.response.defer(ephemeral=True)
+        for memberid in memberids:
+            await asyncio.sleep(2)
+            if memberid is None:
+                await interaction.followup.send("User is not in the server, please use Memberid")
+                return
+            member = await self.bot.fetch_user(int(memberid))
+            await ModUser.ban_user(interaction, member, bot, reason, appeal, idlist)
+
+
 
     @app_commands.command(name="kick")
     @permissions.check_app_roles()
@@ -132,6 +167,7 @@ class moderation(commands.Cog, name="Moderation"):
                 attachments = [await attachment.to_file() for attachment in message.attachments]
                 await destination.send(files=attachments)
         await interaction.followup.send("Done")
+
 
 async def setup(bot: commands.Bot):
     """Adds the cog to the bot."""
