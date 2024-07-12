@@ -18,9 +18,8 @@ class inviteInfo(commands.Cog):
                 return inv
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         """reads invite dictionary, and outputs user info"""
-        self.bot.invites[member.guild.id] = await member.guild.invites()
         try:
             infochannel = ConfigData().get_key_int(member.guild.id, 'inviteinfo')
         except KeyError:
@@ -38,12 +37,16 @@ Code created by: {invite.inviter} ({invite.inviter.id})
 account created at: {member.created_at.strftime("%m/%d/%Y")}
 Member joined at {datetime.now().strftime("%m/%d/%Y")}
 """)
+
                 try:
                     embed.set_image(url=member.avatar.url)
                 except:
+
                     pass
+
                 embed.set_footer(text=f"USERID: {member.id}")
                 channel = self.bot.get_channel(infochannel)
+
                 await channel.send(embed=embed)
 
                 self.bot.invites[member.guild.id] = invites_after_join

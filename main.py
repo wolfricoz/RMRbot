@@ -46,6 +46,7 @@ async def on_ready():
     # CREATES A COUNTER TO KEEP TRACK OF HOW MANY GUILDS / SERVERS THE BOT IS CONNECTED TO.
     guilds = []
     for guild in bot.guilds:
+        bot.invites[guild.id] = await guild.invites()
         ConfigTransactions.server_add(guild.id)
         ConfigData().load_guild(guild.id)
         guilds.append(guild.name)
