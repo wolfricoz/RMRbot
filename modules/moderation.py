@@ -85,7 +85,7 @@ class moderation(commands.Cog, name="Moderation"):
                        appeal: Choice[str], idlist: Choice[str]) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
         bot = self.bot
-        memberids = [x for x in memberids.replace(' ', '').split(",") if await bot.fetch_user(int(x)) is not None]
+        memberids = [x for x in memberids.replace(' ', '').split(",") if x and await bot.fetch_user(int(x)) is not None]
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
         if bantype.upper() == "CUSTOM":
