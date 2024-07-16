@@ -85,23 +85,7 @@ class moderation(commands.Cog, name="Moderation"):
                        appeal: Choice[str], idlist: Choice[str]) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
         bot = self.bot
-        memberids = memberids.replace(' ', '').split(",")
-        for id in memberids:
-            try:
-
-                if not id.isdigit():
-                    await interaction.channel.send(f"Error: {id} is not a valid id.")
-                    memberids.remove(id)
-                    continue
-                user = await bot.fetch_user(int(id))
-                if user is None:
-                    await interaction.channel.send(f"Error: {id} is not a valid id/or user does not exist")
-                    memberids.remove(id)
-            except Exception as e:
-                await interaction.channel.send(f"Error: {e}")
-                memberids.remove(id)
-
-
+        memberids = [x for x in memberids.split(' ') if x and await bot.fetch_user(int(x)) is not None]
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
         if bantype.upper() == "CUSTOM":

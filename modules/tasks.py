@@ -189,7 +189,11 @@ class Tasks(commands.GroupCog):
                     # print(f"Checking {thread.name} in {channel.name} in {thread.guild.name}")
                     if message is None:
                         logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing.")
-                        await thread.delete()
+                        try:
+                            await thread.delete()
+                        except Exception as e:
+                            dev = self.bot.get_channel(self.bot.DEV)
+                            await dev.send(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
                     if regex.search(channel.name) is None:
                         continue
                     user = thread.guild.get_member(thread.owner_id)
