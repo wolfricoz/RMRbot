@@ -93,8 +93,8 @@ class Forum(commands.GroupCog, name="forum"):
                 await Advert.send_advert_to_user(thread, text, "Your advert:", "no")
                 await thread.delete()
                 return
-        character_age = int(re.search(ages[0], text.content, re.DOTALL|re.I).group(1))
-        writer_age = int(re.search(ages[1], text.content, re.DOTALL|re.I).group(1))
+        character_age = int(re.search(ages[0], text.content, re.DOTALL | re.I).group(1))
+        writer_age = int(re.search(ages[1], text.content, re.DOTALL | re.I).group(1))
         if character_age < 18 or writer_age < 18:
             await modchannel.send(
                     f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
