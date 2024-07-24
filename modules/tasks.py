@@ -192,8 +192,7 @@ class Tasks(commands.GroupCog):
                         try:
                             await thread.delete()
                         except Exception as e:
-                            dev = self.bot.get_channel(self.bot.DEV)
-                            await dev.send(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
+                            logging.error(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
                     if regex.search(channel.name) is None:
                         continue
                     user = thread.guild.get_member(thread.owner_id)
@@ -202,7 +201,10 @@ class Tasks(commands.GroupCog):
                     if permissions.check_admin(thread.owner):
                         continue
                     logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
-                    await thread.delete()
+                    try:
+                        await thread.delete()
+                    except Exception as e:
+                        logging.error(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
 
     @tasks.loop(hours=24)
     async def check_invites_task(self):
