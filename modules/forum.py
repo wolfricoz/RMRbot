@@ -86,15 +86,15 @@ class Forum(commands.GroupCog, name="forum"):
         modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
         forum = self.bot.get_channel(thread.parent_id)
         for item in items:
-            match = re.search(item, text.content)
+            match = re.search(item, text.content, re.I)
             if match is None:
                 await automod_log(self.bot, thread.guild.id,
                                   f"{thread.owner.mention} Failed to follow the profile template in {thread.name}. it failed at {item}", "automodlog")
                 await Advert.send_advert_to_user(thread, text, "Your advert:", "no")
                 await thread.delete()
                 return
-        character_age = int(re.search(ages[0], text.content, re.DOTALL).group(1))
-        writer_age = int(re.search(ages[1], text.content, re.DOTALL).group(1))
+        character_age = int(re.search(ages[0], text.content, re.DOTALL|re.I).group(1))
+        writer_age = int(re.search(ages[1], text.content, re.DOTALL|re.I).group(1))
         if character_age < 18 or writer_age < 18:
             await modchannel.send(
                     f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
