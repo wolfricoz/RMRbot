@@ -15,6 +15,7 @@ from classes.Advert import Advert
 from classes.Support.LogTo import automod_log
 from classes.automod import ForumAutoMod
 from classes.databaseController import ConfigData
+from classes.queue import queue
 from views.buttons.confirmButtons import confirmAction
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
@@ -35,28 +36,30 @@ class Forum(commands.GroupCog, name="forum"):
         if forum_channel.id not in forums:
             return
 
-        await ForumAutoMod.checktags(thread)
+        queue().add(ForumAutoMod.checktags(thread))
         # Checks the tags and adds the correct ones.
 
         msg: discord.Message = await ForumAutoMod.get_message(thread)
         if msg is None:
-            await automod_log(bot, thread.guild.id,
-                              f"Message not found in {thread.name} posted by {thread.owner.mention}", "automodlog")
-            await ForumAutoMod.reminder(thread, thread.guild.id)
+            queue().add(automod_log(bot, thread.guild.id,
+                                    f"Message not found in {thread.name} posted by {thread.owner.mention}", "automodlog"), priority=0)
+            queue().add(ForumAutoMod.reminder(thread, thread.guild.id))
             return
 
         header_status = await ForumAutoMod.check_header(msg, thread)
         duplicate_status = await ForumAutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)
         if header_status:
-            await automod_log(bot, thread.guild.id,
-                              f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog")
+            queue().add(automod_log(bot, thread.guild.id,
+                                    f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog"), priority=0)
             return
         if duplicate_status:
-            await automod_log(bot, thread.guild.id,
-                              f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog")
+            queue().add(automod_log(bot, thread.guild.id,
+                                    f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog"), priority=0)
             return
-        await ForumAutoMod.reminder(thread, thread.guild.id)
-        await ForumAutoMod.info(forum_channel, thread, msg)
+        queue().add(ForumAutoMod.reminder(thread, thread.guild.id))
+        queue().add(ForumAutoMod.info(forum_channel, thread, msg))
+        queue().add(automod_log(bot, thread.guild.id,
+                                f"{thread.name} successfully checked and waiting for approval", "automodlog", "Success"), priority=0)
         # await ForumAutoMod.age(msg, botmsg)
 
     @commands.Cog.listener('on_thread_create')
@@ -88,10 +91,10 @@ class Forum(commands.GroupCog, name="forum"):
         for item in items:
             match = re.search(item, text.content, re.I)
             if match is None:
-                await automod_log(self.bot, thread.guild.id,
-                                  f"{thread.owner.mention} Failed to follow the profile template in {thread.name}. it failed at {item}", "automodlog")
-                await Advert.send_advert_to_user(thread, text, "Your advert:", "no")
-                await thread.delete()
+                queue().add(automod_log(self.bot, thread.guild.id,
+                                              f"{thread.owner.mention} Failed to follow the profile template in {thread.name}. it failed at {item}", "automodlog"), priority=0)
+                queue().add(Advert.send_advert_to_user(thread, text, "Your advert:", "no"))
+                queue().add(thread.delete())
                 return
         character_age = int(re.search(ages[0], text.content, re.DOTALL | re.I).group(1))
         writer_age = int(re.search(ages[1], text.content, re.DOTALL | re.I).group(1))
@@ -101,16 +104,16 @@ class Forum(commands.GroupCog, name="forum"):
                     f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
             for a in forum.available_tags:
                 if a.name == "New":
-                    await thread.remove_tags(a)
+                    queue().add(thread.remove_tags(a))
                 if a.name == "Waiting":
-                    await thread.add_tags(a)
+                    queue().add(thread.add_tags(a))
             return
         await ForumAutoMod.checktags(thread)
         for a in forum.available_tags:
             if a.name == "New":
-                await thread.remove_tags(a)
+                queue().add(thread.remove_tags(a))
             if a.name == "Approved":
-                await thread.add_tags(a)
+                queue().add(thread.add_tags(a))
 
     @commands.Cog.listener()
     async def on_message(self, message):

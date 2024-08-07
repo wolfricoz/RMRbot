@@ -10,13 +10,13 @@ from discord.ext import commands
 import classes.permissions as permissions
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
+from classes.encryption import Encryption
 from classes.lobbyprocess import LobbyProcess
 from views.buttons.agebuttons import AgeButtons
 from views.buttons.confirmButtons import confirmAction
 from views.buttons.verifybutton import VerifyButton
-from views.modals import inputmodal
-
 from views.embeds.SendEmbed import send_embed
+from views.modals import inputmodal
 
 
 class Lobby(commands.GroupCog):
@@ -46,7 +46,7 @@ class Lobby(commands.GroupCog):
             case "UPDATE":
                 if await AgeCalculations.validatedob(dob, interaction) is False:
                     return
-                UserTransactions.update_user_dob(userid, dob)
+                UserTransactions.update_user_dob(userid, dob, interaction.guild.name)
                 await send_embed(interaction, title="Database entry updated",
                                  body=f"<@{userid}>'s database entry has been updated to: {dob}")
                 await LobbyProcess.age_log(age_log_channel, userid, dob, interaction, "updated")
@@ -62,15 +62,16 @@ class Lobby(commands.GroupCog):
             case "ADD":
                 if await AgeCalculations.validatedob(dob, interaction) is False:
                     return
-                UserTransactions.add_user_full(str(userid), dob)
+                UserTransactions.add_user_full(str(userid), dob, interaction.guild.name)
                 await send_embed(interaction, title="Database entry added",
                                  body=f"<@{userid}> added to the database with dob: {dob}")
                 await LobbyProcess.age_log(age_log_channel, userid, dob, interaction)
             case "GET":
                 user = UserTransactions.get_user(userid)
-                await send_embed(interaction, title="Database entry", body=f"**__USER INFO__**\n"
-                                                                           f"user: <@{user.uid}>\n"
-                                                                           f"dob: {user.dob.strftime('%m/%d/%Y')}")
+                await send_embed(interaction, title="Database entry",
+                                 body=f"**__USER INFO__**\n"
+                                      f"user: <@{user.uid}>\n"
+                                      f"dob: {Encryption().decrypt(user.date_of_birth)}")
 
     @app_commands.command(name="adduser")
     @permissions.check_app_roles()
@@ -104,7 +105,7 @@ class Lobby(commands.GroupCog):
                 print("true")
                 VerificationTransactions.idverify_update(user.id, dob)
                 await interaction.followup.send(
-                    f"{user.mention} has been ID verified with date of birth: {dob}")
+                        f"{user.mention} has been ID verified with date of birth: {dob}")
                 await agelog.send(f"""**USER ID VERIFICATION**
 user: {user.mention}
 DOB: {dob}
@@ -115,7 +116,7 @@ UID: {user.id}
             case "FALSE":
                 VerificationTransactions.idverify_update(user.id, dob)
                 await interaction.followup.send(
-                    f"{user.mention} has been ID verified with date of birth: {dob}")
+                        f"{user.mention} has been ID verified with date of birth: {dob}")
                 await agelog.send(f"""**USER ID VERIFICATION**
 user: {user.mention}
 DOB: {dob}
@@ -250,11 +251,11 @@ UID: {user.id}
                     await interaction.followup.send("Not found")
                     return
                 await send_embed(interaction, title="User id check info", body="**__USER INFO__**\n"
-                                                f"user: <@{user.uid}>\n"
-                                                f"Reason: {user.reason}\n"
-                                                f"idcheck: {user.idcheck}\n"
-                                                f"idverifier: {user.idverified}\n"
-                                                f"verifieddob: {user.verifieddob}\n")
+                                                                               f"user: <@{user.uid}>\n"
+                                                                               f"Reason: {user.reason}\n"
+                                                                               f"idcheck: {user.idcheck}\n"
+                                                                               f"idverifier: {user.idverified}\n"
+                                                                               f"verifieddob: {user.verifieddob}\n")
 
             case "DELETE":
                 if permissions.check_admin(interaction.user) is False:

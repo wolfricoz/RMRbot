@@ -6,6 +6,7 @@ import discord
 import databases.current
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
+from classes.encryption import Encryption
 from views.buttons.agebuttons import AgeButtons
 
 
@@ -45,9 +46,9 @@ class VerifyModal(discord.ui.Modal):
         idchannel = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "idlog"))
         age = int(self.age.value)
         # validates inputs with regex
-        if await AgeCalculations.infocheck(interaction, self.age.value, self.dateofbirth.value, modlobby) is False:
+        dob = await AgeCalculations.infocheck(interaction, self.age.value, self.dateofbirth.value, modlobby)
+        if dob is None:
             return
-        dob = self.dateofbirth.value.replace("-", "/").replace(".", "/")
         # Checks if date of birth and age match
         if age < 18:
             await modlobby.send(
@@ -57,12 +58,13 @@ class VerifyModal(discord.ui.Modal):
                     f'Unfortunately you are too young for our server. If you are 17 you may wait in the lobby.',
                     ephemeral=True)
             VerificationTransactions.set_idcheck_to_true(interaction.user.id,
-                                                         f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18. The user gave the age of {age}, due to GDPR we are unable to log the date of birth.")
+
+            f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18. The user gave the age of {age}, due to GDPR we are unable to log the date of birth.")
             logging.debug(f"userid: {interaction.user.id} gave an age below 18 and was added to the ID list. Age given: {age}. Dob is NOT logged")
             return
         # Checks if user is underaged
         agechecked, years = AgeCalculations.agechecker(age, dob)
-        logging.debug(f"userid: {interaction.user.id} age: {age} dob: {dob}")
+        logging.debug(f"userid: {interaction.user.id} age: {age}")
         if agechecked == 1 or agechecked == -1:
             await modlobby.send(
                     f"[Info]{interaction.user.mention}\'s age does not match. "
@@ -83,9 +85,10 @@ class VerifyModal(discord.ui.Modal):
                     ephemeral=True)
             return
         # Checks if user has a date of birth in the database, and if the date of births match.
+
         if AgeCalculations.check_date_of_birth(userdata, dob) is False:
             await idchannel.send(
-                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {userdata.dob.strftime('%m/%d/%Y')}\n"
+                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {Encryption().decrypt(userdata.date_of_birth)}\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
                     f'A staff member will contact you soon, please wait patiently.',
@@ -118,7 +121,8 @@ class VerifyModal(discord.ui.Modal):
                     ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        print(error)
+        print(error.with_traceback(error.__traceback__))
+
         await interaction.response.send_message('Oops! Something went wrong.\n'
                                                 f'{error}')
         raise error

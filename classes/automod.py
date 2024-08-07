@@ -1,18 +1,19 @@
 """This module is used to handle the automod for the forums."""
+import asyncio
 import logging
 import os.path
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 
-import asyncio
 import discord
 import pytz
 
 from classes.Advert import Advert
 from classes.AutomodComponents import AutomodComponents
-from classes.Support.LogTo import automod_log, automod_approval_log
+from classes.Support.LogTo import automod_log
 from classes.databaseController import ConfigData
+from classes.queue import queue
 
 
 class ForumAutoMod(ABC):
@@ -114,7 +115,7 @@ class ForumAutoMod(ABC):
             if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0:
                 await AutomodComponents.change_tags_approve(forum, thread)
                 await interaction.channel.send("Post successfully bumped and automatically approved")
-                await automod_approval_log(bot, interaction.guild_id, f"User bumped post in {interaction.channel.mention} and was automatically approved", "automodlog")
+                await automod_log(bot, interaction.guild_id, f"User bumped post in {interaction.channel.mention} and was automatically approved", "automodlog", message_type="Approval")
                 return
         except Exception as e:
             logging.error(e)
@@ -135,11 +136,11 @@ class ForumAutoMod(ABC):
             forum = bot.get_channel(c)
             checkdup = await AutomodComponents.check_duplicate(forum, thread, originalmsg)
             if checkdup:
-                await thread.owner.send(
+                queue().add(thread.owner.send(
                         f"Hi, I am a bot of {thread.guild.name}. Your latest advertisement is too similar to {checkdup.channel.mention}; since 07/01/2023 you're only allowed to have the same advert up once. \n\n"
-                        f"If you wish to bump your advert, do /forum bump on your advert, if you wish to move then please use /forum close")
-                await Advert.send_advert_to_user(thread, originalmsg, "Your advert:", "no")
-                await thread.delete()
+                        f"If you wish to bump your advert, do /forum bump on your advert, if you wish to move then please use /forum close"))
+                queue().add(Advert.send_advert_to_user(thread, originalmsg, "Your advert:", "no"))
+                queue().add(thread.delete())
                 return checkdup
 
     @staticmethod
@@ -187,7 +188,7 @@ class ForumAutoMod(ABC):
         if search is None:
             return
         if header is None:
-            await message.author.send(
+            queue().add(message.author.send(
                     """Your advert has been removed because it does not have a header or your header does not follow the template below. Please re-post with a (correct) header.
 ```text
 All characters are (ages)+
@@ -204,9 +205,9 @@ Common Errors:
 * It is highly recommended to only change the information in the (brackets)
 You can use this website to check your header: https://regex101.com/r/HYkkf9/2
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
-""")
-            await Advert.send_advert_to_user(message, message, "Your advert:", "no")
-            await thread.delete()
+"""))
+            queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
+            queue().add(thread.delete())
             return True
 
     @staticmethod

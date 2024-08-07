@@ -86,9 +86,6 @@ Once you've made these changes you may resubmit your age and date of birth. Than
         self.allow.disabled = True
         self.allow.style = discord.ButtonStyle.grey
 
-        self.add_to_db.disabled = True
-        self.add_to_db.style = discord.ButtonStyle.grey
-
         self.nsfw_warning.disabled = True
         self.nsfw_warning.style = discord.ButtonStyle.grey
 

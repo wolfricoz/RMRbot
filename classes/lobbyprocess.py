@@ -7,6 +7,7 @@ from discord.utils import get
 
 from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData
+from classes.queue import queue
 from views.embeds.SendEmbed import send_embed
 from views.modals.inputmodal import send_modal
 
@@ -20,22 +21,22 @@ class LobbyProcess(ABC):
 
             return
         # updates user's age if it exists, otherwise makes a new entry
-        UserTransactions.update_user_dob(user.id, dob)
+        UserTransactions.update_user_dob(user.id, dob, guild.name)
 
         # check add the right age role
-        await LobbyProcess.calculate_age_role(user, guild, age)
+        queue().add(LobbyProcess.calculate_age_role(user, guild, age), priority=2)
 
         # changes user's roles; adds and removes
-        await LobbyProcess.change_user_roles(user, guild)
+        queue().add(LobbyProcess.change_user_roles(user, guild), priority=2)
 
         # Log age and dob to lobbylog
-        await LobbyProcess.log(user, guild, age, dob, staff)
+        queue().add(LobbyProcess.log(user, guild, age, dob, staff), priority=2)
 
         # fetches welcoming message and welcomes them in general channel
-        await LobbyProcess.welcome(user, guild)
+        queue().add(LobbyProcess.welcome(user, guild), priority=2)
 
         # Cleans up the messages in the lobby and where the command was executed
-        await LobbyProcess.clean_up(guild, user)
+        queue().add(LobbyProcess.clean_up(guild, user), priority=2)
 
     @staticmethod
     @abstractmethod

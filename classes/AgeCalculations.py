@@ -20,10 +20,10 @@ class AgeCalculations(ABC):
     @staticmethod
     @abstractmethod
     def check_date_of_birth(userdata, dob):
-        if userdata is None or userdata.dob is None:
+        if userdata is None or userdata.date_of_birth is None:
             print("None found")
             return True
-        return userdata.dob.strftime("%m/%d/%Y") == dob
+        return Encryption().decrypt(userdata.date_of_birth) == dob
 
     @staticmethod
     @abstractmethod
@@ -54,17 +54,17 @@ class AgeCalculations(ABC):
             return False
         if userinfo.idverified is True and userinfo.verifieddob is not None and send_message is True:
             await channel.send(
-                f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
+                    f"[Info] {user.mention} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             logging.debug(f"{user} has previously ID verified: {userinfo.verifieddob.strftime('%m/%d/%Y')}")
             return False
         if userinfo.idcheck is True:
             await idchannel.send(
-                f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user "
-                f"before letting them through."
-                f"\n[DEBUG] age: {age} dob: {dob} (please remove this after verification if underage)")
+                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user "
+                    f"before letting them through."
+                    f"\n[DEBUG] age: {age} dob: {dob} (please remove this after verification if underage)")
             logging.debug(
-                f"{user} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them "
-                f"through.")
+                    f"{user} is on the ID list with reason: {userinfo.reason}. Please ID the user before letting them "
+                    f"through.")
             return True
         return False
 
@@ -79,9 +79,9 @@ class AgeCalculations(ABC):
             return False
         if userinfo.idcheck is True:
             await idchannel.send(
-                f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before "
-                f"letting them through."
-                f"lobby debug: age: {age} dob: {dob} (please remove this after verification)")
+                    f"[Info] {user.mention} is on the ID list with reason: {userinfo.reason}. Please ID the user before "
+                    f"letting them through."
+                    f"lobby debug: age: {age} dob: {dob} (please remove this after verification)")
             return True
         return False
 
@@ -93,18 +93,33 @@ class AgeCalculations(ABC):
         if agevalid is None:
             await interaction.response.send_message('Please fill in your age in numbers.', ephemeral=True)
             await channel.send(
-                f"{interaction.user.mention} failed in verification at age: {age} {dateofbirth}")
+                    f"{interaction.user.mention} failed in verification at age: {age} {dateofbirth}")
             return False
-        redob = (r"(((0[0-9])|(1[012]))([\/|\-|.])((0[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2["
-                 r"0123])))")
+        try:
+            dateofbirth = await AgeCalculations.add_slashes_to_dob(dateofbirth)
+        except Exception as e:
+            logging.info(f"failed slashes to dob: {e}")
+
+
+        redob = (r"(((0?[0-9])|(1[012]))([\/|\-|.])((0?[1-9])|([12][0-9])|(3[01]))([\/|\-|.])((20[012]\d|19\d\d)|(1\d|2[0123])))")
         dobvalid = re.match(redob, dateofbirth)
+
         if dobvalid is None:
             await interaction.response.send_message(
-                'Please fill in your date of birth as with the format: mm/dd/yyyy.', ephemeral=True)
+                    'Please fill in your date of birth as with the format: mm/dd/yyyy.', ephemeral=True)
             await channel.send(
-                f"[{location} info] {interaction.user.mention} failed in verification at date of birth: {age} {dateofbirth}")
-            return False
-        return True
+                    f"[{location} info] {interaction.user.mention} failed in verification at date of birth: {age} {dateofbirth}")
+            return None
+        dateofbirth = AgeCalculations.regex(dateofbirth)
+        return dateofbirth
+
+    @staticmethod
+    @abstractmethod
+    async def add_slashes_to_dob(dateofbirth):
+        if "/" not in dateofbirth or "-" not in dateofbirth or "." not in dateofbirth:
+            deconstruct = re.search(r"(((0?[0-9])|(1[012]))((0?[1-9])|([12][0-9])|(3[01]))((20[012]\d|19\d\d)|(1\d|2[0123])))", dateofbirth)
+            dateofbirth = f"{deconstruct.group(3)}/{deconstruct.group(6)}/{deconstruct.group(10)}"
+        return dateofbirth
 
     @staticmethod
     @abstractmethod
@@ -125,10 +140,11 @@ class AgeCalculations(ABC):
 
     @staticmethod
     @abstractmethod
-    def regex(arg2):
+    def regex(date_of_birth):
         try:
-            datetime.strptime(arg2, "%m/%d/%Y")
-            dob = str(arg2)
+            date_of_birth = date_of_birth.replace("-", "/").replace(".", "/")
+            datetime.strptime(date_of_birth, "%m/%d/%Y")
+            dob = str(date_of_birth)
             dob_object = re.search(r"([0-1]?[0-9])/([0-3]?[0-9])/([0-2][0-9][0-9][0-9])", dob)
             month = dob_object.group(1).zfill(2)
             day = dob_object.group(2).zfill(2)

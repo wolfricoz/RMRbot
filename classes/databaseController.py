@@ -7,6 +7,8 @@ import sqlalchemy.exc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
+from classes.encryption import Encryption
+
 
 import databases.current as db
 from databases.current import *
@@ -112,9 +114,9 @@ class UserTransactions(ABC):
 
     @staticmethod
     @abstractmethod
-    def add_user_full(userid, dob):
+    def add_user_full(userid, dob, guildname):
         try:
-            item = db.Users(uid=userid, dob=datetime.strptime(dob, "%m/%d/%Y"), entry=datetime.now(tz=timezone.utc))
+            item = db.Users(uid=userid, entry=datetime.now(tz=timezone.utc), date_of_birth=Encryption().encrypt(dob), server=guildname)
             session.merge(item)
             DatabaseTransactions.commit(session)
             return True
@@ -123,13 +125,14 @@ class UserTransactions(ABC):
 
     @staticmethod
     @abstractmethod
-    def update_user_dob(userid: int, dob: str):
+    def update_user_dob(userid: int, dob: str, guildname: str):
         userdata: Users = session.scalar(Select(Users).where(Users.uid == userid))
         if userdata is None:
-            UserTransactions.add_user_full(userid, dob)
+            UserTransactions.add_user_full(userid, dob, guildname)
             return False
-        userdata.dob = datetime.strptime(dob, "%m/%d/%Y")
+        userdata.date_of_birth = Encryption().encrypt(dob)
         userdata.entry = datetime.now(tz=timezone.utc)
+        userdata.server = guildname
         DatabaseTransactions.commit(session)
         return True
 

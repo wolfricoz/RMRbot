@@ -27,6 +27,7 @@ intents.members = True
 activity = discord.Activity(type=discord.ActivityType.watching, name="over RMR")
 bot = commands.Bot(command_prefix=PREFIX, case_insensitive=True, intents=intents, activity=activity)
 bot.DEV = int(os.getenv("DEV"))
+bot.KEY = os.getenv("KEY")
 
 
 # Move to devtools?
