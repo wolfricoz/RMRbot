@@ -64,9 +64,6 @@ class Config(Base):
     value: Mapped[str] = mapped_column(String(1980))
 
 
-
-
-
 # noinspection PyTypeChecker, PydanticTypeChecker
 
 class IdVerification(Base):
@@ -79,6 +76,7 @@ class IdVerification(Base):
     verifieddob: Mapped[Optional[datetime]]
     user: Mapped["Users"] = relationship(back_populates="id")
 
+
 class Timers(Base):
     __tablename__ = "timers"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -89,7 +87,6 @@ class Timers(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     # in hours
     removal: Mapped[int]
-
 
 
 class database:

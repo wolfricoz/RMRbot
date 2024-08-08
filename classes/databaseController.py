@@ -417,7 +417,7 @@ class VerificationTransactions(ABC):
 
     @staticmethod
     @abstractmethod
-    def idverify_update(userid, dob: str, idverified=True):
+    def idverify_update(userid, dob: str, guildname, idverified=True):
 
         userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
         if userdata is None:
@@ -428,7 +428,7 @@ class VerificationTransactions(ABC):
         userdata.idcheck = False
         userdata.reason = "User ID Verified"
         DatabaseTransactions.commit(session)
-        UserTransactions.update_user_dob(userid, dob)
+        UserTransactions.update_user_dob(userid, dob, guildname=guildname)
 
 
 class ConfigData(ABC):

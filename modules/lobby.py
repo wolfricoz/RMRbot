@@ -83,7 +83,7 @@ class Lobby(commands.GroupCog):
         age_log_channel = interaction.guild.get_channel(age_log)
         if await AgeCalculations.validatedob(dob, interaction) is False:
             return
-        UserTransactions.add_user_full(str(userid), dob)
+        UserTransactions.add_user_full(str(userid), dob, guildname=interaction.guild.name)
         await interaction.followup.send(f"<@{userid}> added to the database with dob: {dob}")
         await LobbyProcess.age_log(age_log_channel, userid, dob, interaction)
 
@@ -103,7 +103,7 @@ class Lobby(commands.GroupCog):
         match process.value.upper():
             case "TRUE":
                 print("true")
-                VerificationTransactions.idverify_update(user.id, dob)
+                VerificationTransactions.idverify_update(user.id, dob, interaction.guild.name)
                 await interaction.followup.send(
                         f"{user.mention} has been ID verified with date of birth: {dob}")
                 await agelog.send(f"""**USER ID VERIFICATION**
