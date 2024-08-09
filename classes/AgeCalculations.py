@@ -117,7 +117,7 @@ class AgeCalculations(ABC):
     @abstractmethod
     async def add_slashes_to_dob(dateofbirth):
         if "/" not in dateofbirth or "-" not in dateofbirth or "." not in dateofbirth:
-            deconstruct = re.search(r"(((0?[0-9])|(1[012]))((0?[1-9])|([12][0-9])|(3[01]))((20[012]\d|19\d\d)|(1\d|2[0123])))", dateofbirth)
+            deconstruct = re.search(r"(((0[0-9])|(1[012])|(0?[0-9]))((0[1-9])|([12][0-9])|(3[01])|(0?[1-9]))((20[012]\d|19\d\d)|(1\d|2[0123])))", dateofbirth)
             dateofbirth = f"{deconstruct.group(3)}/{deconstruct.group(6)}/{deconstruct.group(10)}"
         return dateofbirth
 
