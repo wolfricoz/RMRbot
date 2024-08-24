@@ -40,7 +40,9 @@ class moderation(commands.Cog, name="rmn"):
         overwrite = discord.PermissionOverwrite(send_messages=True, read_messages=True, read_message_history=True)
         await channel.set_permissions(member, overwrite=overwrite)
         await channel.send(
-                f"{member.mention} Thank you for partnering with RMN. Please post your advert here, with a minimum of 5 tags and a maximum of 15. Don't forget to post our advert in your server!")
+                f"{member.mention} Thank you for partnering with RMN. Please post your advert here, with a minimum of 5 tags and a maximum of 15. Don't forget to post our advert in your server!"
+                f"\n\n"
+                f"Please ensure to make a channel for Roleplay Meets: Network in your server, and post our advert in it. You can find our advert here: https://discord.com/channels/780622396297183252/793532877966278657/793532933264637972")
         await member.add_roles(partner)
         await interaction.followup.send("Success!")
 
