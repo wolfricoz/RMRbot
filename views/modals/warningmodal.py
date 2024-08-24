@@ -21,12 +21,12 @@ class WarningModal(discord.ui.Modal, title='Official Warning'):
 
     async def on_submit(self, interaction: discord.Interaction):
         channel = interaction.guild.get_channel(self.warnlog)
-        warning = f"{interaction.guild.name} **__WARNING__**: {self.reason}"
+        warning = f"{interaction.guild.name} {self.user.mention} you've received a **__WARNING__**: \n `{self.reason}`"
         UserTransactions.user_add_warning(self.user.id, self.reason.value)
         if self.notify.upper() == "YES":
             await self.user.send(warning)
         embed = discord.Embed(title=f"{self.user.name} has been warned", description=warning)
-        embed.set_footer(text=f"Notify: {self.notify}, uid: {self.user.id}")
+        embed.set_footer(text=f"Notify: {self.notify}, uid: {self.user.id}, user: {self.user.mention}")
         await interaction.response.send_message(self.user.mention, embed=embed)
         await channel.send(embed=embed)
 
