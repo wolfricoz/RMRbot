@@ -101,7 +101,7 @@ class NsfwVerifyModal(discord.ui.Modal):
             return
         if agechecked > 1 or agechecked < -1:
             await idchannel.send(
-                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match and has been timed "
+                    f"[Info] <@&{admin[0]}> User {interaction.user.mention}\'s age does not match and should be DMed to verify the age and dob."
                     f"out. User gave {age} but dob indicates {years}\n"
                     f"[Lobby Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
@@ -111,7 +111,7 @@ class NsfwVerifyModal(discord.ui.Modal):
         # Checks if user has a date of birth in the database, and if the date of births match.
         if AgeCalculations.check_date_of_birth(userdata, dob) is False:
             await idchannel.send(
-                    f"[Info] <@{admin[0]}> User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {Encryption().decrypt(userdata.date_of_birth)}\n"
+                    f"[Info] <@{admin[0]}> User {interaction.user.mention}\'s date of birth does not match. Given: {dob} Recorded: {Encryption().decrypt(userdata.date_of_birth)}. Please DM the user to verify their date of birth.\n"
                     f"[NSFW Debug] Age: {age} dob {dob}")
             await interaction.response.send_message(
                     f'A staff member will contact you within 24 hours, please wait patiently.',
