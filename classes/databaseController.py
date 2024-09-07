@@ -134,6 +134,8 @@ class UserTransactions(ABC):
         userdata.entry = datetime.now(tz=timezone.utc)
         userdata.server = guildname
         DatabaseTransactions.commit(session)
+        if userdata.date_of_birth is None:
+            return False
         return True
 
     @staticmethod
