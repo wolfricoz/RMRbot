@@ -9,7 +9,6 @@ from classes.AgeCalculations import AgeCalculations
 from classes.databaseController import UserTransactions, ConfigData
 from classes.queue import queue
 from views.embeds.SendEmbed import send_embed
-from views.modals.inputmodal import send_modal
 
 
 class LobbyProcess(ABC):
@@ -18,7 +17,6 @@ class LobbyProcess(ABC):
     async def approve_user(guild, user, dob, age, staff):
         # checks if user is on the id list
         if await AgeCalculations.id_check(guild, user, age, dob):
-
             return
         # updates user's age if it exists, otherwise makes a new entry
         UserTransactions.update_user_dob(user.id, dob, guild.name)
@@ -73,8 +71,11 @@ class LobbyProcess(ABC):
                            f"Age: {age} \n"
                            f"DOB: {dob} \n"
                            f"User info: \n"
-                           f"UID: {user.id}  joined at: {user.joined_at.strftime('%m/%d/%Y %I:%M:%S %p')} executed: {datetime.datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')} \n"
-                           f"staff: {staff}")
+                           f"UID: {user.id} \n"
+                           f"Joined at: {user.joined_at.strftime('%m/%d/%Y %I:%M:%S %p')} \n"
+                           f"Account created at: {user.created_at.strftime('%m/%d/%Y %I:%M:%S %p')} \n"
+                           f"Executed at: {datetime.datetime.now().strftime('%m/%d/%Y %I:%M:%S %p')} \n"
+                           f"Staff: {staff}")
 
     @staticmethod
     @abstractmethod
