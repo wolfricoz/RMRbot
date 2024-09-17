@@ -14,7 +14,7 @@ def get_discord_channel(bot: commands.Bot, channel_id: int):
 
 async def automod_log(bot: commands.Bot, guildid, message: str, channel="dev", message_type="Error"):
     """Logs automod failures to a channel."""
-    logging.error(f"[Automod Error] {message}")
+    logging.error(f"[Automod {message_type}] {message}")
     channel = get_discord_channel(bot, ConfigData().get_key_int(guildid, channel))
     try:
         await channel.send(f"[Automod {message_type}] {message}")
