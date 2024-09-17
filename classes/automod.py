@@ -28,11 +28,23 @@ class ForumAutoMod(ABC):
 
     @staticmethod
     @abstractmethod
+    async def clean_bumps(thread: discord.Thread, bot):
+        before = datetime.now() - timedelta(days=3)
+        count = 0
+        async for m in thread.history(limit=1000, before=before):
+            if m.author is bot.user and not m.content.startswith("Thank you for posting"):
+                queue().add(m.delete(), 0)
+                count += 1
+        logging.info(f"Queued {count} bump messages for deletion in {thread.name}")
+
+
+    @staticmethod
+    @abstractmethod
     async def add_status_tags(forum, thread, tag="new"):
         """This function is used to add the status tags to a forum post."""
         for a in forum.available_tags:
             if a.name.lower() == tag.lower():
-                await thread.add_tags(a, reason="new post")
+                queue().add(thread.add_tags(a, reason="new post"))
                 logging.info(f"New tag added to {thread.name} for {thread.name}")
 
     @staticmethod
@@ -54,10 +66,10 @@ class ForumAutoMod(ABC):
                 count += 1
 
             fm = ', '.join([x.name for x in counted_tags])
-            await thread.add_tags(*counted_tags, reason=f"Automod applied {fm}")
+            queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
             logging.info(f"Automod applied {fm} to {thread.name}")
-            await thread.send(
-                    f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!")
+            queue().add(thread.send(
+                    f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
 
     @staticmethod
     @abstractmethod
