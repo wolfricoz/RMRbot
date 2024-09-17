@@ -71,7 +71,9 @@ class Lobby(commands.GroupCog):
                 await send_embed(interaction, title="Database entry",
                                  body=f"**__USER INFO__**\n"
                                       f"user: <@{user.uid}>\n"
-                                      f"dob: {Encryption().decrypt(user.date_of_birth)}")
+                                      f"dob: {Encryption().decrypt(user.date_of_birth)}"
+                                      f"Last Server: {user.server}\n"
+                                 )
 
     @app_commands.command(name="adduser")
     @permissions.check_app_roles()
