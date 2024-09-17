@@ -38,7 +38,6 @@ class ForumAutoMod(ABC):
                 if m.content.startswith("Thank you for posting") or m.embeds:
                     logging.info(f"Ignoring starting message in {thread.name}")
                     continue
-                logging.info(f"Queued bump message for deletion in {thread.name}")
                 queue().add(m.delete(), 0)
                 count += 1
         logging.info(f"Queued {count} bump messages for deletion in {thread.name}")
