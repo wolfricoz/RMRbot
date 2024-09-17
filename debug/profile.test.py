@@ -15,8 +15,8 @@ def check(text):
         r"\*?\*?NSFW or SFW\??\*?\*?:?(?:.*)"
     ]
     ages = [
-        r"\*?\*?Preferred Character Age:?\*?\*?:?\D+(\d+).*",
-        r"\*?\*?Preferred Writer Age:?\*?\*?:?\D+(\d+).*",
+        r"\*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n",
+        r"\*?\*?Preferred Writer Age:?\*?\*?:?\s*(\d+).{,3}?\n",
     ]
     items = items + ages
     for item in items:
@@ -25,7 +25,8 @@ def check(text):
             return f"no match at {item}"
     character_age = int(re.search(ages[0], text, re.DOTALL).group(1))
     writer_age = int(re.search(ages[1], text, re.DOTALL).group(1))
-
+    if not character_age or not writer_age:
+        return "no match at age"
     if character_age < 18 or writer_age < 18:
         return "under 18"
 
@@ -131,7 +132,7 @@ test6 = """**Name**: Angelina
 **Average writing length**: at least 7-10 sentences long- i like very detailed rp 
 **NSFW or SFW**?- both depending on how the story goes"""
 
-run_test(test6, "test6")
+run_test(test6, "test6", r"no match at \*?\*?Preferred Writer Age:?\*?\*?:?\s*(\d+).{,3}?\n")
 
 test7 = """**Name:** dëamon
 **Pronouns:** he/him
@@ -150,4 +151,133 @@ test7 = """**Name:** dëamon
 both is okay
 """
 
-run_test(test7, "test7")
+run_test(test7, "test7", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test8 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** 20+
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or
+"""
+
+run_test(test8, "test8")
+
+test9 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** immortal or adults
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test9, "test9", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test10 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** 20+ except for when someone's peegnat
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test10, "test10", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test11 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** 20+
+**Preferred Writer Age:** who cares
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test11, "test11", r"no match at \*?\*?Preferred Writer Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test12 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** usually 19+
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test12, "test12", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test13 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** 19+ depending on the setting
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test13, "test13", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test14 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** 20+ but not in school settings
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test14, "test14", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
+
+test15 = """**Name:** tony chestnut
+**Pronouns:** she/they/he
+**Timezone:** pst
+**Availability:** never, go away 
+**Preferred Character Age:** 20-30 ish
+**Preferred Writer Age:** 20+
+**Preferred Genres:** fantasy, furry, drama, etc.
+**Fandoms:** marvel, trigun, hades, some other things
+**Preferred Character Gender Pairings:** m/m and f/f please
+**Preferred Writer Gender:** who cares
+**Preferred Point of View:** 3rd person present or past 
+**Average writing length**: 3 - 10 paragraphs, depending
+**NSFW or SFW?** either or"""
+
+run_test(test15, "test15", r"no match at \*?\*?Preferred Character Age:?\*?\*?:?\s*(\d+).{,3}?\n")
