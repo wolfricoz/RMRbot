@@ -106,16 +106,16 @@ class Forum(commands.GroupCog, name="forum"):
                     f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
                     f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
             for a in forum.available_tags:
-                if a.name == "New":
+                if a.name.lower() == "new":
                     queue().add(thread.remove_tags(a))
-                if a.name == "Waiting":
+                if a.name.lower() == "waiting":
                     queue().add(thread.add_tags(a))
             return
         await ForumAutoMod.checktags(thread)
         for a in forum.available_tags:
-            if a.name == "New":
+            if a.name.lower() == "new":
                 queue().add(thread.remove_tags(a))
-            if a.name == "Approved":
+            if a.name.lower() == "approved":
                 queue().add(thread.add_tags(a))
 
     @commands.Cog.listener()
