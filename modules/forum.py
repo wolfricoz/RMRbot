@@ -36,8 +36,8 @@ class Forum(commands.GroupCog, name="forum"):
         if forum_channel.id not in forums:
             return
 
+        # Checks if there is space for new tags
         queue().add(ForumAutoMod.checktags(thread))
-        # Checks the tags and adds the correct ones.
 
         msg: discord.Message = await ForumAutoMod.get_message(thread)
         if msg is None:
@@ -57,7 +57,10 @@ class Forum(commands.GroupCog, name="forum"):
                                     f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog"), priority=0)
             return
         queue().add(ForumAutoMod.reminder(thread, thread.guild.id))
-        queue().add(ForumAutoMod.info(forum_channel, thread, msg))
+        # Applies the status tag 'new' to the thread
+        queue().add(ForumAutoMod.add_status_tags(forum_channel, thread))
+        queue().add(ForumAutoMod.info(thread))
+        queue().add(ForumAutoMod.add_relevant_tags(forum_channel, thread, msg))
         queue().add(automod_log(bot, thread.guild.id,
                                 f"{thread.name} successfully checked and waiting for approval", "automodlog", "Success"), priority=0)
         # await ForumAutoMod.age(msg, botmsg)

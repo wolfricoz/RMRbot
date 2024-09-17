@@ -28,23 +28,19 @@ class ForumAutoMod(ABC):
 
     @staticmethod
     @abstractmethod
-    async def info(forum, thread, msg):
-        """This to remind users about the bumping rules"""
-        # This module needs to be fixed; keeps adding too much tags.
-        matched = await AutomodComponents.tags(thread, forum, msg)
-        await ForumAutoMod.checktags(thread)
-        # applies the new tag
+    async def add_status_tags(forum, thread, tag="new"):
+        """This function is used to add the status tags to a forum post."""
         for a in forum.available_tags:
-            if a.name == "New":
+            if a.name.lower() == tag.lower():
                 await thread.add_tags(a, reason="new post")
                 logging.info(f"New tag added to {thread.name} for {thread.name}")
-        botmessage = await thread.send(
-                f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
-                f"\n\n"
-                f"To close the advert, please use /forum close")
+
+    @staticmethod
+    @abstractmethod
+    async def add_relevant_tags(forum, thread, msg):
         if len(thread.applied_tags) >= 5:
             print("too many tags")
-            return botmessage
+        matched = await AutomodComponents.tags(thread, forum, msg)
         if matched:
             count = 0
             maxtags = 5 - len(thread.applied_tags)
@@ -58,12 +54,21 @@ class ForumAutoMod(ABC):
                 count += 1
 
             fm = ', '.join([x.name for x in counted_tags])
-
-            # print(f"[debugging] adding tags to {thread.name}: {matched} ({len(matched)}), {len(thread.applied_tags)}, reason: new post")
             await thread.add_tags(*counted_tags, reason=f"Automod applied {fm}")
             logging.info(f"Automod applied {fm} to {thread.name}")
             await thread.send(
                     f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!")
+
+    @staticmethod
+    @abstractmethod
+    async def info(thread):
+        """This to remind users about the bumping rules"""
+        # This module needs to be fixed; keeps adding too much tags.
+        await ForumAutoMod.checktags(thread)
+        botmessage = await thread.send(
+                f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
+                f"\n\n"
+                f"To close the advert, please use /forum close")
 
         return botmessage
 
@@ -171,7 +176,7 @@ class ForumAutoMod(ABC):
         found = False
         if len(tags) == 5:
             for tag in tags:
-                if tag.name in remove:
+                if tag.name.lower() in remove:
                     await thread.remove_tags(tag)
                     logging.info(f"Removed tag {tag.name} for {thread.name}")
                     found = True
