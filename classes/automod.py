@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import discord
 import pytz
+from discord.ext import commands
 
 from classes.Advert import Advert
 from classes.AutomodComponents import AutomodComponents
@@ -28,12 +29,12 @@ class ForumAutoMod(ABC):
 
     @staticmethod
     @abstractmethod
-    async def clean_bumps(thread: discord.Thread, bot):
+    async def clean_bumps(thread: discord.Thread, bot: commands.Bot):
         before = datetime.now() - timedelta(days=3)
         count = 0
         async for m in thread.history(limit=1000, before=before, oldest_first=False):
 
-            if m.author is bot.user:
+            if m.author.id == bot.user.id:
                 if m.content.startswith("Thank you for posting") or m.embeds:
                     logging.info(f"Ignoring starting message in {thread.name}")
                     continue
