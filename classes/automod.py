@@ -32,6 +32,8 @@ class ForumAutoMod(ABC):
         before = datetime.now() - timedelta(days=3)
         count = 0
         async for m in thread.history(limit=1000, before=before):
+            print(m.author)
+            print(m.content)
             if m.author is bot.user and not m.content.startswith("Thank you for posting"):
                 queue().add(m.delete(), 0)
                 count += 1
