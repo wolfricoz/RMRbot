@@ -84,14 +84,15 @@ class moderation(commands.Cog, name="Moderation"):
                        memberids: str = None, *,
                        appeal: Choice[str], idlist: Choice[str]) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
-        bot = self.bot
-        memberids = [x for x in memberids.split(' ') if x and await bot.fetch_user(int(x)) is not None]
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
         if bantype.upper() == "CUSTOM":
             reason = str(await inputmodal.send_modal(interaction, "Banreason accepted"))
         else:
             await interaction.response.defer(ephemeral=True)
+        bot = self.bot
+        memberids = [x for x in memberids.split(' ') if x and await bot.fetch_user(int(x)) is not None]
+
         for memberid in memberids:
             await asyncio.sleep(2)
             if memberid is None:
