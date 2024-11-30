@@ -10,8 +10,9 @@
       <excludeFolder url="file://$MODULE_DIR$/saved code" />
       <excludeFolder url="file://$MODULE_DIR$/test files" />
       <excludeFolder url="file://$MODULE_DIR$/users" />
+      <excludeFolder url="file://$MODULE_DIR$/venvnew" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (rmrbot)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">

@@ -16,6 +16,7 @@ import classes.databaseController
 import classes.searchbans as searchbans
 from classes import permissions
 from classes.databaseController import ConfigData, TimersTransactions, UserTransactions, DatabaseTransactions
+from classes.queue import queue
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
 
@@ -169,42 +170,46 @@ class Tasks(commands.GroupCog):
                     # print(f"Skipping {channel.name} as it is not a forum channel.")
                     continue
                 async for post in channel.archived_threads():
-                    postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
-                    try:
-                        if permissions.check_admin(post.owner) or regex.search(channel.name) is None:
-                            message = await post.send(postreminder)
-                            await asyncio.sleep(1)
-                            await message.delete()
-                            continue
-                        await post.send(f"{post.owner.mention} {postreminder}")
-                        await asyncio.sleep(1)
-                    except AttributeError:
-                        await post.send(postreminder)
-                        await asyncio.sleep(1)
+                    async def unarchive():
+                        postreminder = "Your advert has been unarchived. If this advert is no longer relevant, please close it with /forum close (this message counts as a bump, you do not have to do the bump command.)"
+                        try:
+                            if permissions.check_admin(post.owner) or regex.search(channel.name) is None:
+                                message = await post.send(postreminder)
+                                await asyncio.sleep(1)
+                                await message.delete()
+                                return
+                            await post.send(f"{post.owner.mention} {postreminder}")
+                        except AttributeError:
+                            await post.send(postreminder)
+                    queue().add(unarchive(), priority=0)
                 for thread in channel.threads:
-                    try:
-                        message = await thread.fetch_message(thread.id)
-                    except discord.errors.NotFound:
-                        message = None
-                    # print(f"Checking {thread.name} in {channel.name} in {thread.guild.name}")
-                    if message is None:
-                        logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing.")
+                    async def bump_thread():
+                        try:
+                            message = await thread.fetch_message(thread.id)
+                        except discord.errors.NotFound:
+                            message = None
+                        if message is None:
+                            logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing.")
+                            try:
+                                await thread.delete()
+                            except Exception as e:
+                                logging.error(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
+                        if regex.search(channel.name) is None:
+                            return
+                        user = thread.guild.get_member(thread.owner_id)
+                        if user is not None:
+                            return
+                        if permissions.check_admin(thread.owner):
+                            return
+                        logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
                         try:
                             await thread.delete()
                         except Exception as e:
                             logging.error(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
-                    if regex.search(channel.name) is None:
-                        continue
-                    user = thread.guild.get_member(thread.owner_id)
-                    if user is not None:
-                        continue
-                    if permissions.check_admin(thread.owner):
-                        continue
-                    logging.info(f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
-                    try:
-                        await thread.delete()
-                    except Exception as e:
-                        logging.error(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
+                    queue().add(bump_thread(), priority=0)
+
+
+
 
     @tasks.loop(hours=24)
     async def check_invites_task(self):
