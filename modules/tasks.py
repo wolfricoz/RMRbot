@@ -167,29 +167,32 @@ class Tasks(commands.GroupCog) :
 		for x in self.bot.guilds :
 			members = [member.id for member in x.members]
 			for channel in x.channels :
-				if channel.type != discord.ChannelType.forum :
-					continue
-				if regex.search(channel.name) is None :
-					continue
-				async for archived_thread in channel.archived_threads() :
-					if archived_thread.owner.id not in members :
-						queue().add(archived_thread.delete())
+				try:
+					if channel.type != discord.ChannelType.forum :
 						continue
-					if archived_thread.archived is False:
+					if regex.search(channel.name) is None :
 						continue
-					postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
-					try :
-						if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
-							try:
-								message = await archived_thread.send(postreminder)
-								queue().add(message.delete(), priority=0)
-							except discord.Forbidden or discord.NotFound:
-								pass
-
+					async for archived_thread in channel.archived_threads() :
+						if archived_thread.owner.id not in members :
+							queue().add(archived_thread.delete())
 							continue
-						await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
-					except AttributeError or discord.Forbidden or discord.NotFound :
-						await archived_thread.send(postreminder)
+						if archived_thread.archived is False:
+							continue
+						postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
+						try :
+							if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
+								try:
+									message = await archived_thread.send(postreminder)
+									queue().add(message.delete(), priority=0)
+								except discord.Forbidden or discord.NotFound:
+									pass
+
+								continue
+							await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
+						except AttributeError or discord.errors.Forbidden or discord.errors.NotFound :
+							await archived_thread.send(postreminder)
+				except:
+					pass
 
 				# 	This part cleans up the forums, it removes posts from users who have left, or where the main message is deleted.
 				for thread in channel.threads :
