@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import discord
 from Levenshtein import ratio
 
+from classes.queue import queue
+
 
 class AutomodComponents(ABC):
 
@@ -63,19 +65,13 @@ class AutomodComponents(ABC):
 
     @staticmethod
     @abstractmethod
-    async def change_tags_bump(forum, thread):
+    async def change_tags(forum: discord.ForumChannel, thread: discord.Thread, added_tags: str | list, removed_tags: str | list):
+        if isinstance(added_tags, str):
+            added_tags = added_tags.lower().split()
+        if isinstance(removed_tags, str):
+            removed_tags = removed_tags.lower().split()
         for a in forum.available_tags:
-            if a.name == "Bump":
-                await thread.add_tags(a)
-            if a.name == "Approved" or a.name == "New":
-                await thread.remove_tags(a)
-
-    @staticmethod
-    @abstractmethod
-    async def change_tags_approve(forum, thread):
-        for a in forum.available_tags:
-
-            if a.name == "Approved":
-                await thread.add_tags(a)
-            if a.name == "Bump" or a.name == "New":
-                await thread.remove_tags(a)
+            if a.name.lower() in added_tags:
+                queue().add(thread.add_tags(a))
+            if a.name.lower() in removed_tags:
+                queue().add(thread.remove_tags(a))

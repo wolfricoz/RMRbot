@@ -15,6 +15,7 @@ from discord.ext import commands, tasks
 import classes.databaseController
 import classes.searchbans as searchbans
 from classes import permissions
+from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
 from classes.databaseController import ConfigData, DatabaseTransactions, TimersTransactions, UserTransactions
@@ -45,6 +46,7 @@ class Tasks(commands.GroupCog) :
 		self.unarchiver.start()
 		self.check_invites_task.start()
 		self.delete_abandoned_posts.start()
+		self.check_status_tag.start()
 
 	def cog_unload(self) :
 		"""unloads tasks"""
@@ -55,6 +57,7 @@ class Tasks(commands.GroupCog) :
 		self.unarchiver.cancel()
 		self.check_invites_task.cancel()
 		self.delete_abandoned_posts.cancel()
+		self.check_status_tag.cancel()
 
 	@tasks.loop(hours=3)
 	async def config_reload(self) :
@@ -258,6 +261,25 @@ class Tasks(commands.GroupCog) :
 		print("finished searching for abandoned posts")
 
 	@tasks.loop(hours=24)
+	async def check_status_tag(self) -> None :
+		print("checking for missed posts")
+		post: discord.Thread
+		channel: discord.ForumChannel
+
+		for x in self.bot.guilds :
+			for channel in x.channels :
+				if channel.type != discord.ChannelType.forum :
+					continue
+				for thread in channel.threads :
+					tags = [tag.name.lower() for tag in thread.applied_tags]
+					result = list({'new', 'approved', 'bump'}.intersection(tags))
+					if not any(result) :
+						print(f"{thread.name} in {channel.name} has no status tag")
+						queue().add(AutomodComponents.change_tags(channel, thread, "new", ["approved", "bump"]))
+
+		print("finished searching for abandoned posts")
+
+	@tasks.loop(hours=24)
 	async def check_invites_task(self) :
 		"""Checks if the invite is still valid."""
 		invite_pattern = r"(https?://)?(www\.)?(discord\.(gg|io|me|li)|discordapp\.com/invite)/[a-zA-Z0-9\-]+"
@@ -353,6 +375,10 @@ class Tasks(commands.GroupCog) :
 
 	@delete_abandoned_posts.before_loop
 	async def before_abandoned_posts(self) :
+		await self.bot.wait_until_ready()
+
+	@check_status_tag.before_loop
+	async def before_status_check(self) :
 		await self.bot.wait_until_ready()
 
 

@@ -25,3 +25,4 @@ var1, var2 = SearchWarningTransactions.get_total_warnings(188647277181665280)
 print(var1)
 print(var2)
 
+print("test".lower().split())
