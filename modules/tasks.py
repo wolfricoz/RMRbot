@@ -159,6 +159,7 @@ class Tasks(commands.GroupCog) :
 	@tasks.loop(hours=24)
 	async def unarchiver(self) -> None :
 		"""makes all posts active again"""
+		return
 		print("checking for unarchiving")
 		archived_thread: discord.Thread
 		channel: discord.ForumChannel
@@ -174,6 +175,7 @@ class Tasks(commands.GroupCog) :
 					async def unarchive() :
 						if archived_thread.owner.id not in members :
 							queue().add(thread.delete())
+							return
 						postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
 						try :
 							if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
@@ -202,6 +204,7 @@ class Tasks(commands.GroupCog) :
 
 	@tasks.loop(hours=24)
 	async def delete_abandoned_posts(self) -> None :
+		return
 		print("checking for abandoned posts")
 		post: discord.Thread
 		channel: discord.ForumChannel
@@ -239,6 +242,7 @@ class Tasks(commands.GroupCog) :
 
 	@tasks.loop(hours=12)
 	async def check_status_tag(self) -> None :
+		# return
 		print("checking for missed posts")
 		post: discord.Thread
 		channel: discord.ForumChannel
