@@ -58,7 +58,6 @@ class Forum(commands.GroupCog, name="forum"):
             return
         queue().add(ForumAutoMod.reminder(thread, thread.guild.id))
         # Applies the status tag 'new' to the thread
-        queue().add(ForumAutoMod.add_status_tags(forum_channel, thread))
         queue().add(ForumAutoMod.info(thread))
         queue().add(ForumAutoMod.add_relevant_tags(forum_channel, thread, msg))
         queue().add(automod_log(bot, thread.guild.id,

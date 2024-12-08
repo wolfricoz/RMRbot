@@ -1,6 +1,7 @@
 import logging
 
 import discord
+from discord import DMChannel
 from discord.ext.commands.help import MISSING
 
 max_length = 1800
@@ -115,3 +116,9 @@ async def await_message(interaction, message) -> discord.Message | bool:
     if m.content.lower() == "cancel":
         return False
     return m
+
+async def fetch_message_or_none(channel: discord.TextChannel | discord.DMChannel | discord.Thread, id: int) -> discord.Message | None:
+    try :
+        return await channel.fetch_message(id)
+    except discord.errors.NotFound :
+        return None
