@@ -173,8 +173,10 @@ class Tasks(commands.GroupCog) :
 					continue
 				async for archived_thread in channel.archived_threads() :
 					if archived_thread.owner.id not in members :
-						queue().add(thread.delete())
-						return
+						queue().add(archived_thread.delete())
+						continue
+					if archived_thread.archived is False:
+						continue
 					postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
 					try :
 						if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
@@ -184,7 +186,7 @@ class Tasks(commands.GroupCog) :
 							except discord.Forbidden or discord.NotFound:
 								pass
 
-							return
+							continue
 						await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
 					except AttributeError or discord.Forbidden or discord.NotFound :
 						await archived_thread.send(postreminder)
@@ -219,7 +221,7 @@ class Tasks(commands.GroupCog) :
 					try :
 						async for m in thread.history() :
 							if count == 3 :
-								return
+								# return
 								message = await fetch_message_or_none(thread, thread.id)
 								if message is None :
 									queue().add(thread.delete(), priority=0)
@@ -237,9 +239,7 @@ class Tasks(commands.GroupCog) :
 							if m.content is None :
 								continue
 							if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
-								print(m.content)
-								queue().add(m.delete())
-								# count += 1
+								count += 1
 								continue
 					except :
 						pass
