@@ -225,7 +225,7 @@ class Tasks(commands.GroupCog) :
 							queue().add(automod_log(self.bot, thread.guild.id,
 							                        f"`[ABANDONED POST CHECK]{thread.name}` by {thread.owner.mention} has been "
 							                        f"reminded three times to bump their post but failed to do so. ",
-							                        "automodlog"), priority=0)
+							                        "automodlog", message_type="CLEANUP"), priority=0)
 							queue().add(thread.delete(), priority=0)
 							break
 						if m.content is None :
