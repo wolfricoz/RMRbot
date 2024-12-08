@@ -5,6 +5,7 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta
+from dis import disco
 
 import discord
 from discord import app_commands
@@ -177,11 +178,15 @@ class Tasks(commands.GroupCog) :
 					postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
 					try :
 						if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
-							message = await archived_thread.send(postreminder)
-							queue().add(message.delete(), priority=0)
+							try:
+								message = await archived_thread.send(postreminder)
+								queue().add(message.delete(), priority=0)
+							except discord.Forbidden or discord.NotFound:
+								pass
+
 							return
 						await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
-					except AttributeError :
+					except AttributeError or discord.Forbidden or discord.NotFound :
 						await archived_thread.send(postreminder)
 
 				# 	This part cleans up the forums, it removes posts from users who have left, or where the main message is deleted.
