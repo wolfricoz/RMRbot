@@ -48,7 +48,7 @@ class ForumAutoMod(ABC) :
 		"""This function is used to add the status tags to a forum post."""
 		for a in forum.available_tags :
 			if a.name.lower() == tag.lower() :
-				logging.info(f"New tag added to {thread.name} for {thread.name}")
+				# logging.info(f"New tag added to {thread.name} for {thread.name}")
 				return a
 
 	@staticmethod
@@ -57,7 +57,7 @@ class ForumAutoMod(ABC) :
 		if len(thread.applied_tags) >= 5 :
 			print("too many tags")
 		matched = await AutomodComponents.tags(thread, forum, msg)
-		counted_tags = [ForumAutoMod.add_status_tags(forum, thread)]
+		counted_tags = [await ForumAutoMod.add_status_tags(forum, thread)]
 		if matched :
 			count = 0
 			maxtags = 5 - len(thread.applied_tags) + len(counted_tags)
@@ -69,11 +69,10 @@ class ForumAutoMod(ABC) :
 				counted_tags.append(x)
 				count +=1
 
-			fm = ', '.join([x.name for x in counted_tags])
-			# queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
 			queue().add(thread.send(
 				f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
-		await AutomodComponents.change_tags(forum, thread, counted_tags, ["bump", "approved"])
+		fm = ', '.join([x.name for x in counted_tags])
+		queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
 		logging.info(f"[role change] added {', '.join(counted_tags)}")
 
 	@staticmethod
