@@ -69,11 +69,10 @@ class ForumAutoMod(ABC) :
 				counted_tags.append(x)
 				count +=1
 
-			fm = ', '.join([x.name for x in counted_tags])
-			# queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
 			queue().add(thread.send(
 				f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
-		await AutomodComponents.change_tags(forum, thread, counted_tags, ["bump", "approved"])
+		fm = ', '.join([x.name for x in counted_tags])
+		queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
 		logging.info(f"[role change] added {', '.join(counted_tags)}")
 
 	@staticmethod
