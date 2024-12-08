@@ -1,11 +1,9 @@
 """This cogs handles all the tasks."""
 import asyncio
-import functools
 import json
 import logging
 import os
 import re
-import typing
 from datetime import datetime, timedelta
 
 import discord
@@ -17,20 +15,11 @@ import classes.searchbans as searchbans
 from classes import permissions
 from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
-from classes.Support.discord_tools import send_message
+from classes.Support.discord_tools import fetch_message_or_none, send_message
 from classes.databaseController import ConfigData, DatabaseTransactions, TimersTransactions, UserTransactions
 from classes.queue import queue
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
-
-
-# overhaul of database is needed to allow SQLalchemy to run in async mode.
-def to_thread(func: typing.Callable) -> typing.Coroutine :
-	@functools.wraps(func)
-	async def wrapper(*args, **kwargs) :
-		return await asyncio.to_thread(func, *args, **kwargs)
-
-	return wrapper
 
 
 class Tasks(commands.GroupCog) :
@@ -90,6 +79,7 @@ class Tasks(commands.GroupCog) :
 		if os.path.exists('config') is False :
 			os.mkdir('config')
 		with open('config/history.json', 'w') as f :
+			# noinspection PyTypeChecker
 			json.dump(historydict, f, indent=4)
 		print("[auto refresh]List updated")
 		logging.debug("[auto refresh]List updated")
@@ -170,57 +160,45 @@ class Tasks(commands.GroupCog) :
 	async def unarchiver(self) -> None :
 		"""makes all posts active again"""
 		print("checking for unarchiving")
-		post: discord.Thread
+		archived_thread: discord.Thread
 		channel: discord.ForumChannel
 		regex = re.compile(f"search", flags=re.IGNORECASE)
 		for x in self.bot.guilds :
+			members = [member.id for member in x.members]
 			for channel in x.channels :
 				if channel.type != discord.ChannelType.forum :
-					# print(f"Skipping {channel.name} as it is not a forum channel.")
 					continue
-				async for post in channel.archived_threads() :
+				if regex.search(channel.name) is None :
+					continue
+				async for archived_thread in channel.archived_threads() :
 					async def unarchive() :
+						if archived_thread.owner.id not in members :
+							queue().add(thread.delete())
 						postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
 						try :
-							if permissions.check_admin(post.owner) or regex.search(channel.name) is None :
-								message = await post.send(postreminder)
-								await asyncio.sleep(1)
-								await message.delete()
+							if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
+								message = await archived_thread.send(postreminder)
+								queue().add(message.delete(), priority=0)
 								return
-							await post.send(f"{post.owner.mention} {postreminder}")
+							await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
 						except AttributeError :
-							await post.send(postreminder)
+							await archived_thread.send(postreminder)
 
 					queue().add(unarchive(), priority=0)
+				# 	This part cleans up the forums, it removes posts from users who have left, or where the main message is deleted.
 				for thread in channel.threads :
-					async def bump_thread() :
-						try :
-							message = await thread.fetch_message(thread.id)
-						except discord.errors.NotFound :
-							message = None
-						if message is None :
-							logging.info(
-								f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing.")
-							try :
-								await thread.delete()
-							except Exception as e :
-								logging.error(
-									f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
-						if regex.search(channel.name) is None :
-							return
-						user = thread.guild.get_member(thread.owner_id)
-						if user is not None :
-							return
-						if permissions.check_admin(thread.owner) :
-							return
+					if thread.owner is None or thread.owner.id not in members :
+						queue().add(thread.delete())
+						return
+					message = await fetch_message_or_none(thread, thread.id)
+					if message is None or message.author not in message.guild.members :
 						logging.info(
-							f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as owner of the thread is no longer in guild.")
+							f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing or because the author has left..")
 						try :
 							await thread.delete()
 						except Exception as e :
-							logging.error(f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
-
-					queue().add(bump_thread(), priority=0)
+							logging.error(
+								f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
 
 	@tasks.loop(hours=24)
 	async def delete_abandoned_posts(self) -> None :
@@ -233,34 +211,30 @@ class Tasks(commands.GroupCog) :
 				if channel.type != discord.ChannelType.forum :
 					continue
 				for thread in channel.threads :
-					async def check_reminders() :
-						count = 0
-						async for m in thread.history() :
-							if count == 3 :
-								message = await thread.fetch_message(thread.id)
-								try :
-									await send_message(message.author,
-									                   f"Your post in {thread.name} has been removed due to not being bumped after 3 reminders. Here is the content: {message.content}")
-								except discord.NotFound :
-									logging.error(f"Could not start a dm with {thread.owner.name}")
-								except discord.Forbidden :
-									logging.error(f"{thread.owner.name} has DM's closed.")
-								queue().add(automod_log(self.bot, thread.guild.id,
-								                        f"`[ABANDONED POST CHECK]{thread.name}` by {thread.owner.mention} has been reminded three times to bump their post but failed to do so. ",
-								                        "automodlog"))
-								await thread.delete()
-								break
-							if m.content is None :
-								continue
-							if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
-								count += 1
-								continue
+					count = 0
+					async for m in thread.history() :
+						if count == 3 :
+							message = await thread.fetch_message(thread.id)
+							queue().add(send_message(message.author,
+							                         f"Your post in {thread.name} has been removed due to not being bumped "
+							                         f"after 3 reminders. Here is the content: {message.content}"),
+							            priority=0)
+							queue().add(automod_log(self.bot, thread.guild.id,
+							                        f"`[ABANDONED POST CHECK]{thread.name}` by {thread.owner.mention} has been "
+							                        f"reminded three times to bump their post but failed to do so. ",
+							                        "automodlog"), priority=0)
+							queue().add(thread.delete(), priority=0)
 							break
+						if m.content is None :
+							continue
+						if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
+							count += 1
+							continue
+						break
 
-					queue().add(check_reminders(), priority=0)
 		print("finished searching for abandoned posts")
 
-	@tasks.loop(hours=24)
+	@tasks.loop(hours=12)
 	async def check_status_tag(self) -> None :
 		print("checking for missed posts")
 		post: discord.Thread
@@ -274,7 +248,7 @@ class Tasks(commands.GroupCog) :
 					tags = [tag.name.lower() for tag in thread.applied_tags]
 					result = list({'new', 'approved', 'bump'}.intersection(tags))
 					if not any(result) :
-						print(f"{thread.name} in {channel.name} has no status tag")
+						logging.info(f"{thread.name} in {channel.name} has no status tag")
 						queue().add(AutomodComponents.change_tags(channel, thread, "new", ["approved", "bump"]))
 
 		print("finished searching for abandoned posts")
