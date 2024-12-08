@@ -214,7 +214,10 @@ class Tasks(commands.GroupCog) :
 					count = 0
 					async for m in thread.history() :
 						if count == 3 :
-							message = await thread.fetch_message(thread.id)
+							message = await fetch_message_or_none(thread, thread.id)
+							if message is None:
+								queue().add(thread.delete(), priority=0)
+								return
 							queue().add(send_message(message.author,
 							                         f"Your post in {thread.name} has been removed due to not being bumped "
 							                         f"after 3 reminders. Here is the content: {message.content}"),
