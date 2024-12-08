@@ -195,8 +195,10 @@ class Tasks(commands.GroupCog) :
 					pass
 
 				# 	This part cleans up the forums, it removes posts from users who have left, or where the main message is deleted.
+				logging.info("Cleaning up posts")
 				for thread in channel.threads :
 					if thread.owner is None or thread.owner.id not in members :
+						logging.info(f"{thread.name}'s user left, cleaning up")
 						queue().add(thread.delete())
 						return
 					message = await fetch_message_or_none(thread, thread.id)
