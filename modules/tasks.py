@@ -159,7 +159,6 @@ class Tasks(commands.GroupCog) :
 	@tasks.loop(hours=24)
 	async def unarchiver(self) -> None :
 		"""makes all posts active again"""
-		return
 		print("checking for unarchiving")
 		archived_thread: discord.Thread
 		channel: discord.ForumChannel
@@ -172,21 +171,19 @@ class Tasks(commands.GroupCog) :
 				if regex.search(channel.name) is None :
 					continue
 				async for archived_thread in channel.archived_threads() :
-					async def unarchive() :
-						if archived_thread.owner.id not in members :
-							queue().add(thread.delete())
+					if archived_thread.owner.id not in members :
+						queue().add(thread.delete())
+						return
+					postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
+					try :
+						if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
+							message = await archived_thread.send(postreminder)
+							queue().add(message.delete(), priority=0)
 							return
-						postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
-						try :
-							if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
-								message = await archived_thread.send(postreminder)
-								queue().add(message.delete(), priority=0)
-								return
-							await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
-						except AttributeError :
-							await archived_thread.send(postreminder)
+						await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
+					except AttributeError :
+						await archived_thread.send(postreminder)
 
-					queue().add(unarchive(), priority=0)
 				# 	This part cleans up the forums, it removes posts from users who have left, or where the main message is deleted.
 				for thread in channel.threads :
 					if thread.owner is None or thread.owner.id not in members :
@@ -204,7 +201,6 @@ class Tasks(commands.GroupCog) :
 
 	@tasks.loop(hours=24)
 	async def delete_abandoned_posts(self) -> None :
-		return
 		print("checking for abandoned posts")
 		post: discord.Thread
 		channel: discord.ForumChannel
@@ -217,6 +213,7 @@ class Tasks(commands.GroupCog) :
 					count = 0
 					async for m in thread.history() :
 						if count == 3 :
+							return
 							message = await fetch_message_or_none(thread, thread.id)
 							if message is None:
 								queue().add(thread.delete(), priority=0)
@@ -234,9 +231,9 @@ class Tasks(commands.GroupCog) :
 						if m.content is None :
 							continue
 						if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
+							await m.delete()
 							count += 1
 							continue
-						break
 
 		print("finished searching for abandoned posts")
 
@@ -255,7 +252,6 @@ class Tasks(commands.GroupCog) :
 					tags = [tag.name.lower() for tag in thread.applied_tags]
 					result = list({'new', 'approved', 'bump'}.intersection(tags))
 					if not any(result) :
-						logging.info(f"{thread.name} in {channel.name} has no status tag")
 						queue().add(AutomodComponents.change_tags(channel, thread, "new", ["approved", "bump"]))
 
 		print("finished searching for abandoned posts")

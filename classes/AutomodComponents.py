@@ -1,3 +1,4 @@
+import logging
 import re
 from abc import ABC, abstractmethod
 
@@ -66,6 +67,8 @@ class AutomodComponents(ABC):
     @staticmethod
     @abstractmethod
     async def change_tags(forum: discord.ForumChannel, thread: discord.Thread, added_tags: str | list, removed_tags: str | list):
+        logging.info(f"changing tags for {thread.name} adding {added_tags} and {removed_tags}")
+
         if isinstance(added_tags, str):
             added_tags = added_tags.lower().split()
         if isinstance(removed_tags, str):
