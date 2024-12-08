@@ -233,8 +233,8 @@ class Tasks(commands.GroupCog) :
 								continue
 							if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
 								print(m.content)
-								await m.delete()
-								count += 1
+								queue().add(m.delete())
+								# count += 1
 								continue
 					except :
 						pass
