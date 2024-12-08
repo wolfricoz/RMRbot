@@ -57,10 +57,10 @@ class ForumAutoMod(ABC) :
 		if len(thread.applied_tags) >= 5 :
 			print("too many tags")
 		matched = await AutomodComponents.tags(thread, forum, msg)
+		counted_tags = [ForumAutoMod.add_status_tags(forum, thread)]
 		if matched :
 			count = 0
-			maxtags = 5 - len(thread.applied_tags)
-			counted_tags = [ForumAutoMod.add_status_tags(forum, thread)]
+			maxtags = 5 - len(thread.applied_tags) + len(counted_tags)
 			for x in matched :
 				if x in thread.applied_tags :
 					continue
@@ -71,10 +71,10 @@ class ForumAutoMod(ABC) :
 
 			fm = ', '.join([x.name for x in counted_tags])
 			# queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
-			await AutomodComponents.change_tags(forum, thread, counted_tags, ["bump", "approved"])
-			logging.info(f"Automod applied {fm} to {thread.name}")
 			queue().add(thread.send(
 				f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
+			await AutomodComponents.change_tags(forum, thread, counted_tags, ["bump", "approved"])
+			logging.info(f"[role change] added {', '.join(counted_tags)}")
 
 	@staticmethod
 	@abstractmethod
