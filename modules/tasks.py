@@ -211,30 +211,32 @@ class Tasks(commands.GroupCog) :
 					continue
 				for thread in channel.threads :
 					count = 0
-					async for m in thread.history() :
-						if count == 3 :
-							return
-							message = await fetch_message_or_none(thread, thread.id)
-							if message is None:
-								queue().add(thread.delete(), priority=0)
+					try :
+						async for m in thread.history() :
+							if count == 3 :
 								return
-							queue().add(send_message(message.author,
-							                         f"Your post in {thread.name} has been removed due to not being bumped "
-							                         f"after 3 reminders. Here is the content: {message.content}"),
-							            priority=0)
-							queue().add(automod_log(self.bot, thread.guild.id,
-							                        f"`[ABANDONED POST CHECK]{thread.name}` by {thread.owner.mention} has been "
-							                        f"reminded three times to bump their post but failed to do so. ",
-							                        "automodlog", message_type="CLEANUP"), priority=0)
-							queue().add(thread.delete(), priority=0)
-							break
-						if m.content is None :
-							continue
-						if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
-							await m.delete()
-							count += 1
-							continue
-
+								message = await fetch_message_or_none(thread, thread.id)
+								if message is None :
+									queue().add(thread.delete(), priority=0)
+									return
+								queue().add(send_message(message.author,
+								                         f"Your post in {thread.name} has been removed due to not being bumped "
+								                         f"after 3 reminders. Here is the content: {message.content}"),
+								            priority=0)
+								queue().add(automod_log(self.bot, thread.guild.id,
+								                        f"`[ABANDONED POST CHECK]{thread.name}` by {thread.owner.mention} has been "
+								                        f"reminded three times to bump their post but failed to do so. ",
+								                        "automodlog", message_type="CLEANUP"), priority=0)
+								queue().add(thread.delete(), priority=0)
+								break
+							if m.content is None :
+								continue
+							if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
+								await m.delete()
+								count += 1
+								continue
+					except :
+						pass
 		print("finished searching for abandoned posts")
 
 	@tasks.loop(hours=12)
