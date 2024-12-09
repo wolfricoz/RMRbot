@@ -1,4 +1,5 @@
 import logging
+from dis import disco
 
 import discord
 from discord import DMChannel
@@ -35,7 +36,7 @@ async def check_missing_permissions(channel: discord.TextChannel, required_permi
     return missing_permissions
 
 
-async def send_message(channel: discord.TextChannel | discord.User | discord.Member, message=None, embed=None, view=None, files=None, file=None) -> discord.Message:
+async def send_message(channel: discord.TextChannel | discord.User | discord.Member | discord.Thread, message=None, embed=None, view=None, files=None, file=None) -> discord.Message:
     """Send a message to a channel, if there is no permission it will send an error message to the owner"""
     last_message = None
     if channel is None:
@@ -122,3 +123,16 @@ async def fetch_message_or_none(channel: discord.TextChannel | discord.DMChannel
         return await channel.fetch_message(id)
     except discord.errors.NotFound :
         return None
+
+async def delete_message(target: discord.Message | discord.Thread):
+    try :
+        await target.delete()
+    except discord.errors.Forbidden:
+        if isinstance(target, discord.Message):
+            await send_message(target.channel, f"Could not delete message {target.jump_url}")
+            return
+        await send_message(target, f"Could not delete message {target.jump_url}")
+    except Exception as e :
+        logging.error(
+            f"Failed to delete {target} because {e}")
+
