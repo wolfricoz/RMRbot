@@ -18,6 +18,7 @@ from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import fetch_message_or_none, send_message
 from classes.databaseController import ConfigData, DatabaseTransactions, TimersTransactions, UserTransactions
+from classes.forumtasks import ForumTasks
 from classes.queue import queue
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
@@ -156,6 +157,26 @@ class Tasks(commands.GroupCog) :
 		await self.user_expiration_update(userids)
 		await self.user_expiration_remove(userdata, removaldate)
 		print("Finished checking all entries")
+
+	@tasks.loop(hours=24)
+	async def forum_manager(self) -> None :
+		"""makes all posts active again"""
+		print("starting the forum manager! The forum will be cleaned.")
+		archived_thread: discord.Thread
+		channel: discord.ForumChannel
+		regex = re.compile(f"search", flags=re.IGNORECASE)
+		channels = [
+			channel
+			for guild in self.bot.guilds
+			for channel in guild.channels
+			if channel.type == discord.ChannelType.forum and regex.search(channel.name)
+		]
+		for channel in channels:
+			logging.debug(f"[Forum Manager] Checking {channel.name}")
+			forum = ForumTasks(channel)
+
+
+
 
 	@tasks.loop(hours=24)
 	async def unarchiver(self) -> None :
