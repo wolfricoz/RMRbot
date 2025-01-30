@@ -67,7 +67,7 @@ class ForumAutoMod(ABC) :
 				if count >= maxtags :
 					break
 				counted_tags.append(x)
-				count +=1
+				count += 1
 
 		fm = ', '.join([x.name for x in counted_tags])
 		queue().add(thread.send(
@@ -94,11 +94,15 @@ class ForumAutoMod(ABC) :
 		"""This function is used to bump the post."""
 		utc = pytz.UTC
 		thread: discord.Thread = interaction.channel
-		dcheck = datetime.now() + timedelta(hours=-60)
+		dcheck = datetime.now() + timedelta(hours=-70)
 		bcheck = dcheck.replace(tzinfo=utc)
-		messages = thread.history(after=bcheck, oldest_first=False)
+		messages = thread.history(oldest_first=False)
 		count = 0
 		user_count = 0
+		if "approved" not in [x.name.lower() for x in thread.applied_tags] :
+			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.")
+			return
+
 		if thread.owner_id != interaction.user.id :
 			await interaction.followup.send("You can't bump another's post.")
 			return
@@ -109,23 +113,15 @@ class ForumAutoMod(ABC) :
 				count += 1
 			if count == 1 :
 				pm = m.created_at.replace(tzinfo=utc)
-				if abs(pm - bcheck).total_seconds() / 3600 <= 70 :
-					print("72 hours has passed")
+				if abs(pm - bcheck).total_seconds() / 3600 >= 70 :
 					break
 
 				timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
-				try :
-					await interaction.user.send(
-						f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
-						f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
-				except discord.Forbidden :
-					await interaction.channel.send(
-						f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
-						f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
-
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
-				await interaction.followup.send(f"You've bumped too soon, please wait {timeinfo} hours before bumping again.")
+				await interaction.followup.send(
+					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
+					f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
