@@ -112,7 +112,7 @@ class ForumAutoMod(ABC) :
 				count += 1
 			if count == 1 :
 				pm = m.created_at.replace(tzinfo=utc)
-				if abs(pm - bcheck).total_seconds() / 3600 >= 60 :
+				if abs(pm - bcheck).total_seconds() >= 60 * 3600 :
 					break
 
 				timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
