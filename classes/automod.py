@@ -102,7 +102,6 @@ class ForumAutoMod(ABC) :
 		if "approved" not in [x.name.lower() for x in thread.applied_tags] :
 			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.")
 			return
-
 		if thread.owner_id != interaction.user.id :
 			await interaction.followup.send("You can't bump another's post.")
 			return
@@ -113,7 +112,7 @@ class ForumAutoMod(ABC) :
 				count += 1
 			if count == 1 :
 				pm = m.created_at.replace(tzinfo=utc)
-				if abs(pm - bcheck).total_seconds() / 3600 >= 70 :
+				if abs(pm - bcheck).total_seconds() / 3600 >= 60 :
 					break
 
 				timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
@@ -140,7 +139,7 @@ class ForumAutoMod(ABC) :
 		except Exception as e :
 			logging.error(e)
 		await AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"])
-
+		queue().add(ForumAutoMod.clean_bumps(thread, bot), 0)
 		await interaction.channel.send("Post successfully bumped and awaiting manual review")
 		await interaction.followup.send("You've successfully bumped your post")
 

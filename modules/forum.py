@@ -203,7 +203,6 @@ class Forum(commands.GroupCog, name="forum") :
 			return
 		await interaction.response.defer(ephemeral=True)
 		queue().add(ForumAutoMod.bump(self.bot, interaction), 2)
-		queue().add(ForumAutoMod.clean_bumps(thread, self.bot), 0)
 
 	@app_commands.command(name="close", description="Removes your post from the forum and sends you a copy.")
 	async def close(self, interaction: discord.Interaction) :
