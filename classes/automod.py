@@ -116,8 +116,8 @@ class ForumAutoMod(ABC) :
 				if time_diff > timedelta(hours=hours) :
 					logging.info("Bump allowed")
 					break
-
-				timeinfo = f"{int(time_diff.total_seconds() / 3600)} hours and {int(time_diff.total_seconds() / 60 % 60)} minutes"
+				time_remaining = timedelta(hours=hours) - time_diff
+				timeinfo = f"{int(time_remaining.total_seconds() / 3600)} hours and {int(time_remaining.total_seconds() / 60 % 60)} minutes"
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
 				await interaction.followup.send(
