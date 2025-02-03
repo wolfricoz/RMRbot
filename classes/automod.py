@@ -112,18 +112,18 @@ class ForumAutoMod(ABC) :
 				count += 1
 			if count == 1 :
 				message_time = m.created_at.replace(tzinfo=utc)
-				if current_time - message_time > timedelta(hours=hours):
+				if current_time - message_time > timedelta(hours=hours) :
 					logging.info("Bump allowed")
 					break
-				total_seconds = abs(current_time - message_time).total_seconds()
+				total_seconds = abs((current_time - message_time).total_seconds())
 				hours, remainder = divmod(total_seconds, 3600)
-				minutes = remainder // 60
+				minutes = divmod(remainder, 60)[0]
 				timeinfo = f"last bump: {int(hours)} hours and {int(minutes)} minutes ago"
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
 				await interaction.followup.send(
-					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
-					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')}timediff: {discord.utils.format_dt(message_time, style='R')}")
+					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} before bumping again."
+					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})")
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
