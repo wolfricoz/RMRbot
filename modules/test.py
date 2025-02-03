@@ -73,7 +73,7 @@ class Test(commands.Cog, name="test"):
 
     @commands.command()
     @commands.is_owner()
-    async def emptyforum(self, ctx: discord.Interaction, forum: discord.ForumChannel):
+    async def emptyforum(self, ctx: commands.Context, forum: discord.ForumChannel):
         if ctx.author.id == 188647277181665280:
             for x in forum.threads:
                 print(f"deleting {x}")

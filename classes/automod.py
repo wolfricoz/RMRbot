@@ -114,7 +114,14 @@ class ForumAutoMod(ABC) :
 				pm = m.created_at.replace(tzinfo=utc)
 				if abs(pm - bcheck).total_seconds() >= 60 * 3600 :
 					break
-
+				# Debugging error: Bot flags posts as too soon too bump, eventhough its been 3 days.
+				logging.info(pm)
+				logging.info(pm.strftime('%m/%d/%Y %I:%M %p'))
+				logging.info(bcheck)
+				logging.info(bcheck.strftime('%m/%d/%Y %I:%M %p'))
+				logging.info(m.author.name)
+				logging.info(m.content)
+				logging.info(abs(pm - bcheck).total_seconds())
 				timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
