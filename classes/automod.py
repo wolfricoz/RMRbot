@@ -93,7 +93,7 @@ class ForumAutoMod(ABC) :
 	async def bump(bot, interaction) :
 		"""This function is used to bump the post."""
 		utc = pytz.UTC
-		hours = 60
+		hours = 72
 		thread: discord.Thread = interaction.channel
 		current_time = datetime.now(tz=utc)
 		messages = thread.history(oldest_first=False)
