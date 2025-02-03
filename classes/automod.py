@@ -115,16 +115,10 @@ class ForumAutoMod(ABC) :
 				if current_time - message_time > timedelta(hours=hours):
 					logging.info("Bump allowed")
 					break
-				# Debugging error: Bot flags posts as too soon to bump, even though it's been 3 days.
-				logging.info("Bump not allowed")
-				logging.info(message_time)
-				logging.info(message_time.strftime('%m/%d/%Y %I:%M %p'))
-				logging.info(current_time)
-				logging.info(current_time.strftime('%m/%d/%Y %I:%M %p'))
-				logging.info(m.author.name)
-				logging.info(m.content)
-				logging.info(abs(current_time - message_time).total_seconds())
-				timeinfo = f"last bump: {round(abs(current_time - message_time).total_seconds(), 2)} hours ago"
+				total_seconds = abs(current_time - message_time).total_seconds()
+				hours, remainder = divmod(total_seconds, 3600)
+				minutes = remainder // 60
+				timeinfo = f"last bump: {int(hours)} hours and {int(minutes)} minutes ago"
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
 				await interaction.followup.send(
