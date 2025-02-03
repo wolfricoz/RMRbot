@@ -95,7 +95,7 @@ class ForumAutoMod(ABC) :
 		utc = pytz.UTC
 		hours = 60
 		thread: discord.Thread = interaction.channel
-		current_time = datetime.now().replace(tzinfo=utc)
+		current_time = datetime.now(tz=utc)
 		messages = thread.history(oldest_first=False)
 		count = 0
 		user_count = 0
@@ -112,13 +112,12 @@ class ForumAutoMod(ABC) :
 				count += 1
 			if count == 1 :
 				message_time = m.created_at.replace(tzinfo=utc)
-				if current_time - message_time > timedelta(hours=hours) :
+				time_diff = current_time - message_time
+				if time_diff > timedelta(hours=hours) :
 					logging.info("Bump allowed")
 					break
-				total_seconds = abs((current_time - message_time).total_seconds())
-				hours, remainder = divmod(total_seconds, 3600)
-				minutes = divmod(remainder, 60)[0]
-				timeinfo = f"last bump: {int(hours)} hours and {int(minutes)} minutes ago"
+
+				timeinfo = f"{int(time_diff.total_seconds() / 3600)} hours and {int(time_diff.total_seconds() / 60 % 60)} minutes"
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
 				await interaction.followup.send(
