@@ -93,9 +93,9 @@ class ForumAutoMod(ABC) :
 	async def bump(bot, interaction) :
 		"""This function is used to bump the post."""
 		utc = pytz.UTC
+		hours = 60
 		thread: discord.Thread = interaction.channel
-		dcheck = datetime.now() + timedelta(hours=-70)
-		bcheck = dcheck.replace(tzinfo=utc)
+		current_time = datetime.now().replace(tzinfo=utc)
 		messages = thread.history(oldest_first=False)
 		count = 0
 		user_count = 0
@@ -111,23 +111,25 @@ class ForumAutoMod(ABC) :
 			if m.author.id == bot.application_id :
 				count += 1
 			if count == 1 :
-				pm = m.created_at.replace(tzinfo=utc)
-				if abs(pm - bcheck).total_seconds() >= 60 * 3600 :
+				message_time = m.created_at.replace(tzinfo=utc)
+				if current_time - message_time > timedelta(hours=hours):
+					logging.info("Bump allowed")
 					break
-				# Debugging error: Bot flags posts as too soon too bump, eventhough its been 3 days.
-				logging.info(pm)
-				logging.info(pm.strftime('%m/%d/%Y %I:%M %p'))
-				logging.info(bcheck)
-				logging.info(bcheck.strftime('%m/%d/%Y %I:%M %p'))
+				# Debugging error: Bot flags posts as too soon to bump, even though it's been 3 days.
+				logging.info("Bump not allowed")
+				logging.info(message_time)
+				logging.info(message_time.strftime('%m/%d/%Y %I:%M %p'))
+				logging.info(current_time)
+				logging.info(current_time.strftime('%m/%d/%Y %I:%M %p'))
 				logging.info(m.author.name)
 				logging.info(m.content)
-				logging.info(abs(pm - bcheck).total_seconds())
-				timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
+				logging.info(abs(current_time - message_time).total_seconds())
+				timeinfo = f"last bump: {round(abs(current_time - message_time).total_seconds(), 2)} hours ago"
 				await automod_log(bot, interaction.guild_id,
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
 				await interaction.followup.send(
 					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
-					f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')}timediff: {discord.utils.format_dt(message_time, style='R')}")
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
