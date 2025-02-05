@@ -100,11 +100,13 @@ class ForumAutoMod(ABC) :
 		messages = thread.history(oldest_first=False)
 		count = 0
 		user_count = 0
-		if "approved" not in [x.name.lower() for x in thread.applied_tags] :
+		if "bump" in [x.name.lower() for x in thread.applied_tags] :
 			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.")
+			logging.info("Post not approved yet")
 			return
 		if thread.owner_id != interaction.user.id :
 			await interaction.followup.send("You can't bump another's post.")
+			logging.info("User tried to bump another's post")
 			return
 		if interaction.channel.type != discord.ChannelType.public_thread :
 			return
@@ -117,6 +119,7 @@ class ForumAutoMod(ABC) :
 				if time_diff > timedelta(hours=hours) :
 					logging.info("Bump allowed")
 					break
+				logging.info(f"Cant bump yet with Time diff: {time_diff}")
 				time_remaining = timedelta(hours=hours) - time_diff
 				timeinfo = f"{int(time_remaining.total_seconds() / 3600)} hours and {int(time_remaining.total_seconds() / 60 % 60)} minutes"
 				queue().add(automod_log(bot, interaction.guild_id,

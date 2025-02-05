@@ -197,7 +197,6 @@ class Forum(commands.GroupCog, name="forum") :
 		forums = ForumAutoMod.config(interaction.guild.id)
 		thread: discord.Thread = interaction.guild.get_thread(interaction.channel.id)
 		forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
-		await ForumAutoMod.checktags(thread)
 		if forum.id not in forums :
 			await interaction.response.send_message("Forum not found")
 			return
