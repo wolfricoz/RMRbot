@@ -129,9 +129,9 @@ class ForumAutoMod(ABC) :
 
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
-		og_time = og.created_at.replace(tzinfo=utc)
+		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
 		try :
-			if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0 :
+			if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
 				await AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"])
 				await interaction.channel.send("Post successfully bumped and automatically approved")
 				await automod_log(bot, interaction.guild_id,
