@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import re
 from abc import ABC, abstractmethod
@@ -66,7 +67,7 @@ class AutomodComponents(ABC):
 
     @staticmethod
     @abstractmethod
-    async def change_tags(forum: discord.ForumChannel, thread: discord.Thread, added_tags: str | list, removed_tags: str | list):
+    async def change_tags(forum: discord.ForumChannel, thread: discord.Thread, added_tags: str | list, removed_tags: str | list, verify=False):
         logging.info(f"changing tags for {thread.name} adding {added_tags} and {removed_tags}")
 
         if isinstance(added_tags, str):
@@ -78,3 +79,11 @@ class AutomodComponents(ABC):
                 queue().add(thread.add_tags(a))
             if a.name.lower() in removed_tags:
                 queue().add(thread.remove_tags(a))
+
+        if not verify:
+            return
+        await asyncio.sleep(3)
+        if isinstance(added_tags, list):
+            added_tags = added_tags[0]
+        if added_tags.lower() not in [x.name.lower() for x in thread.applied_tags]:
+            queue().add(AutomodComponents.change_tags(forum, thread, added_tags, removed_tags, verify=False))

@@ -13,6 +13,7 @@ from discord.ext import commands
 from classes.Advert import Advert
 from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
+from classes.Support.discord_tools import send_message
 from classes.databaseController import ConfigData
 from classes.queue import queue
 
@@ -93,18 +94,19 @@ class ForumAutoMod(ABC) :
 	async def bump(bot, interaction) :
 		"""This function is used to bump the post."""
 		utc = pytz.UTC
+		hours = 72
 		thread: discord.Thread = interaction.channel
-		dcheck = datetime.now() + timedelta(hours=-70)
-		bcheck = dcheck.replace(tzinfo=utc)
+		current_time = datetime.now(tz=utc)
 		messages = thread.history(oldest_first=False)
 		count = 0
 		user_count = 0
-		if "approved" not in [x.name.lower() for x in thread.applied_tags] :
+		if "bump" in [x.name.lower() for x in thread.applied_tags] :
 			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.")
+			logging.info("Post not approved yet")
 			return
-
 		if thread.owner_id != interaction.user.id :
 			await interaction.followup.send("You can't bump another's post.")
+			logging.info("User tried to bump another's post")
 			return
 		if interaction.channel.type != discord.ChannelType.public_thread :
 			return
@@ -112,37 +114,42 @@ class ForumAutoMod(ABC) :
 			if m.author.id == bot.application_id :
 				count += 1
 			if count == 1 :
-				pm = m.created_at.replace(tzinfo=utc)
-				if abs(pm - bcheck).total_seconds() / 3600 >= 70 :
+				message_time = m.created_at.replace(tzinfo=utc)
+				time_diff = current_time - message_time
+				if time_diff > timedelta(hours=hours) :
+					logging.info("Bump allowed")
 					break
-
-				timeinfo = f"last bump: {round(abs(pm - bcheck).total_seconds() / 3600, 2)} hours ago"
-				await automod_log(bot, interaction.guild_id,
-				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog")
+				logging.info(f"Cant bump yet with Time diff: {time_diff}")
+				time_remaining = timedelta(hours=hours) - time_diff
+				timeinfo = f"{int(time_remaining.total_seconds() / 3600)} hours and {int(time_remaining.total_seconds() / 60 % 60)} minutes"
+				queue().add(automod_log(bot, interaction.guild_id,
+				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog"))
 				await interaction.followup.send(
-					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} hours before bumping again."
-					f"\nLast bump: {discord.utils.format_dt(pm, style='f')}timediff: {discord.utils.format_dt(pm, style='R')}")
+					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} before bumping again."
+					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})")
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
 
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
-		og_time = og.created_at.replace(tzinfo=utc)
+		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
 		try :
-			if og_time is not None and og_time <= bcheck and user_count <= 0 or og_time is None and user_count <= 0 :
-				await AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"])
-				await interaction.channel.send("Post successfully bumped and automatically approved")
-				await automod_log(bot, interaction.guild_id,
+			if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
+				queue().add(AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"], verify=True))
+				queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
+				queue().add(automod_log(bot, interaction.guild_id,
 				                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
-				                  "automodlog", message_type="Approval")
+				                  "automodlog", message_type="Approval"))
+				await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+
 				return
 		except Exception as e :
 			logging.error(e)
-		await AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"])
-
-		await interaction.channel.send("Post successfully bumped and awaiting manual review")
-		await interaction.followup.send("You've successfully bumped your post")
+		queue().add(AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"], verify=True))
+		queue().add(ForumAutoMod.clean_bumps(thread, bot), 0)
+		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
+		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
 
 	@staticmethod
 	@abstractmethod

@@ -197,13 +197,11 @@ class Forum(commands.GroupCog, name="forum") :
 		forums = ForumAutoMod.config(interaction.guild.id)
 		thread: discord.Thread = interaction.guild.get_thread(interaction.channel.id)
 		forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
-		await ForumAutoMod.checktags(thread)
 		if forum.id not in forums :
 			await interaction.response.send_message("Forum not found")
 			return
 		await interaction.response.defer(ephemeral=True)
 		queue().add(ForumAutoMod.bump(self.bot, interaction), 2)
-		queue().add(ForumAutoMod.clean_bumps(thread, self.bot), 0)
 
 	@app_commands.command(name="close", description="Removes your post from the forum and sends you a copy.")
 	async def close(self, interaction: discord.Interaction) :
