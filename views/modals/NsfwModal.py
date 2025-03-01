@@ -72,9 +72,8 @@ class NsfwVerifyModal(discord.ui.Modal):
         idchannel = interaction.guild.get_channel(idlog)
         age = self.age.value
         # validates inputs with regex
-        if await AgeCalculations.infocheck(interaction, age, self.dateofbirth.value, channel, "NSFW") is False:
+        if dob := await AgeCalculations.infocheck(interaction, age, self.dateofbirth.value, channel, "NSFW") is False:
             return
-        dob = self.dateofbirth.value.replace("-", "/").replace(".", "/")
 
         print(dob)
         # Checks if date of birth and age match
