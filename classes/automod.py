@@ -145,8 +145,8 @@ class ForumAutoMod(ABC) :
 				return
 		except Exception as e :
 			logging.error(e)
+		queue().add(ForumAutoMod.clean_bumps(thread, bot), 2)
 		queue().add(AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"], verify=True))
-		queue().add(ForumAutoMod.clean_bumps(thread, bot), 0)
 		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
 		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
 
