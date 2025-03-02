@@ -129,6 +129,8 @@ class ForumAutoMod(ABC) :
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
+		queue().add(ForumAutoMod.clean_bumps(thread, bot), 2)
+
 
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
@@ -137,6 +139,7 @@ class ForumAutoMod(ABC) :
 			if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
 				queue().add(AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"], verify=True))
 				queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
+
 				queue().add(automod_log(bot, interaction.guild_id,
 				                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
 				                  "automodlog", message_type="Approval"))
@@ -145,7 +148,6 @@ class ForumAutoMod(ABC) :
 				return
 		except Exception as e :
 			logging.error(e)
-		queue().add(ForumAutoMod.clean_bumps(thread, bot), 2)
 		queue().add(AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"], verify=True))
 		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
 		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
