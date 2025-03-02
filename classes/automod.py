@@ -33,10 +33,12 @@ class ForumAutoMod(ABC) :
 	async def clean_bumps(thread: discord.Thread, bot: commands.Bot) :
 		before = datetime.now() - timedelta(days=3)
 		count = 0
-		message = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if m.author.id == bot.user.id]
-		for m in message :
+		messages = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if m.author.id == bot.user.id]
+		logging.info(f"Found {len(messages)} bump messages in {thread.name}")
+		logging.info(messages)
+		for m in messages :
 			logging.info(f"Deleting bump message in {thread.name}")
-			queue().add(m.delete(), 0)
+			queue().add(m.delete(), 2)
 			count += 1
 		logging.info(f"Queued {count} bump messages for deletion in {thread.name}")
 
