@@ -41,10 +41,10 @@ class AutomodComponents(ABC):
 
     @staticmethod
     @abstractmethod
-    async def tags(thread, forum, message):
+    async def tags(thread: discord.Thread, forum: discord.ForumChannel, message: discord.Message):
         skip = ['New', 'Approved', 'Bump']
         matched = []
-        count = 0
+        count = len(thread.applied_tags)
         for r in forum.available_tags:
             limitreg = re.compile(fr"(limit.*?{r}|no.*?{r}|dont.*?{r}|don\'t.*?{r})", flags=re.I)
             limitmatch = limitreg.search(message.content)
@@ -52,7 +52,7 @@ class AutomodComponents(ABC):
                 continue
             if r.name in skip:
                 pass
-            if count >= 3:
+            if count >= 4:
                 break
             tagreg = re.compile(rf"{r.name}", flags=re.I)
             match = tagreg.search(message.content)

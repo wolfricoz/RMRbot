@@ -77,7 +77,7 @@ class ForumTasks :
 		if message is None:
 			logging.info(
 				f"Deleting thread {thread.name} from {self.forum.name} in {thread.guild.name} as the starter message is missing or because the author has left..")
-			queue().add(delete_message(message))
+			queue().add(delete_message(thread))
 
 	async def check_abandoned_status(self, thread):
 		count = 0

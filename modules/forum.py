@@ -38,7 +38,6 @@ class Forum(commands.GroupCog, name="forum") :
 			return
 
 		# Checks if there is space for new tags
-		queue().add(ForumAutoMod.checktags(thread))
 
 		msg: discord.Message = await ForumAutoMod.get_message(thread)
 		if msg is None :
@@ -110,18 +109,9 @@ class Forum(commands.GroupCog, name="forum") :
 			await modchannel.send(
 				f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
 				f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
-			for a in forum.available_tags :
-				if a.name.lower() == "new" :
-					queue().add(thread.remove_tags(a))
-				if a.name.lower() == "waiting" :
-					queue().add(thread.add_tags(a))
+			await ForumAutoMod.change_status_tag(thread, ["waiting"])
 			return
-		await ForumAutoMod.checktags(thread)
-		for a in forum.available_tags :
-			if a.name.lower() == "new" :
-				queue().add(thread.remove_tags(a))
-			if a.name.lower() == "approved" :
-				queue().add(thread.add_tags(a))
+		await ForumAutoMod.change_status_tag(thread, ["approved"])
 
 	@commands.Cog.listener()
 	async def on_message(self, message) :

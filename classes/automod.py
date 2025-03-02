@@ -41,20 +41,17 @@ class ForumAutoMod(ABC) :
 
 	@staticmethod
 	@abstractmethod
-	async def add_status_tags(forum, thread, tag="new") -> discord.ForumTag :
-		"""This function is used to add the status tags to a forum post."""
+	async def get_status_tags(forum, thread, tag="new") -> discord.ForumTag :
+		"""This function is used to find the status tags in the forum."""
 		for a in forum.available_tags :
 			if a.name.lower() == tag.lower() :
-				# logging.info(f"New tag added to {thread.name} for {thread.name}")
 				return a
 
 	@staticmethod
 	@abstractmethod
 	async def add_relevant_tags(forum, thread, msg) :
-		if len(thread.applied_tags) >= 5 :
-			print("too many tags")
 		matched = await AutomodComponents.tags(thread, forum, msg)
-		counted_tags = [await ForumAutoMod.add_status_tags(forum, thread)]
+		counted_tags = [await ForumAutoMod.get_status_tags(forum, thread)]
 		if matched :
 			count = 0
 			maxtags = 5 - len(thread.applied_tags) + len(counted_tags)
@@ -72,12 +69,32 @@ class ForumAutoMod(ABC) :
 		queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
 		logging.info(f"[role change] added {', '.join([x.name for x in counted_tags])}")
 
+
+	@staticmethod
+	@abstractmethod
+	async def change_status_tag(thread: discord.Thread, tags=("new")) :
+		"""This function checks if there is space for the status tag, if not it removes one of the other tags"""
+		tags = thread.applied_tags
+		status = ["new", "approved", "bump"]
+		remove_tags = []
+		for r in status :
+			if r in tags :
+				remove_tags.append(r)
+		if not remove_tags and len(tags) >= 5 :
+			remove_tags.append(tags[0])
+		await AutomodComponents.change_tags(
+			thread.parent,
+			thread,
+			tags,
+			remove_tags
+		)
+
+
 	@staticmethod
 	@abstractmethod
 	async def info(thread) :
 		"""This to remind users about the bumping rules"""
 		# This module needs to be fixed; keeps adding too much tags.
-		await ForumAutoMod.checktags(thread)
 		botmessage = await thread.send(
 			f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
 			f"\n\n"
@@ -187,21 +204,7 @@ class ForumAutoMod(ABC) :
 			except Exception as e :
 				logging.error(e)
 
-	@staticmethod
-	@abstractmethod
-	async def checktags(thread) :
-		"""This function is used to check the tags."""
-		tags = thread.applied_tags
-		remove = ["new", "approved", "bump"]
-		found = False
-		if len(tags) == 5 :
-			for tag in tags :
-				if tag.name.lower() in remove :
-					await thread.remove_tags(tag)
-					logging.info(f"Removed tag {tag.name} for {thread.name}")
-					found = True
-			if not found :
-				await thread.remove_tags(tags[0])
+
 
 	@staticmethod
 	@abstractmethod

@@ -36,7 +36,7 @@ class contextmenus(commands.Cog, name="contextmenus"):
             thread = message.channel
         tags = [x.name for x in thread.applied_tags]
         forum = bot.get_channel(thread.parent_id)
-        await ForumAutoMod.checktags(thread)
+        await ForumAutoMod.change_status_tag(thread)
         if "New" in tags:
             for a in forum.available_tags:
                 if a.name == "New":
