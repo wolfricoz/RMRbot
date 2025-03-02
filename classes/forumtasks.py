@@ -12,6 +12,7 @@ from classes import permissions
 from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import delete_message, fetch_message_or_none, send_message
+from classes.TagController import TagController
 from classes.queue import queue
 
 
@@ -49,37 +50,31 @@ class ForumTasks :
 		tags = [tag.name.lower() for tag in thread.applied_tags]
 		result = list({'new', 'approved', 'bump'}.intersection(tags))
 		if not any(result) :
-			queue().add(AutomodComponents.change_tags(self.forum, thread, "new", ["approved", "bump"]))
-
-
+			queue().add(TagController().change_tags(self.forum, thread, "new", ["approved", "bump"]))
 
 	async def cleanup_forum(self, thread: discord.Thread) :
 		logging.info("Cleaning up the forum")
-		if self.check_user(thread.owner) is None:
+		if self.check_user(thread.owner) is None :
 			logging.info(f"{thread.name}'s user left, cleaning up")
 			queue().add(thread.delete())
 			return
 
-
-
-
-	def check_user(self, member: discord.Member) -> None | discord.Member:
-		if member is None:
+	def check_user(self, member: discord.Member) -> None | discord.Member :
+		if member is None :
 			return None
-		if member.id not in self.members:
+		if member.id not in self.members :
 			return None
 		return member
-
 
 	async def check_post(self, thread) :
 		"""Check if the main message still exists, if not it deletes the post"""
 		message = await fetch_message_or_none(thread, thread.id)
-		if message is None:
+		if message is None :
 			logging.info(
 				f"Deleting thread {thread.name} from {self.forum.name} in {thread.guild.name} as the starter message is missing or because the author has left..")
 			queue().add(delete_message(thread))
 
-	async def check_abandoned_status(self, thread):
+	async def check_abandoned_status(self, thread) :
 		count = 0
 		pattern = r"<@\d+> Your advert has been reopened after discord archived it\."
 
@@ -111,7 +106,7 @@ class ForumTasks :
 	async def send_reminder(self, archived_thread) :
 		post_reminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
 		try :
-			if permissions.check_admin(archived_thread.owner):
+			if permissions.check_admin(archived_thread.owner) :
 				try :
 					message = await archived_thread.send(post_reminder)
 					queue().add(message.delete(), priority=0)
