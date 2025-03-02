@@ -33,14 +33,11 @@ class ForumAutoMod(ABC) :
 	async def clean_bumps(thread: discord.Thread, bot: commands.Bot) :
 		before = datetime.now() - timedelta(days=3)
 		count = 0
-		async for m in thread.history(limit=1000, before=before, oldest_first=True) :
-
-			if m.author.id == bot.user.id :
-				if m.content.startswith("Thank you for posting") or m.embeds :
-					logging.info(f"Ignoring starting message in {thread.name}")
-					continue
-				queue().add(m.delete(), 0)
-				count += 1
+		message = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if m.author.id == bot.user.id]
+		for m in message :
+			logging.info(f"Deleting bump message in {thread.name}")
+			queue().add(m.delete(), 0)
+			count += 1
 		logging.info(f"Queued {count} bump messages for deletion in {thread.name}")
 
 	@staticmethod
