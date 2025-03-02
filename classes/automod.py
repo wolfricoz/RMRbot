@@ -33,14 +33,11 @@ class ForumAutoMod(ABC) :
 	async def clean_bumps(thread: discord.Thread, bot: commands.Bot) :
 		before = datetime.now() - timedelta(days=3)
 		count = 0
-		messages = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if m.author.id == bot.user.id]
+		messages = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if m.author.id == bot.user.id and m.content.lower().startswith("post successfully bumped")]
 		logging.info(f"Found {len(messages)} bump messages in {thread.name}")
-		logging.info(messages)
 		for m in messages :
-			logging.info(f"Deleting bump message in {thread.name}")
 			queue().add(m.delete(), 2)
 			count += 1
-		logging.info(f"Queued {count} bump messages for deletion in {thread.name}")
 
 	@staticmethod
 	@abstractmethod
@@ -137,7 +134,7 @@ class ForumAutoMod(ABC) :
 		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
 		try :
 			if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
-				queue().add(AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"], verify=True))
+				queue().add(AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"], verify=True), 2)
 				queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
 
 				queue().add(automod_log(bot, interaction.guild_id,
@@ -148,7 +145,7 @@ class ForumAutoMod(ABC) :
 				return
 		except Exception as e :
 			logging.error(e)
-		queue().add(AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"], verify=True))
+		queue().add(AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"], verify=True), 2)
 		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
 		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
 
