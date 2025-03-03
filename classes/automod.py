@@ -43,15 +43,13 @@ class ForumAutoMod(ABC) :
 
 	@staticmethod
 	@abstractmethod
-	async def add_relevant_tags(forum, thread, msg) :
-		matched = await TagController().find_tags_in_content(thread, forum, msg)
-		counted_tags = [await TagController().get_status_tags(forum, thread)]
-		await TagController().change_status_tag(thread)
-		await TagController().change_tags(forum, thread, matched)
+	async def add_relevant_tags(forum, thread, msg, status = "new") :
+		matched = [tag.name for tag in await TagController().find_tags_in_content(thread, forum, msg)]
+		matched.append(status)
+		queue().add(TagController().change_tags(forum, thread, matched))
 		fm = ", ".join(matched)
 		queue().add(thread.send(
 			f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
-		queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
 
 
 
@@ -114,20 +112,19 @@ class ForumAutoMod(ABC) :
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
 		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
-		try :
-			if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
-				queue().add(TagController().change_tags(forum, thread, "approved", ["bump", "new"], verify=True), 2)
-				queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
 
-				queue().add(automod_log(bot, interaction.guild_id,
-				                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
-				                  "automodlog", message_type="Approval"))
-				await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+		if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
+			queue().add(TagController().change_status_tag(thread, ["approved"]), 2)
+			queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
 
-				return
-		except Exception as e :
-			logging.error(e)
-		queue().add(TagController().change_tags(forum, thread, "bump", ["approved", "new"], verify=True), 2)
+			queue().add(automod_log(bot, interaction.guild_id,
+			                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
+			                  "automodlog", message_type="Approval"))
+			await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+
+			return
+
+		queue().add(TagController().change_status_tag(thread, ["bump"]), 2)
 		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
 		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
 

@@ -28,6 +28,7 @@ class ForumTasks :
 
 	async def start(self) :
 		"""This starts the checking of the forum and will walk through all the tasks."""
+		logging.info(f"Starting forum tasks for {self.forum.name} in {self.forum.guild.name}")
 		await self.recover_archived_posts()
 		for thread in self.threads :
 			queue().add(self.cleanup_forum(thread), priority=0)
