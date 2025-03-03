@@ -13,3 +13,4 @@ discord.py>=2.4.0
 cryptography>=44.0.0
 
 SQLAlchemy-Utils>=0.41.2
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
