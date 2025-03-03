@@ -31,9 +31,9 @@ class ForumTasks :
 		logging.info(f"Starting forum tasks for {self.forum.name} in {self.forum.guild.name}")
 		await self.recover_archived_posts()
 		for thread in self.threads :
-			queue().add(self.cleanup_forum(thread), priority=0)
 			queue().add(self.check_status_tag(thread), priority=0)
 			queue().add(self.check_abandoned_status(thread), priority=0)
+			queue().add(self.cleanup_forum(thread), priority=0)
 
 	async def recover_archived_posts(self) :
 		"""Loop through archived posts and send a reminder there."""
@@ -57,6 +57,10 @@ class ForumTasks :
 		logging.info("Cleaning up the forum")
 		if self.check_user(thread.owner) is None :
 			logging.info(f"{thread.name}'s user left, cleaning up")
+			queue().add(thread.delete())
+		message = await fetch_message_or_none(thread, thread.id)
+		if message is None :
+			logging.info(f"{thread.name}'s main message was deleted, cleaning up")
 			queue().add(thread.delete())
 			return
 
