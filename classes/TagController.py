@@ -1,11 +1,17 @@
 """In this file all ForumTag related functions will be stored, this includes the creation of tags, the deletion of tags, the editing of tags, and the checking of tags. This file will also contain the TagController class which will be used to create new tag types."""
-
+import logging
 from abc import ABC, abstractmethod
-from discord import ForumChannel, ForumTag, Thread
+import re
+
+from discord import ForumChannel, ForumTag, Message, Thread
+
+from classes.queue import queue
 
 
 class TagController():
+	"""This class is used to handle the tags for the forums."""
 
+	# WARNING: You can only apply tags once in the same function, otherwise it'll overwrite the previous tag.
 
 	async def get_status_tags(self, forum: ForumChannel, tags: list = ("new", "approved", "bump")) -> list[ForumTag] :
 		"""This function is used to find the status tags in the forum."""
@@ -18,37 +24,74 @@ class TagController():
 
 	async def change_status_tag(self, thread: Thread, tags: list =("new")) :
 		"""This function checks if there is space for the status tag, if not it removes one of the other tags"""
-		tags = thread.applied_tags
-		remove_tags = self.get_status_tags(thread.parent)
-		if not remove_tags and len(tags) >= 5 :
-			remove_tags = [tags[0]]
-		await AutomodComponents.change_tags(
+		remove_tags = [status for status in ["new", "approved", "bump"] if status not in tags]
+		applied_tags = thread.applied_tags
+		if not remove_tags and len(applied_tags) >= 5 :
+			remove_tags = [applied_tags[0]]
+		await self.change_tags(
 			thread.parent,
 			thread,
 			tags,
 			remove_tags
 		)
 
-	@staticmethod
-	@abstractmethod
-	async def change_tags(forum: discord.ForumChannel, thread: discord.Thread, added_tags: str | list,
-	                      removed_tags: str | list, verify=False) :
+	async def change_tags(self, forum: ForumChannel, thread: Thread, added_tags: str | list[str],
+	                      removed_tags: str | list[str] = ()) :
+		apply = []
+		remove = []
 		logging.info(f"changing tags for {thread.name} adding {added_tags} and {removed_tags}")
-
+		if len(thread.applied_tags) >= 5:
+			logging.info(f"Too many tags for {thread.name}")
+			return
 		if isinstance(added_tags, str) :
 			added_tags = added_tags.lower().split()
 		if isinstance(removed_tags, str) :
 			removed_tags = removed_tags.lower().split()
+		added_tags = [a.lower() for a in added_tags]
+		removed_tags = [a.lower() for a in removed_tags]
 		for a in forum.available_tags :
 			if a.name.lower() in added_tags :
-				queue().add(thread.add_tags(a))
+				apply.append(a)
 			if a.name.lower() in removed_tags :
-				queue().add(thread.remove_tags(a))
+				remove.append(a)
+		queue().add(self.add_tags(thread, apply))
+		queue().add(self.remove_tags(thread, remove))
+		logging.info(f"Tags changed for {thread.name}")
 
-		if not verify :
+	async def find_tags_in_content(self, thread: Thread, forum: ForumChannel, message: Message) :
+		skip = ['New', 'Approved', 'Bump']
+		matched = []
+		count = len(thread.applied_tags)
+		for r in forum.available_tags :
+			limitreg = re.compile(fr"(limit.*?{r}|no.*?{r}|dont.*?{r}|don\'t.*?{r})", flags=re.I)
+			limitmatch = limitreg.search(message.content)
+			if limitmatch :
+				continue
+			if r.name in skip :
+				pass
+			if count >= 4 :
+				break
+			tagreg = re.compile(rf"{r.name}", flags=re.I)
+			match = tagreg.search(message.content)
+			matcht = tagreg.search(thread.name)
+			if match :
+				matched.append(r)
+				count += 1
+			if matcht :
+				matched.append(r)
+				count += 1
+		return matched
+
+	async def add_tags(self, thread,  tags: list[ForumTag]):
+		if not tags or len(tags) < 1:
 			return
-		await asyncio.sleep(3)
-		if isinstance(added_tags, list) :
-			added_tags = added_tags[0]
-		if added_tags.lower() not in [x.name.lower() for x in thread.applied_tags] :
-			queue().add(AutomodComponents.change_tags(forum, thread, added_tags, removed_tags, verify=False))
+		logging.info(f"Adding tags {', '.join([tag.name for tag in tags])} to {thread.name}")
+		tags.extend(thread.applied_tags)
+		queue().add(thread.add_tags(*tags[:5]))
+
+	async def remove_tags(self, thread, tags: list[ForumTag]):
+		if not tags or len(tags) < 1:
+			return
+		logging.info(f"Removing tags {', '.join([tag.name for tag in tags])} from {thread.name}")
+		queue().add(thread.remove_tags(*tags))
+

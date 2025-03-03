@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from classes.Advert import Advert
+from classes.TagController import TagController
 from classes.automod import ForumAutoMod
 from views.modals.custom import Custom
 
@@ -34,26 +35,10 @@ class contextmenus(commands.Cog, name="contextmenus"):
             await interaction.followup.send("You can't approve outside of forums.")
         elif message.channel.type is discord.ChannelType.public_thread:
             thread = message.channel
-        tags = [x.name for x in thread.applied_tags]
-        forum = bot.get_channel(thread.parent_id)
-        await ForumAutoMod.change_status_tag(thread)
-        if "New" in tags:
-            for a in forum.available_tags:
-                if a.name == "New":
-                    await thread.remove_tags(a)
-            await interaction.followup.send("Post successfully approved")
-        elif "Bump" in tags:
+        await TagController().change_status_tag(thread, ["approved"])
 
-            for a in forum.available_tags:
-                if a.name == "Bump":
-                    await thread.remove_tags(a)
 
-            await interaction.followup.send("bump successfully approved")
-        else:
-            await interaction.followup.send("Post successfully approved")
-        for a in forum.available_tags:
-            if a.name == "Approved":
-                await thread.add_tags(a)
+        await interaction.followup.send("bump successfully approved")
         ForumAutoMod.approval_log(interaction)
 
     async def appcustom(self, interaction: discord.Interaction,

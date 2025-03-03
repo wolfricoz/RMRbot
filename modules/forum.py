@@ -14,6 +14,7 @@ import classes.permissions as permissions
 from classes.Advert import Advert
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message, send_response
+from classes.TagController import TagController
 from classes.automod import ForumAutoMod
 from classes.databaseController import ConfigData
 from classes.queue import queue
@@ -109,9 +110,9 @@ class Forum(commands.GroupCog, name="forum") :
 			await modchannel.send(
 				f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
 				f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
-			await ForumAutoMod.change_status_tag(thread, ["waiting"])
+			await TagController().change_status_tag(thread, ["waiting"])
 			return
-		await ForumAutoMod.change_status_tag(thread, ["approved"])
+		await TagController().change_status_tag(thread, ["approved"])
 
 	@commands.Cog.listener()
 	async def on_message(self, message) :

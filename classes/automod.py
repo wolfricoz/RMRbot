@@ -14,6 +14,7 @@ from classes.Advert import Advert
 from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
+from classes.TagController import TagController
 from classes.databaseController import ConfigData
 from classes.queue import queue
 
@@ -39,55 +40,17 @@ class ForumAutoMod(ABC) :
 			queue().add(m.delete(), 2)
 			count += 1
 
-	@staticmethod
-	@abstractmethod
-	async def get_status_tags(forum, thread, tag="new") -> discord.ForumTag :
-		"""This function is used to find the status tags in the forum."""
-		for a in forum.available_tags :
-			if a.name.lower() == tag.lower() :
-				return a
 
 	@staticmethod
 	@abstractmethod
-	async def add_relevant_tags(forum, thread, msg) :
-		matched = await AutomodComponents.tags(thread, forum, msg)
-		counted_tags = [await ForumAutoMod.get_status_tags(forum, thread)]
-		if matched :
-			count = 0
-			maxtags = 5 - len(thread.applied_tags) + len(counted_tags)
-			for x in matched :
-				if x in thread.applied_tags :
-					continue
-				if count >= maxtags :
-					break
-				counted_tags.append(x)
-				count += 1
-
-		fm = ', '.join([x.name for x in counted_tags])
+	async def add_relevant_tags(forum, thread, msg, status = "new") :
+		matched = [tag.name for tag in await TagController().find_tags_in_content(thread, forum, msg)]
+		matched.append(status)
+		queue().add(TagController().change_tags(forum, thread, matched))
+		fm = ", ".join(matched)
 		queue().add(thread.send(
 			f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
-		queue().add(thread.add_tags(*counted_tags, reason=f"Automod applied {fm}"))
-		logging.info(f"[role change] added {', '.join([x.name for x in counted_tags])}")
 
-
-	@staticmethod
-	@abstractmethod
-	async def change_status_tag(thread: discord.Thread, tags=("new")) :
-		"""This function checks if there is space for the status tag, if not it removes one of the other tags"""
-		tags = thread.applied_tags
-		status = ["new", "approved", "bump"]
-		remove_tags = []
-		for r in status :
-			if r in tags :
-				remove_tags.append(r)
-		if not remove_tags and len(tags) >= 5 :
-			remove_tags.append(tags[0])
-		await AutomodComponents.change_tags(
-			thread.parent,
-			thread,
-			tags,
-			remove_tags
-		)
 
 
 	@staticmethod
@@ -149,20 +112,19 @@ class ForumAutoMod(ABC) :
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
 		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
-		try :
-			if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
-				queue().add(AutomodComponents.change_tags(forum, thread, "approved", ["bump", "new"], verify=True), 2)
-				queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
 
-				queue().add(automod_log(bot, interaction.guild_id,
-				                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
-				                  "automodlog", message_type="Approval"))
-				await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+		if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
+			queue().add(TagController().change_status_tag(thread, ["approved"]), 2)
+			queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
 
-				return
-		except Exception as e :
-			logging.error(e)
-		queue().add(AutomodComponents.change_tags(forum, thread, "bump", ["approved", "new"], verify=True), 2)
+			queue().add(automod_log(bot, interaction.guild_id,
+			                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
+			                  "automodlog", message_type="Approval"))
+			await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+
+			return
+
+		queue().add(TagController().change_status_tag(thread, ["bump"]), 2)
 		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
 		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
 
