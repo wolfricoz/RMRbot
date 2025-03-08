@@ -54,8 +54,8 @@ class TagController():
 				apply.append(a)
 			if a.name.lower() in removed_tags :
 				remove.append(a)
-		queue().add(self.add_tags(thread, apply))
 		queue().add(self.remove_tags(thread, remove))
+		queue().add(self.add_tags(thread, apply))
 		logging.info(f"Tags changed for {thread.name}")
 
 	async def find_tags_in_content(self, thread: Thread, forum: ForumChannel, message: Message) :
