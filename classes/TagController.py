@@ -40,9 +40,6 @@ class TagController():
 		apply = []
 		remove = []
 		logging.info(f"changing tags for {thread.name} adding {added_tags} and {removed_tags}")
-		if len(thread.applied_tags) >= 5:
-			logging.info(f"Too many tags for {thread.name}")
-			return
 		if isinstance(added_tags, str) :
 			added_tags = added_tags.lower().split()
 		if isinstance(removed_tags, str) :
@@ -85,12 +82,15 @@ class TagController():
 	async def add_tags(self, thread,  tags: list[ForumTag]):
 		if not tags or len(tags) < 1:
 			return
-		logging.info(f"Adding tags {', '.join([tag.name for tag in tags])} to {thread.name}")
-		tags.extend(thread.applied_tags)
-		queue().add(thread.add_tags(*tags[:5]))
+		if len(thread.applied_tags) >= 5:
+			logging.info(f"too many tags for {thread.name}, removing {len(tags)} tags")
+			await self.remove_tags(thread, thread.applied_tags[:len(tags)])
+		logging.info(f"adding {', '.join([tag.name for tag in tags])} tags for {thread.name}")
+		queue().add(thread.add_tags(*tags))
 
 	async def remove_tags(self, thread, tags: list[ForumTag]):
 		if not tags or len(tags) < 1:
+			logging.info("No tags were supplied to remove")
 			return
 		logging.info(f"Removing tags {', '.join([tag.name for tag in tags])} from {thread.name}")
 		queue().add(thread.remove_tags(*tags))

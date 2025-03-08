@@ -30,8 +30,8 @@ class Users(Base):
     __tablename__ = "users"
     uid: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     entry: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    date_of_birth: Mapped[Optional[str]]
-    server: Mapped[Optional[str]]
+    date_of_birth: Mapped[Optional[str]] = mapped_column(String(4096))
+    server: Mapped[Optional[str]] = mapped_column(String(4096))
     warnings: Mapped[List["Warnings"]] = relationship(cascade="save-update, merge, delete, delete-orphan")
     id: Mapped["IdVerification"] = relationship(back_populates="user", cascade="save-update, merge, delete, delete-orphan")
 
