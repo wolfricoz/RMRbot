@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from classes.Advert import Advert
 from classes.TagController import TagController
-from classes.automod import ForumAutoMod
+from classes.automod import AutoMod
 from views.modals.custom import Custom
 
 
@@ -39,7 +39,7 @@ class contextmenus(commands.Cog, name="contextmenus"):
 
 
         await interaction.followup.send("bump successfully approved")
-        ForumAutoMod.approval_log(interaction)
+        AutoMod.approval_log(interaction)
 
     async def appcustom(self, interaction: discord.Interaction,
                         message: discord.Message) -> None:

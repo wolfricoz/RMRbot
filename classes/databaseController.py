@@ -507,7 +507,6 @@ class SearchWarningTransactions(ABC):
         userdata = session.scalars(Select(Warnings).where(Warnings.uid == userid, Warnings.type == "SEARCH")).all()
         session.close()
         for x in userdata:
-            print(x.id)
             if monthsago < x.entry:
                 active += 1
             total += 1

@@ -4,8 +4,10 @@ import logging
 import os
 import re
 import typing
+from datetime import datetime, timedelta
 
 import discord
+import pytz
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
@@ -15,9 +17,11 @@ from classes.Advert import Advert
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message, send_response
 from classes.TagController import TagController
-from classes.automod import ForumAutoMod
-from classes.databaseController import ConfigData
+from classes.automod import AutoMod
+from classes.databaseController import ConfigData, TimersTransactions
+from classes.moduser import ModUser
 from classes.queue import queue
+from classes.searchbans import add_search_ban, warning_count_check
 from views.buttons.confirmButtons import confirmAction
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
@@ -32,46 +36,58 @@ class Forum(commands.GroupCog, name="forum") :
 	async def on_thread_create(self, thread: discord.Thread) :
 		"""Initiates automod to check the thread"""
 		# gets the config
-		forums = ForumAutoMod.config(guildid=thread.guild.id)
+		forums = AutoMod.config(guildid=thread.guild.id)
 		bot = self.bot
 		forum_channel = bot.get_channel(thread.parent_id)
 		if forum_channel.id not in forums :
 			return
 
 		# Checks if there is space for new tags
-
-		msg: discord.Message = await ForumAutoMod.get_message(thread)
+		msg: discord.Message = await AutoMod.get_message(thread)
 		if msg is None :
 			queue().add(automod_log(bot, thread.guild.id,
 			                        f"Message not found in {thread.name} posted by {thread.owner.mention}", "automodlog"),
 			            priority=0)
-			queue().add(ForumAutoMod.reminder(thread, thread.guild.id))
+			queue().add(AutoMod.reminder(thread, thread.guild.id))
 			return
 
-		header_status = await ForumAutoMod.check_header(msg, thread)
-		duplicate_status = await ForumAutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)
-		if header_status :
+		header_status = await AutoMod.check_header(msg, thread)
+		duplicate_status = await AutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)
+		if header_status and isinstance(header_status, bool) :
 			queue().add(automod_log(bot, thread.guild.id,
-			                        f"Header not found in `{thread.name}` posted by {thread.owner.mention}", "automodlog"),
+			                        f"Header not found in `{thread.name}` posted by {thread.owner.mention} and has been removed",
+			                        "automodlog"),
 			            priority=0)
 			return
+		if header_status and isinstance(header_status, int) :
+			mod_channel = bot.get_channel(ConfigData().get_key_int(thread.guild.id, 'advertmod'))
+
+			queue().add(send_message(mod_channel,
+			                         f"{thread.owner.mention} posted an advert with the the character age **{header_status}** in {thread.jump_url}.", ),
+			            priority=0)
 		if duplicate_status :
 			queue().add(automod_log(bot, thread.guild.id,
 			                        f"{thread.name} is a duplicate of {duplicate_status.channel.mention} ", "automodlog"),
 			            priority=0)
 			return
-		queue().add(ForumAutoMod.reminder(thread, thread.guild.id))
+		queue().add(AutoMod.reminder(thread, thread.guild.id))
 		# Applies the status tag 'new' to the thread
-		queue().add(ForumAutoMod.info(thread))
-		queue().add(ForumAutoMod.add_relevant_tags(forum_channel, thread, msg))
+		queue().add(AutoMod.info(thread))
+		queue().add(AutoMod.add_relevant_tags(forum_channel, thread, msg))
 		queue().add(automod_log(bot, thread.guild.id,
-		                        f"{thread.name} successfully checked and waiting for approval", "automodlog", "Success"),
+		                        f"{thread.jump_url} successfully checked by automod and awaiting review by staff",
+		                        "pendingapproval", "Success"),
 		            priority=0)
-		# await ForumAutoMod.age(msg, botmsg)
+
+	# await ForumAutoMod.age(msg, botmsg)
 
 	@commands.Cog.listener('on_thread_create')
 	async def on_profile_create(self, thread: discord.Thread) :
-		key = ConfigData().get_key_int(thread.guild.id, "rpprofiles")
+		try :
+			key = ConfigData().get_key_int(thread.guild.id, "rpprofiles")
+		except KeyError :
+			logging.warning(f"No rpprofiles channel set for {thread.guild.name}")
+			return
 		rpprofiles = thread.guild.get_channel(key)
 		if rpprofiles is None or rpprofiles.type != discord.ChannelType.forum or thread.parent_id != rpprofiles.id :
 			return
@@ -124,7 +140,7 @@ class Forum(commands.GroupCog, name="forum") :
 		if message.channel.type is discord.ChannelType.private :
 			logging.info(f"Private message from {message.author}:\n{message.content}")
 			return
-		forums = ForumAutoMod.config(guildid=message.guild.id)
+		forums = AutoMod.config(guildid=message.guild.id)
 		dobreg = re.compile(r"bump|bumping", flags=re.IGNORECASE)
 		match = dobreg.search(message.content)
 		try :
@@ -157,7 +173,7 @@ class Forum(commands.GroupCog, name="forum") :
 		if message.channel.type != discord.ChannelType.public_thread :
 			logging.debug("on_message_delete: not a thread")
 			return
-		forums = ForumAutoMod.config(message.guild.id)
+		forums = AutoMod.config(message.guild.id)
 		forum: discord.ForumChannel = self.bot.get_channel(message.channel.parent_id)
 		if message.author == self.bot :
 			logging.debug("on_message_delete: bot message")
@@ -185,35 +201,20 @@ class Forum(commands.GroupCog, name="forum") :
 	@app_commands.command(name="bump", description="Bumps your post!")
 	async def bump(self, interaction: discord.Interaction) :
 		"""Allows you to bump your advert every 72 hours."""
-		forums = ForumAutoMod.config(interaction.guild.id)
+		forums = AutoMod.config(interaction.guild.id)
 		thread: discord.Thread = interaction.guild.get_thread(interaction.channel.id)
 		forum: discord.ForumChannel = self.bot.get_channel(thread.parent_id)
 		if forum.id not in forums :
 			await interaction.response.send_message("Forum not found")
 			return
 		await interaction.response.defer(ephemeral=True)
-		queue().add(ForumAutoMod.bump(self.bot, interaction), 2)
+		queue().add(AutoMod.bump(self.bot, interaction), 2)
 
 	@app_commands.command(name="close", description="Removes your post from the forum and sends you a copy.")
 	async def close(self, interaction: discord.Interaction) :
 		"""Closes the advert and sends the advert to your dms"""
 		await interaction.response.defer(ephemeral=True)
-		thread: discord.Thread = interaction.channel
-		if interaction.channel.type != discord.ChannelType.public_thread :
-			await interaction.followup.send("[ERROR] This channel is not a thread.")
-			return
-		if thread.owner_id != interaction.user.id :
-			await interaction.followup.send("[ERROR] You do not own this thread.")
-			return
-
-		async for m in thread.history(limit=1, oldest_first=True) :
-			with open('advert.txt', 'w', encoding='utf-16') as f :
-				f.write(m.content)
-			await interaction.user.send(
-				f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
-				file=discord.File(f.name, f"{m.channel}.txt"))
-		await thread.delete()
-		os.remove(f.name)
+		await AutoMod.close_thread(interaction)
 
 	async def search_commands_autocompletion(self, interaction: discord.Interaction, current: str) -> typing.List[
 		app_commands.Choice[str]] :
@@ -258,12 +259,18 @@ class Forum(commands.GroupCog, name="forum") :
 		user = thread_message.author
 
 		# adds warning to database
-		warning = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel,
+		warning, active_warnings = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel,
 		                                       warn)
+		try:
+			await warning_count_check(interaction, user, interaction.guild, active_warnings)
+		except Exception as e:
+			logging.error(e, exc_info=True)
 		# Logs the advert and sends it to the user.
 		await Advert.logadvert(thread_message, loggingchannel)
 		reminder = "**__The removed advert: (Please make the required changes before reposting.)__**"
+
 		await Advert.send_advert_to_user(interaction, thread_message, reminder, warning)
+
 		try :
 			await interaction.followup.send(f"{thread_message.author.mention} successfully warned")
 		except discord.NotFound :
@@ -308,9 +315,9 @@ class Forum(commands.GroupCog, name="forum") :
 				try :
 					thread_message = await thread.fetch_message(thread.id)
 					queue().add(Advert.send_advert_to_user(interaction, thread_message,
-					                                 "Your advert has been removed due to a purge; you may repost "
-					                                 "them once the purge has finished. Thank you for using RMR!",
-					                                 "purge"), 0)
+					                                       "Your advert has been removed due to a purge; you may repost "
+					                                       "them once the purge has finished. Thank you for using RMR!",
+					                                       "purge"), 0)
 					queue().add(thread.delete(), 0)
 					amount += 1
 				except discord.NotFound :
@@ -327,10 +334,10 @@ class Forum(commands.GroupCog, name="forum") :
 				try :
 					thread_message = await thread.fetch_message(thread.id)
 					queue().add(Advert.send_advert_to_user(interaction, thread_message,
-					                                 f"Your advert `{thread.name}` has been removed due to a purge;"
-					                                 f"you may repost them once the purge has finished. Thank you for "
-					                                 f"using RMR!\nYour advert:",
-					                                 "purge"), 0)
+					                                       f"Your advert `{thread.name}` has been removed due to a purge;"
+					                                       f"you may repost them once the purge has finished. Thank you for "
+					                                       f"using RMR!\nYour advert:",
+					                                       "purge"), 0)
 					queue().add(thread.delete(), 0)
 					amount += 1
 				except discord.NotFound :
@@ -350,12 +357,26 @@ class Forum(commands.GroupCog, name="forum") :
 			if isinstance(forum, discord.ForumChannel) is False :
 				continue
 			for _ in forum.threads :
-					amount += 1
+				amount += 1
 			async for _ in forum.archived_threads(limit=None) :
-					amount += 1
+				amount += 1
 		await send_response(interaction, f"Total amount of posts: {amount}")
 
 
+	@app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
+	@permissions.check_app_roles_admin()
+	async def searchban(self, interaction: discord.Interaction, member: discord.Member, days: int) -> None :
+		"""Allows admin to add a searchban to a user."""
+		await interaction.response.defer(ephemeral=True)
+		tz = pytz.timezone("US/Eastern")
+		cooldown = datetime.now(tz=tz) + timedelta(days=days)
+		hours = days * 24
+		reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban of {days} day(s). Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban.\n\n This search ban expires on:\n {cooldown.strftime('%m/%d/%Y')}"
+		await member.send(reason)
+		await add_search_ban(member, interaction.guild, reason, hours)
+		await ModUser.log_ban(interaction, member, reason, interaction.guild, typeofaction="searchbanned")
+		await interaction.followup.send(
+			f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
 
 
 async def setup(bot: commands.Bot) :

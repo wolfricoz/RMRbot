@@ -32,7 +32,7 @@ class Tasks(commands.GroupCog) :
 		self.config_reload.start()
 		self.lobby_history.start()
 		self.search_ban_check.start()
-		self.check_users_expiration.start()
+		# self.check_users_expiration.start()
 		self.check_invites_task.start()
 		self.forum_manager.start()
 
@@ -41,7 +41,7 @@ class Tasks(commands.GroupCog) :
 		self.config_reload.cancel()
 		self.lobby_history.cancel()
 		self.search_ban_check.cancel()
-		self.check_users_expiration.cancel()
+# 		self.check_users_expiration.cancel()
 		self.check_invites_task.cancel()
 		self.forum_manager.cancel()
 
@@ -122,7 +122,6 @@ class Tasks(commands.GroupCog) :
 		updated_users = []
 		for guild in self.bot.guilds :
 			for member in guild.members :
-				await asyncio.sleep(0.1)
 				if member.id not in userids :
 					logging.debug(f"User {member.id} not found in database, adding.")
 					UserTransactions.add_user_empty(member.id)
@@ -136,22 +135,21 @@ class Tasks(commands.GroupCog) :
 		"""removes expired entries."""
 		for entry in userdata :
 			if entry.entry < removaldate :
-				await asyncio.sleep(0.1)
 				UserTransactions.user_delete(entry.uid)
 				logging.debug(f"Database record: {entry.uid} expired")
 
-	@tasks.loop(hours=48)
-	async def check_users_expiration(self) :
-		"""updates entry time, if entry is expired this also removes it."""
-		if self.check_users_expiration.current_loop == 0 :
-			return
-		print("checking user entries")
-		userdata = UserTransactions.get_all_users()
-		userids = [x.uid for x in userdata]
-		removaldate = datetime.now() - timedelta(days=730)
-		await self.user_expiration_update(userids)
-		await self.user_expiration_remove(userdata, removaldate)
-		print("Finished checking all entries")
+	# @tasks.loop(hours=48)
+	# async def check_users_expiration(self) :
+	# 	"""updates entry time, if entry is expired this also removes it."""
+	# 	if self.check_users_expiration.current_loop == 0 :
+	# 		return
+	# 	print("checking user entries")
+	# 	userdata = UserTransactions.get_all_users()
+	# 	userids = [x.uid for x in userdata]
+	# 	removaldate = datetime.now() - timedelta(days=730)
+	# 	await self.user_expiration_update(userids)
+	# 	await self.user_expiration_remove(userdata, removaldate)
+	# 	print("Finished checking all entries")
 
 	@tasks.loop(hours=24)
 	async def forum_manager(self) -> None :
@@ -170,118 +168,6 @@ class Tasks(commands.GroupCog) :
 			logging.debug(f"[Forum Manager] Checking {channel.name}")
 			forum = ForumTasks(channel, self.bot)
 			queue().add(forum.start())
-
-	# @tasks.loop(hours=24)
-	# async def unarchiver(self) -> None :
-	# 	"""makes all posts active again"""
-	# 	print("checking for unarchiving")
-	# 	archived_thread: discord.Thread
-	# 	channel: discord.ForumChannel
-	# 	regex = re.compile(f"search", flags=re.IGNORECASE)
-	# 	for x in self.bot.guilds :
-	# 		members = [member.id for member in x.members]
-	# 		for channel in x.channels :
-	# 			try :
-	# 				if channel.type != discord.ChannelType.forum :
-	# 					continue
-	# 				if regex.search(channel.name) is None :
-	# 					continue
-	# 				async for archived_thread in channel.archived_threads() :
-	# 					if archived_thread.owner.id not in members :
-	# 						queue().add(archived_thread.delete())
-	# 						continue
-	# 					if archived_thread.archived is False :
-	# 						continue
-	# 					postreminder = "Your advert has been reopened after discord archived it. If this advert is no longer relevant, please close it with </forum close:1096183254605901976> if it is no longer relevant. Please bump the post in 3 days with </forum bump:1096183254605901976>. After three reopen reminders your post will be automatically removed."
-	# 					try :
-	# 						if permissions.check_admin(archived_thread.owner) or regex.search(channel.name) is None :
-	# 							try :
-	# 								message = await archived_thread.send(postreminder)
-	# 								queue().add(message.delete(), priority=0)
-	# 							except discord.Forbidden or discord.NotFound :
-	# 								pass
-	#
-	# 							continue
-	# 						await archived_thread.send(f"{archived_thread.owner.mention} {postreminder}")
-	# 					except AttributeError or discord.errors.Forbidden or discord.errors.NotFound :
-	# 						await archived_thread.send(postreminder)
-	# 			except :
-	# 				pass
-	#
-	# 			# 	This part cleans up the forums, it removes posts from users who have left, or where the main message is deleted.
-	# 			logging.info("Cleaning up posts")
-	# 			for thread in channel.threads :
-	# 				if thread.owner is None or thread.owner.id not in members :
-	# 					logging.info(f"{thread.name}'s user left, cleaning up")
-	# 					queue().add(thread.delete())
-	# 					return
-	# 				message = await fetch_message_or_none(thread, thread.id)
-	# 				if message is None or message.author not in message.guild.members :
-	# 					logging.info(
-	# 						f"Deleting thread {thread.name} from {channel.name} in {thread.guild.name} as the starter message is missing or because the author has left..")
-	# 					try :
-	# 						await thread.delete()
-	# 					except Exception as e :
-	# 						logging.error(
-	# 							f"Error deleting thread {thread.name} in {channel.name} in {thread.guild.name} due to {e}")
-	#
-	# @tasks.loop(hours=24)
-	# async def delete_abandoned_posts(self) -> None :
-	# 	print("checking for abandoned posts")
-	# 	post: discord.Thread
-	# 	channel: discord.ForumChannel
-	#
-	# 	for x in self.bot.guilds :
-	# 		for channel in x.channels :
-	# 			if channel.type != discord.ChannelType.forum :
-	# 				continue
-	# 			for thread in channel.threads :
-	# 				count = 0
-	# 				try :
-	# 					async for m in thread.history() :
-	# 						if count == 3 :
-	# 							# return
-	# 							message = await fetch_message_or_none(thread, thread.id)
-	# 							if message is None :
-	# 								queue().add(thread.delete(), priority=0)
-	# 								return
-	# 							queue().add(send_message(message.author,
-	# 							                         f"Your post in {thread.name} has been removed due to not being bumped "
-	# 							                         f"after 3 reminders. Here is the content: {message.content}"),
-	# 							            priority=0)
-	# 							queue().add(automod_log(self.bot, thread.guild.id,
-	# 							                        f"`[ABANDONED POST CHECK]{thread.name}` by {thread.owner.mention} has been "
-	# 							                        f"reminded three times to bump their post but failed to do so. ",
-	# 							                        "automodlog", message_type="CLEANUP"), priority=0)
-	# 							queue().add(thread.delete(), priority=0)
-	# 							break
-	# 						if m.content is None :
-	# 							continue
-	# 						if re.search(r"\bYour advert has been unarchived\b", m.content) and m.author.id == self.bot.user.id :
-	# 							count += 1
-	# 							continue
-	# 				except :
-	# 					pass
-	# 	print("finished searching for abandoned posts")
-	#
-	# @tasks.loop(hours=12)
-	# async def check_status_tag(self) -> None :
-	# 	# return
-	# 	print("checking for missed posts")
-	# 	post: discord.Thread
-	# 	channel: discord.ForumChannel
-	#
-	# 	for x in self.bot.guilds :
-	# 		for channel in x.channels :
-	# 			if channel.type != discord.ChannelType.forum :
-	# 				continue
-	# 			for thread in channel.threads :
-	# 				tags = [tag.name.lower() for tag in thread.applied_tags]
-	# 				result = list({'new', 'approved', 'bump'}.intersection(tags))
-	# 				if not any(result) :
-	# 					queue().add(AutomodComponents.change_tags(channel, thread, "new", ["approved", "bump"]))
-	#
-	# 	print("finished searching for abandoned posts")
 
 	@tasks.loop(hours=24)
 	async def check_invites_task(self) :
@@ -357,10 +243,10 @@ class Tasks(commands.GroupCog) :
 		"""stops event from starting before the bot has fully loaded"""
 		await self.bot.wait_until_ready()
 
-	@check_users_expiration.before_loop
-	async def before_expire(self) :
-		"""stops event from starting before the bot has fully loaded"""
-		await self.bot.wait_until_ready()
+	# @check_users_expiration.before_loop
+	# async def before_expire(self) :
+	# 	"""stops event from starting before the bot has fully loaded"""
+	# 	await self.bot.wait_until_ready()
 
 	@lobby_history.before_loop
 	async def before_lobbyhistory(self) :

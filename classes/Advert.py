@@ -76,4 +76,4 @@ class Advert(ABC):
                               color=discord.Color.from_rgb(255, 117, 24))
         embed.set_footer(text=f"userId: {user.id} Active Warnings: {active_warnings} Total Warnings: {total_warnings}, warn: {warn}")
         await modchannel.send(f"{user.mention}", embed=embed)
-        return warning
+        return warning, active_warnings

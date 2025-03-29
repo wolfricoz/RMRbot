@@ -141,23 +141,6 @@ class moderation(commands.Cog, name="Moderation"):
         await user.send(f"{interaction.guild.name} **__Notification__**: {reason} ")
         await interaction.followup.send(f"[Notification info] {user.mention} has been notified about {reason}")
 
-    @app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
-    @permissions.check_app_roles_admin()
-    async def searchban(self, interaction: discord.Interaction, member: discord.Member, days: int) -> None:
-        """Allows admin to add a searchban to a user."""
-        await interaction.response.defer(ephemeral=True)
-        tz = pytz.timezone("US/Eastern")
-        roleid = ConfigData().get_key_int(interaction.guild.id, 'posttimeout')
-        searchbanrole = interaction.guild.get_role(roleid)
-        await member.add_roles(searchbanrole)
-        cooldown = datetime.datetime.now(tz=tz) + datetime.timedelta(days=days)
-        hours = days * 24
-        reason = f"{interaction.guild.name} **__SEARCH BAN__**: Hello, I'm a staff member from RMR. Due to your frequent refusal to follow our search rules concerning ads, your ad posting privileges have been revoked and you've been given a search ban of {days} day(s). Please use this time to thoroughly review RMR's rules. Continued refusal to follow the server's search rules can result in a permanent search ban.\n\n This search ban expires on:\n {cooldown.strftime('%m/%d/%Y')}"
-        await member.send(reason)
-        TimersTransactions.add_timer(interaction.guild.id, member.id, hours, reason=reason, roleid=roleid)
-        await ModUser.log_ban(interaction, member, reason, interaction.guild, typeofaction="searchbanned")
-        await interaction.followup.send(f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
-
     @app_commands.command()
     @permissions.check_roles()
     async def copyimages(self, interaction: discord.Interaction, source: discord.TextChannel, destination: discord.TextChannel, amount: int = 1000):

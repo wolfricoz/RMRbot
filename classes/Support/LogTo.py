@@ -4,6 +4,7 @@ import logging
 
 from discord.ext import commands
 
+from classes.Support.discord_tools import send_message
 from classes.databaseController import ConfigData
 
 
@@ -17,7 +18,7 @@ async def automod_log(bot: commands.Bot, guildid, message: str, channel="dev", m
     logging.error(f"[Automod {message_type}] {message}")
     channel = get_discord_channel(bot, ConfigData().get_key_int(guildid, channel))
     try:
-        await channel.send(f"[Automod {message_type}] {message}")
+        await send_message(channel, f"[Automod {message_type}] {message}")
     except Exception as e:
         logging.error(e)
 

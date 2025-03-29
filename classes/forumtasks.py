@@ -30,10 +30,19 @@ class ForumTasks :
 		"""This starts the checking of the forum and will walk through all the tasks."""
 		logging.info(f"Starting forum tasks for {self.forum.name} in {self.forum.guild.name}")
 		await self.recover_archived_posts()
+		pending_adverts = []
 		for thread in self.threads :
+			if "approved" not in [tag.name.lower() for tag in thread.applied_tags] :
+				pending_adverts.append(f"- {thread.jump_url} by {thread.owner.mention}.")
 			queue().add(self.check_status_tag(thread), priority=0)
 			queue().add(self.check_abandoned_status(thread), priority=0)
 			queue().add(self.cleanup_forum(thread), priority=0)
+
+
+		pending_msg = f"{self.forum.name} is up to date! All adverts are checked and approved! Good job everyone!"
+		if len(pending_adverts) > 0:
+			pending_msg = f"{self.forum.name} has {len(pending_adverts)} pending adverts:\n {'\n'.join(pending_adverts)}"
+		queue().add(automod_log(self.bot, self.forum.guild.id, pending_msg, "pendingapproval", "pending"))
 
 	async def recover_archived_posts(self) :
 		"""Loop through archived posts and send a reminder there."""

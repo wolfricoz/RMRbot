@@ -8,8 +8,10 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from classes import permissions
+from classes.automod import AutoMod
 from classes.databaseController import ConfigData, ConfigTransactions, UserTransactions
 from databases import current as db
+from views.buttons.PostOptions import PostOptions
 
 # Creating database
 db.database.create()
@@ -56,6 +58,7 @@ async def on_ready():
     await bot.tree.sync()
     await devroom.send(f"{formguilds} \nRMRbot is in {len(guilds)} guilds. RMRbot {version}")
     print("Commands synced, start up _done_")
+    bot.add_view(PostOptions(AutoMod))
     return guilds
 
 

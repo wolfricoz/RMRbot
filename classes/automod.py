@@ -17,9 +17,10 @@ from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
 from classes.databaseController import ConfigData
 from classes.queue import queue
+from views.buttons.PostOptions import PostOptions
 
 
-class ForumAutoMod(ABC) :
+class AutoMod(ABC) :
 	"""This class is used to handle the automod for the forums."""
 
 	@staticmethod
@@ -51,7 +52,25 @@ class ForumAutoMod(ABC) :
 		queue().add(thread.send(
 			f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
 
+	@staticmethod
+	@abstractmethod
+	async def close_thread(interaction: discord.Interaction) :
+		thread: discord.Thread = interaction.channel
+		if interaction.channel.type != discord.ChannelType.public_thread :
+			await interaction.followup.send("[ERROR] This channel is not a thread.")
+			return
+		if thread.owner_id != interaction.user.id :
+			await interaction.followup.send("[ERROR] You do not own this thread.")
+			return
 
+		async for m in thread.history(limit=1, oldest_first=True) :
+			with open('advert.txt', 'w', encoding='utf-16') as f :
+				f.write(m.content)
+			await interaction.user.send(
+				f"Your post `{m.channel}` has successfully been closed. The contents of your adverts:",
+				file=discord.File(f.name, f"{m.channel}.txt"))
+		await thread.delete()
+		os.remove(f.name)
 
 	@staticmethod
 	@abstractmethod
@@ -61,7 +80,7 @@ class ForumAutoMod(ABC) :
 		botmessage = await thread.send(
 			f"Thank you for posting, you may bump every 3 days with the /forum bump command or simply type bump and users can request to DM in your comments."
 			f"\n\n"
-			f"To close the advert, please use /forum close")
+			f"To close the advert, please use /forum close", view=PostOptions(forum_controller=AutoMod))
 
 		return botmessage
 
@@ -106,7 +125,7 @@ class ForumAutoMod(ABC) :
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
-		queue().add(ForumAutoMod.clean_bumps(thread, bot), 2)
+		queue().add(AutoMod.clean_bumps(thread, bot), 2)
 
 
 		forum = bot.get_channel(thread.parent_id)
@@ -115,7 +134,9 @@ class ForumAutoMod(ABC) :
 
 		if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
 			queue().add(TagController().change_status_tag(thread, ["approved"]), 2)
-			queue().add(send_message(interaction.channel, "Post successfully bumped and automatically approved"))
+			queue().add(send_message(interaction.channel,
+			                         f"Post successfully bumped and automatically approved. You can bump again in: {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')}",
+			                         view=PostOptions(AutoMod)))
 
 			queue().add(automod_log(bot, interaction.guild_id,
 			                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
@@ -125,7 +146,9 @@ class ForumAutoMod(ABC) :
 			return
 
 		queue().add(TagController().change_status_tag(thread, ["bump"]), 2)
-		queue().add(send_message(interaction.channel, "Post successfully bumped and awaiting manual review"))
+		queue().add(send_message(interaction.channel,
+		                         f"Post successfully bumped and awaiting manual review. You may bump again in {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')} after a staff member has approved your post.",
+		                         view=PostOptions(AutoMod)))
 		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
 
 	@staticmethod
@@ -133,7 +156,7 @@ class ForumAutoMod(ABC) :
 	async def duplicate(thread: discord.Thread, bot, originalmsg: discord.Message) :
 		"""This function is used to check for duplicate posts."""
 
-		forums = ForumAutoMod.config(thread.guild.id)
+		forums = AutoMod.config(thread.guild.id)
 		if thread.owner_id == 188647277181665280 :
 			return
 		for c in forums :
@@ -170,14 +193,10 @@ class ForumAutoMod(ABC) :
 
 	@staticmethod
 	@abstractmethod
-	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | None :
+	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | int | None :
 		"""This function is used to check the header."""
-		header = re.match(r"(All character'?s? are \(?[1-9][0-9])([\S\n\t\v ]*)([-|—]{5,100})", message.content,
+		header = re.match(r".?.?.?(All character'?s? are:? \(?([1-9][0-9])([\S\n\t\v ]*)([-|—]{5,100}))", message.content,
 		                  flags=re.IGNORECASE)
-		pattern = re.compile(r'\bsearch\b', re.IGNORECASE)
-		search = pattern.search(thread.parent.name)
-		if search is None :
-			return
 		if header is None :
 			queue().add(message.author.send(
 				"""Your advert has been removed because it does not have a header or your header does not follow the template below. Please re-post with a (correct) header.
@@ -200,6 +219,10 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
 			queue().add(thread.delete())
 			return True
+		age = header.group(2)
+		logging.info(age)
+		if age.isnumeric() and int(age) < 18 :
+			return int(age)
 
 	@staticmethod
 	@abstractmethod
@@ -219,9 +242,12 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 		"""Loops through the history of the channel and retrieves the message"""
 		if thread.type != discord.ChannelType.public_thread :
 			return False
+		message = await thread.fetch_message(thread.id)
+		if message:
+			return message
 		messages = thread.history(limit=10, oldest_first=True)
 		async for message in messages :
 			if message.id == thread.id :
 				return message
-		else :
-			return thread.starter_message
+		return thread.starter_message
+

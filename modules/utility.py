@@ -22,7 +22,7 @@ class Utility(commands.Cog) :
 	@permissions.check_app_roles()
 	async def forumusers(self, interaction: discord.Interaction) :
 		"""Get a list of forum users"""
-		forums = automod.ForumAutoMod.config(interaction.guild.id)
+		forums = automod.AutoMod.config(interaction.guild.id)
 		users = []
 		for x in forums :
 			forum: discord.ForumChannel = interaction.guild.get_channel(int(x))
