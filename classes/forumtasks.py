@@ -41,7 +41,8 @@ class ForumTasks :
 
 		pending_msg = f"{self.forum.name} is up to date! All adverts are checked and approved! Good job everyone!"
 		if len(pending_adverts) > 0:
-			pending_msg = f"{self.forum.name} has {len(pending_adverts)} pending adverts:\n {'\n'.join(pending_adverts)}"
+			posts = '\n'.join(pending_adverts)
+			pending_msg = f"{self.forum.name} has {len(pending_adverts)} pending adverts:\n {posts}"
 		queue().add(automod_log(self.bot, self.forum.guild.id, pending_msg, "pendingapproval", "pending"))
 
 	async def recover_archived_posts(self) :
