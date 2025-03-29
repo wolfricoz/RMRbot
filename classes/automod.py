@@ -242,12 +242,10 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 		"""Loops through the history of the channel and retrieves the message"""
 		if thread.type != discord.ChannelType.public_thread :
 			return False
-		message = await thread.fetch_message(thread.id)
-		if message:
-			return message
-		messages = thread.history(limit=10, oldest_first=True)
-		async for message in messages :
-			if message.id == thread.id :
-				return message
-		return thread.starter_message
+		try:
+			message = await thread.fetch_message(thread.id)
+		except discord.NotFound:
+			await asyncio.sleep(10)
+			message = await thread.fetch_message(thread.id)
+		return message
 

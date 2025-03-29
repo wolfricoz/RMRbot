@@ -90,12 +90,12 @@ class ForumTasks :
 			queue().add(delete_message(thread))
 
 	async def check_abandoned_status(self, thread) :
-		count = 0
+		abandoned_count = 0
 		pattern = r"<@\d+> Your advert has been reopened after discord archived it\."
 
 		async for m in thread.history(limit=None) :
 
-			if count >= 3 :
+			if abandoned_count >= 3 :
 				# return
 				message = await fetch_message_or_none(thread, thread.id)
 				if message is None :
@@ -114,7 +114,7 @@ class ForumTasks :
 			if m.content is None :
 				continue
 			if re.search(pattern, m.content) and m.author.id == self.bot.user.id :
-				count += 1
+				abandoned_count += 1
 				continue
 			return
 
