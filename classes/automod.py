@@ -57,10 +57,10 @@ class AutoMod(ABC) :
 	async def close_thread(interaction: discord.Interaction) :
 		thread: discord.Thread = interaction.channel
 		if interaction.channel.type != discord.ChannelType.public_thread :
-			await interaction.followup.send("[ERROR] This channel is not a thread.")
+			await interaction.followup.send("[ERROR] This channel is not a thread.", ephemeral=True)
 			return
 		if thread.owner_id != interaction.user.id :
-			await interaction.followup.send("[ERROR] You do not own this thread.")
+			await interaction.followup.send("[ERROR] You do not own this thread.", ephemeral=True)
 			return
 
 		async for m in thread.history(limit=1, oldest_first=True) :
@@ -96,11 +96,11 @@ class AutoMod(ABC) :
 		count = 0
 		user_count = 0
 		if "bump" in [x.name.lower() for x in thread.applied_tags] :
-			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.")
+			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.", ephemeral=True)
 			logging.info("Post not approved yet")
 			return
 		if thread.owner_id != interaction.user.id :
-			await interaction.followup.send("You can't bump another's post.")
+			await interaction.followup.send("You can't bump another's post.", ephemeral=True)
 			logging.info("User tried to bump another's post")
 			return
 		if interaction.channel.type != discord.ChannelType.public_thread :
@@ -121,7 +121,7 @@ class AutoMod(ABC) :
 				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog"))
 				await interaction.followup.send(
 					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} before bumping again."
-					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})")
+					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})", ephemeral=True)
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
@@ -141,7 +141,7 @@ class AutoMod(ABC) :
 			queue().add(automod_log(bot, interaction.guild_id,
 			                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
 			                  "automodlog", message_type="Approval"))
-			await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+			await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.", ephemeral=True)
 
 			return
 
@@ -149,7 +149,7 @@ class AutoMod(ABC) :
 		queue().add(send_message(interaction.channel,
 		                         f"Post successfully bumped and awaiting manual review. You may bump again in {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')} after a staff member has approved your post.",
 		                         view=PostOptions(AutoMod)))
-		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.")
+		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.", ephemeral=True)
 
 	@staticmethod
 	@abstractmethod
