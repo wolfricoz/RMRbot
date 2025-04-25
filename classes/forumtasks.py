@@ -62,6 +62,8 @@ class ForumTasks :
 		result = list({'new', 'approved', 'bump'}.intersection(tags))
 		if not any(result) :
 			queue().add(TagController().change_tags(self.forum, thread, "new", ["approved", "bump"]))
+		if "approved" in tags and "bump" in tags :
+			queue().add(TagController().change_tags(self.forum, thread, "approved", ["bump"]))
 
 	async def cleanup_forum(self, thread: discord.Thread) :
 		logging.info("Cleaning up the forum")

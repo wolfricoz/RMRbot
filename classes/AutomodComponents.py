@@ -1,12 +1,7 @@
-import asyncio
-import logging
-import re
 from abc import ABC, abstractmethod
 
 import discord
 from Levenshtein import ratio
-
-from classes.queue import queue
 
 
 class AutomodComponents(ABC):

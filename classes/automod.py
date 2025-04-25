@@ -15,7 +15,7 @@ from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
-from classes.databaseController import ConfigData
+from classes.databaseController import ApprovalTransactions, ConfigData
 from classes.queue import queue
 from views.buttons.PostOptions import PostOptions
 
@@ -35,16 +35,16 @@ class AutoMod(ABC) :
 	async def clean_bumps(thread: discord.Thread, bot: commands.Bot) :
 		before = datetime.now() - timedelta(days=3)
 		count = 0
-		messages = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if m.author.id == bot.user.id and m.content.lower().startswith("post successfully bumped")]
+		messages = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if
+		            m.author.id == bot.user.id and m.content.lower().startswith("post successfully bumped")]
 		logging.info(f"Found {len(messages)} bump messages in {thread.name}")
 		for m in messages :
 			queue().add(m.delete(), 2)
 			count += 1
 
-
 	@staticmethod
 	@abstractmethod
-	async def add_relevant_tags(forum, thread, msg, status = "new") :
+	async def add_relevant_tags(forum, thread, msg, status="new") :
 		matched = [tag.name for tag in await TagController().find_tags_in_content(thread, forum, msg)]
 		matched.append(status)
 		queue().add(TagController().change_tags(forum, thread, matched))
@@ -96,7 +96,8 @@ class AutoMod(ABC) :
 		count = 0
 		user_count = 0
 		if "bump" in [x.name.lower() for x in thread.applied_tags] :
-			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.", ephemeral=True)
+			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.",
+			                                ephemeral=True)
 			logging.info("Post not approved yet")
 			return
 		if thread.owner_id != interaction.user.id :
@@ -118,30 +119,34 @@ class AutoMod(ABC) :
 				time_remaining = timedelta(hours=hours) - time_diff
 				timeinfo = f"{int(time_remaining.total_seconds() / 3600)} hours and {int(time_remaining.total_seconds() / 60 % 60)} minutes"
 				queue().add(automod_log(bot, interaction.guild_id,
-				                  f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}", "automodlog"))
+				                        f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}",
+				                        "automodlog"))
 				await interaction.followup.send(
 					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} before bumping again."
-					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})", ephemeral=True)
+					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})",
+					ephemeral=True)
 				return
 			if m.author.id == interaction.user.id :
 				user_count += 1
 		queue().add(AutoMod.clean_bumps(thread, bot), 2)
 
-
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
 		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
 
-		if og_time is not None and current_time - og_time > timedelta(hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
+		if og_time is not None and current_time - og_time > timedelta(
+				hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
 			queue().add(TagController().change_status_tag(thread, ["approved"]), 2)
 			queue().add(send_message(interaction.channel,
 			                         f"Post successfully bumped and automatically approved. You can bump again in: {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')}",
 			                         view=PostOptions(AutoMod)))
 
 			queue().add(automod_log(bot, interaction.guild_id,
-			                  f"User bumped post in {interaction.channel.mention} and was automatically approved",
-			                  "automodlog", message_type="Approval"))
-			await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.", ephemeral=True)
+			                        f"User bumped post in {interaction.channel.mention} and was automatically approved",
+			                        "automodlog", message_type="Approval"))
+			await interaction.followup.send(
+				"You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.",
+				ephemeral=True)
 
 			return
 
@@ -149,7 +154,9 @@ class AutoMod(ABC) :
 		queue().add(send_message(interaction.channel,
 		                         f"Post successfully bumped and awaiting manual review. You may bump again in {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')} after a staff member has approved your post.",
 		                         view=PostOptions(AutoMod)))
-		await interaction.followup.send("You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.", ephemeral=True)
+		await interaction.followup.send(
+			"You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.",
+			ephemeral=True)
 
 	@staticmethod
 	@abstractmethod
@@ -189,8 +196,6 @@ class AutoMod(ABC) :
 			except Exception as e :
 				logging.error(e)
 
-
-
 	@staticmethod
 	@abstractmethod
 	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | int | None :
@@ -226,15 +231,9 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 
 	@staticmethod
 	@abstractmethod
-	def approval_log(interaction) :
+	def approval_log(user_id, guild_id, thread_id) :
 		"""This function is used to log the approval."""
-		file_name = f"config/approvals{datetime.now().strftime('%m-%y')}.txt"
-		if os.path.isfile(file_name) is False :
-			with open(file_name, 'w') as f :
-				f.write('Advert Approvals')
-		with open(file_name, 'a') as f :
-			f.write(
-				f"\n{datetime.now().strftime('%m/%d/%Y %I:%M %p')}: {interaction.user} has approved post '{interaction.channel}'")
+		ApprovalTransactions.add_approval(user_id, guild_id, thread_id)
 
 	@staticmethod
 	@abstractmethod
@@ -242,10 +241,9 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 		"""Loops through the history of the channel and retrieves the message"""
 		if thread.type != discord.ChannelType.public_thread :
 			return False
-		try:
+		try :
 			message = await thread.fetch_message(thread.id)
-		except discord.NotFound:
+		except discord.NotFound :
 			await asyncio.sleep(10)
 			message = await thread.fetch_message(thread.id)
 		return message
-

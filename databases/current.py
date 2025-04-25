@@ -88,6 +88,13 @@ class Timers(Base):
     # in hours
     removal: Mapped[int]
 
+class Approvals(Base):
+    __tablename__ = "approvals"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"))
+    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
+    thread: Mapped[int] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class database:
     @staticmethod

@@ -25,6 +25,7 @@ class TagController():
 	async def change_status_tag(self, thread: Thread, tags: list =("new")) :
 		"""This function checks if there is space for the status tag, if not it removes one of the other tags"""
 		remove_tags = [status for status in ["new", "approved", "bump"] if status not in tags]
+		logging.info(remove_tags)
 		applied_tags = thread.applied_tags
 		if not remove_tags and len(applied_tags) >= 5 :
 			remove_tags = [applied_tags[0]]
@@ -39,7 +40,7 @@ class TagController():
 	                      removed_tags: str | list[str] = ()) :
 		apply = []
 		remove = []
-		logging.info(f"changing tags for {thread.name} adding {added_tags} and {removed_tags}")
+		logging.info(f"changing tags for {thread.name} adding {added_tags} and removing {removed_tags}")
 		if isinstance(added_tags, str) :
 			added_tags = added_tags.lower().split()
 		if isinstance(removed_tags, str) :

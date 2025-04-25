@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC, abstractmethod
-from datetime import timezone, timedelta
+from datetime import timezone, timedelta, datetime
 
 import sqlalchemy.exc
 from sqlalchemy.exc import SQLAlchemyError
@@ -543,3 +543,22 @@ class TimersTransactions(ABC):
     def remove_timer(timer):
         session.delete(timer)
         session.commit()
+
+
+class ApprovalTransactions(ABC):
+
+    @staticmethod
+    @abstractmethod
+    def add_approval(user_id: int, guild_id: int, thread_id: int,):
+        approval = db.Approvals(uid=user_id, guild=guild_id, thread=thread_id)
+        session.add(approval)
+        DatabaseTransactions.commit(session)
+
+    @staticmethod
+    @abstractmethod
+    def get_all_approvals(days = 30):
+        check_date = datetime.now() - timedelta(days=days)
+        return session.scalars(Select(db.Approvals).filter(Approvals.created_at > check_date)).all()
+
+
+

@@ -18,7 +18,7 @@ from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message, send_response
 from classes.TagController import TagController
 from classes.automod import AutoMod
-from classes.databaseController import ConfigData, TimersTransactions
+from classes.databaseController import ApprovalTransactions, ConfigData, TimersTransactions
 from classes.moduser import ModUser
 from classes.queue import queue
 from classes.searchbans import add_search_ban, warning_count_check
@@ -259,11 +259,12 @@ class Forum(commands.GroupCog, name="forum") :
 		user = thread_message.author
 
 		# adds warning to database
-		warning, active_warnings = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel,
-		                                       warn)
-		try:
+		warning, active_warnings = await Advert.send_in_channel(interaction, user, thread_channel, reason, warning_type,
+		                                                        modchannel,
+		                                                        warn)
+		try :
 			await warning_count_check(interaction, user, interaction.guild, active_warnings)
-		except Exception as e:
+		except Exception as e :
 			logging.error(e, exc_info=True)
 		# Logs the advert and sends it to the user.
 		await Advert.logadvert(thread_message, loggingchannel)
@@ -362,7 +363,6 @@ class Forum(commands.GroupCog, name="forum") :
 				amount += 1
 		await send_response(interaction, f"Total amount of posts: {amount}")
 
-
 	@app_commands.command(name="searchban", description="ADMIN adcommand: search bans the users")
 	@permissions.check_app_roles_admin()
 	async def searchban(self, interaction: discord.Interaction, member: discord.Member, days: int) -> None :
@@ -377,6 +377,35 @@ class Forum(commands.GroupCog, name="forum") :
 		await ModUser.log_ban(interaction, member, reason, interaction.guild, typeofaction="searchbanned")
 		await interaction.followup.send(
 			f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
+
+	@app_commands.command(name="leaderboard", description="description")
+	@permissions.check_app_roles_admin()
+	async def leaderboard(self, interaction: discord.Interaction, days:int = 30) :
+		lb = {
+
+		}
+
+		records = ApprovalTransactions.get_all_approvals(days)
+		for record in records:
+			uid = str(record.uid)
+			if uid not in lb:
+				lb[uid] = 0
+			lb[uid] += 1
+		embed = discord.Embed(title=f"Approval Leaderboard of the last {days} days", color=0x00ff00)
+		embed.set_footer(text="Top 10 Approvals")
+		lb = dict(sorted(lb.items(), key=lambda x: x[1], reverse=True))
+		count = 1
+		for key, value in lb.items() :
+			if count > 9:
+				break
+			member = interaction.guild.get_member(int(key))
+			if member is None :
+				continue
+			embed.add_field(name=member.name, value=value, inline=False)
+		await send_response(interaction, "", embed=embed)
+		count += 1
+
+
 
 
 async def setup(bot: commands.Bot) :
