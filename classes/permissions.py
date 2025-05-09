@@ -33,7 +33,12 @@ def check_roles_admin():
 
 
 def check_app_roles():
+
+
+
     async def pred(interaction: discord.Interaction):
+        if interaction.guild is None:
+            return False
         modroles = ConfigData().get_key(interaction.guild.id, 'mod')
         adminroles = ConfigData().get_key(interaction.guild.id, 'admin')
         user_roles = [x.id for x in interaction.user.roles]

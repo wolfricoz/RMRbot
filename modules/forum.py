@@ -406,6 +406,7 @@ class Forum(commands.GroupCog, name="forum") :
 		count += 1
 
 	@app_commands.command(name="pendingadverts", description="checks for pending adverts")
+	@app_commands.guild_only()
 	@permissions.check_app_roles()
 	async def pending_adverts(self, interaction: discord.Interaction):
 		regex = re.compile(f"search", flags=re.IGNORECASE)
