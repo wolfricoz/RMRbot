@@ -412,8 +412,7 @@ class Forum(commands.GroupCog, name="forum") :
 		regex = re.compile(f"search", flags=re.IGNORECASE)
 		channels = [
 			channel
-			for guild in self.bot.guilds
-			for channel in guild.channels
+			for channel in interaction.guild.channels
 			if channel.type == discord.ChannelType.forum and regex.search(channel.name)
 		]
 		await send_response(interaction, f"Checking all channels for pending adverts, please wait...")
