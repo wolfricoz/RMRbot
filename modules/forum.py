@@ -350,7 +350,7 @@ class Forum(commands.GroupCog, name="forum") :
 		queue().add(send_message(interaction.channel, f"Purge completed, {amount} adverts removed."), 0)
 
 	@app_commands.command(name="count", description="counts all posts in the search forums")
-	async def command(self, interaction: discord.Interaction) :
+	async def count_posts(self, interaction: discord.Interaction) :
 		amount = 0
 		forums = ConfigData().get_key(interaction.guild.id, "FORUM")
 		for x in forums :
