@@ -48,7 +48,7 @@ class Advert(ABC):
         user = msg.author
         count = 0
         try:
-            if warning.lower() not in ["purge"]:
+            if warning.lower() not in ["purge", "no"]:
                 await user.send(warning)
             await user.send(reminder)
             while count < len(msg.content):

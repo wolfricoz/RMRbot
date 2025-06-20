@@ -56,8 +56,10 @@ with open(logfile, 'a') as f:
             f"----------------------------------------------------\n\n")
 
 handlers = [logging.FileHandler(filename=logfile, encoding='utf-8', mode='a'), logging.StreamHandler()]
-logging.basicConfig(handlers=handlers, level=logging.INFO, format='%(asctime)s:%(name)s: %(message)s')
-
+logging.basicConfig(handlers=handlers, level=logging.INFO,
+                    format='(%(asctime)s) %(levelname)s: %(message)s',
+                    datefmt='%d/%m/%Y, %H:%M:%S',
+                    force=True)
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)

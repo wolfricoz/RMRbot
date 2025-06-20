@@ -12,6 +12,7 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
 
     def __init__(self, bot, thread, thread_channel, warn):
         super().__init__(timeout=None)  # Set a timeout for the modal
+        logging.info(f'warning modal created with warn: {type(warn)}' )
         self.bot = bot
         self.thread = thread
         self.thread_channel = thread_channel
