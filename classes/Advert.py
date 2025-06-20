@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -45,6 +46,7 @@ class Advert(ABC):
     @abstractmethod
     async def send_advert_to_user(interaction, msg, reminder, warning):
         """Sends the advert and the warning to the user."""
+        logging.info(f"advert to user: {type(warning)}")
         user = msg.author
         count = 0
         try:
@@ -66,6 +68,7 @@ class Advert(ABC):
     @abstractmethod
     async def send_in_channel(interaction, user, thread_channel, reason, warning_type, modchannel, warn):
         """Sends the warning to the user and logs it in the mod channel."""
+        logging.info(f"advert to user: {type(warn)}")
         warning = (f"Hello, I'm a staff member of **Roleplay Meets Reborn**. Your advert `{thread_channel.name}` has been removed with the following reason: \n"
                    f"{reason}"
                    f"\n\nIf you have any more questions, you can open a ticket at <#{ConfigData().get_key_int(interaction.guild.id, 'HELPCHANNEL')}>.")
