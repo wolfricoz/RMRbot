@@ -200,7 +200,7 @@ class AutoMod(ABC) :
 	@abstractmethod
 	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | int | None :
 		"""This function is used to check the header."""
-		header = re.match(r".?.?.?(All character'?s? are:? \(?([1-9][0-9])([\S\n\t\v ]*)([-|—]{5,100}))", message.content,
+		header = re.match(r"\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}", message.content,
 		                  flags=re.IGNORECASE)
 		if header is None :
 			queue().add(message.author.send(
@@ -232,7 +232,7 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 	@staticmethod
 	@abstractmethod
 	async def check_title(message, thread: discord.Thread) :
-		regex_pattern = r'\[[^\s\[\]/\.]+[\/\.][^\s\[\]/\.]+\] .+'
+		regex_pattern = r'^[\[\(\{][^\]\)\}]{1,10}[4\/x][^\]\)\}]{1,10}[\]\)\}]'
 		result = re.search(regex_pattern, thread.name, flags=re.IGNORECASE)
 		if result is None :
 			queue().add(thread.delete())
