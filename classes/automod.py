@@ -200,7 +200,7 @@ class AutoMod(ABC) :
 	@abstractmethod
 	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | int | None :
 		"""This function is used to check the header."""
-		header = re.match(r"\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}", message.content,
+		header = re.match(r"^\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}", message.content,
 		                  flags=re.IGNORECASE)
 		if header is None :
 			queue().add(message.author.send(
