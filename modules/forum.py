@@ -437,9 +437,40 @@ class Forum(commands.GroupCog, name="forum") :
 			pending_msg = f"{channel.name} has {len(pending_adverts)} pending adverts:\n {posts}"
 			queue().add(send_message(interaction.user, pending_msg))
 
+	@app_commands.command(name="copy", description="Copy a forum with all settings!")
+	@app_commands.checks.has_permissions(manage_channels=True)
+	async def copy(self, interaction: discord.Interaction, forum: discord.ForumChannel, name: str = None) :
+		"""Copy a forum with all settings!"""
+		await send_response(interaction, "Copying a forum with all settings!", ephemeral=True)
+		f = await forum.clone(name=f"{name if name else forum.name}-Copy", category=forum.category)
+		[await f.create_tag(name=tag.name, moderated=tag.moderated, emoji=tag.emoji,
+		                    reason="Forum copied through forum manager") for tag in forum.available_tags]
+		queue().add(f.edit(default_thread_slowmode_delay=forum.default_thread_slowmode_delay,
+		             default_auto_archive_duration=forum.default_auto_archive_duration,
+		             default_layout=forum.default_layout,
+		             default_sort_order=forum.default_sort_order,
+		             default_reaction_emoji=forum.default_reaction_emoji), priority=2)
+		await send_message(interaction.channel, f"Forum {forum.mention} copied to {f.mention}")
 
-
-
+	@app_commands.command(name='stats')
+	@app_commands.checks.has_permissions(manage_channels=True)
+	async def stats(self, interaction: discord.Interaction, forum: discord.ForumChannel) :
+		"""Get stats for a forum"""
+		await send_response(interaction, f"Getting stats for {forum.name}", ephemeral=True)
+		embed = discord.Embed(title=f"Stats for {forum.name}")
+		data = {
+			"Threads"  : len(forum.threads),
+			"archived" : len([thread for thread in forum.threads if thread.archived]),
+			"tags"     : ", ".join([tag.name for tag in forum.available_tags]),
+			"layout"   : forum.default_layout,
+			"sort mode"     : forum.default_sort_order,
+			"slowmode" : forum.default_thread_slowmode_delay,
+			"auto archive" : forum.default_auto_archive_duration,
+			"reaction" : forum.default_reaction_emoji
+		}
+		for key, value in data.items() :
+			embed.add_field(name=key, value=value, inline=False)
+		await send_message(interaction.channel, embed=embed)
 
 
 async def setup(bot: commands.Bot) :
