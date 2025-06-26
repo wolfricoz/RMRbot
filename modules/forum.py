@@ -50,6 +50,12 @@ class Forum(commands.GroupCog, name="forum") :
 			            priority=0)
 			queue().add(AutoMod.reminder(thread, thread.guild.id))
 			return
+		title_status = await AutoMod.check_title(msg, thread)
+		if title_status is False:
+			queue().add(automod_log(bot, thread.guild.id,
+			                        f"`{thread.name}` posted by {thread.owner.mention} and has been removed",
+			                        "automodlog"),
+			            priority=0)
 
 		header_status = await AutoMod.check_header(msg, thread)
 		duplicate_status = await AutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)

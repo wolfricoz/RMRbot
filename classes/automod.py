@@ -231,6 +231,25 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 
 	@staticmethod
 	@abstractmethod
+	async def check_title(message, thread: discord.Thread) :
+		regex_pattern = r'\[[^\s\[\]/\.]+[\/\.][^\s\[\]/\.]+\] .+'
+		result = re.search(regex_pattern, thread.name, flags=re.IGNORECASE)
+		if result is None :
+			queue().add(thread.delete())
+			queue().add(message.author.send(
+				"""Your advert has been removed because it does not follow our title format. Please re-post with the correct format.
+```text
+		[pairing/pairing] title here
+		Example: [m/m] Hi I am looking for a partner
+"""))
+			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
+
+
+			return False
+		return True
+
+	@staticmethod
+	@abstractmethod
 	def approval_log(user_id, guild_id, thread_id) :
 		"""This function is used to log the approval."""
 		ApprovalTransactions.add_approval(user_id, guild_id, thread_id)
