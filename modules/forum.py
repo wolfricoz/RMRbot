@@ -53,7 +53,7 @@ class Forum(commands.GroupCog, name="forum") :
 		title_status = await AutoMod.check_title(msg, thread)
 		if title_status is False:
 			queue().add(automod_log(bot, thread.guild.id,
-			                        f"`{thread.name}` posted by {thread.owner.mention} and has been removed",
+			                        f"`pairing format not found in title {thread.name}` posted by {thread.owner.mention} and has been removed",
 			                        "automodlog"),
 			            priority=0)
 
