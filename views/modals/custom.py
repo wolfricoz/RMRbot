@@ -30,11 +30,11 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
         modchannel = bot.get_channel(mc)
         user = thread.author
         await interaction.response.send_message(content="Command received", ephemeral=True)
-        warning = await Advert.send_in_channel(interaction, user, thread_channel, self.reason.value, "Custom", modchannel, self.warn)
+        warning = await Advert.send_in_channel(interaction, user, thread_channel, self.reason.value, "Custom", modchannel, self.reason)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         reminder = "**__The removed advert: (Please make the required changes before reposting.)__**"
-        await Advert.send_advert_to_user(interaction, thread, reminder, self.warn)
+        await Advert.send_advert_to_user(interaction, thread, reminder, self.reason)
         try:
             await self.send_message(interaction, f"{user.mention} has been warned for: {self.reason.value}")
         except discord.errors.HTTPException:
