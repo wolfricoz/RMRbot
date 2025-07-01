@@ -30,7 +30,7 @@ class Custom(discord.ui.Modal, title='Custom Warning'):
         modchannel = bot.get_channel(mc)
         user = thread.author
         await interaction.response.send_message(content="Command received", ephemeral=True)
-        warning = await Advert.send_in_channel(interaction, user, thread_channel, self.reason.value, "Custom", modchannel, self.reason)
+        warning = await Advert.send_in_channel(interaction, user, thread_channel, self.reason.value, "Custom", modchannel, self.warn)
         # Logs the advert and sends it to the user.
         await Advert.logadvert(thread, loggingchannel)
         reminder = "**__The removed advert: (Please make the required changes before reposting.)__**"
