@@ -132,9 +132,9 @@ class Forum(commands.GroupCog, name="forum") :
 			await modchannel.send(
 				f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
 				f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
-			await TagController().change_status_tag(thread, ["waiting"])
+			await TagController().change_status_tag(self.bot, thread, ["waiting"])
 			return
-		await TagController().change_status_tag(thread, ["approved"])
+		await TagController().change_status_tag(self.bot,thread, ["approved"])
 
 	@commands.Cog.listener()
 	async def on_message(self, message) :

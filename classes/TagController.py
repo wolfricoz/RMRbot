@@ -6,6 +6,7 @@ import re
 
 from discord import ForumChannel, ForumTag, Message, Thread
 
+from classes.Support.LogTo import automod_log
 from classes.queue import queue
 
 
@@ -23,7 +24,7 @@ class TagController():
 		return found_tags
 
 
-	async def change_status_tag(bot, self, thread: Thread, tags: list =("new"), attempt = 0) :
+	async def change_status_tag(self, bot, thread: Thread, tags: list =("new"), attempt = 0) :
 		"""This function checks if there is space for the status tag, if not it removes one of the other tags"""
 		remove_tags = [status for status in ["new", "approved", "bump"] if status not in tags]
 		logging.info(remove_tags)
@@ -38,8 +39,14 @@ class TagController():
 		)
 		await asyncio.sleep(1)
 		if await self.verify_tags(thread) is False:
-			logging.warning("Thread has multiple status tags, restarting the process")
+			logging.warning(f"Thread has multiple status tags, restarting the process (attempt {attempt})")
 			if attempt > 3 :
+				queue().add(automod_log(bot, thread.guild.id,
+				                        f"Failed to apply the tags to {thread.name} after 3 attempts, please check the thread manually.",
+				                        "automodlog"), priority=0)
+				logging.error(f"Failed to apply the tags to {thread.name} after 3 attempts, please check the thread manually.")
+				return
+			await self.change_status_tag(bot, thread, tags, attempt + 1)
 
 
 	async def change_tags(self, forum: ForumChannel, thread: Thread, added_tags: str | list[str],
