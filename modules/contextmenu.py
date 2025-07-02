@@ -35,7 +35,7 @@ class contextmenus(commands.Cog, name="contextmenus"):
             await interaction.followup.send("You can't approve outside of forums.")
         elif message.channel.type is discord.ChannelType.public_thread:
             thread = message.channel
-        await TagController().change_status_tag(thread, ["approved"])
+        await TagController().change_status_tag(interaction.client, thread, ["approved"])
         await interaction.followup.send("bump successfully approved")
         AutoMod.approval_log(interaction.user.id, interaction.guild.id, message.id)
 

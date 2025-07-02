@@ -136,7 +136,7 @@ class AutoMod(ABC) :
 
 		if og_time is not None and current_time - og_time > timedelta(
 				hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
-			queue().add(TagController().change_status_tag(thread, ["approved"]), 2)
+			queue().add(TagController().change_status_tag(interaction.client, thread, ["approved"]), 2)
 			queue().add(send_message(interaction.channel,
 			                         f"Post successfully bumped and automatically approved. You can bump again in: {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')}",
 			                         view=PostOptions(AutoMod)))
@@ -150,7 +150,7 @@ class AutoMod(ABC) :
 
 			return
 
-		queue().add(TagController().change_status_tag(thread, ["bump"]), 2)
+		queue().add(TagController().change_status_tag(interaction.client, thread, ["bump"]), 2)
 		queue().add(send_message(interaction.channel,
 		                         f"Post successfully bumped and awaiting manual review. You may bump again in {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')} after a staff member has approved your post.",
 		                         view=PostOptions(AutoMod)))

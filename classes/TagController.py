@@ -1,4 +1,5 @@
 """In this file all ForumTag related functions will be stored, this includes the creation of tags, the deletion of tags, the editing of tags, and the checking of tags. This file will also contain the TagController class which will be used to create new tag types."""
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 import re
@@ -22,7 +23,7 @@ class TagController():
 		return found_tags
 
 
-	async def change_status_tag(self, thread: Thread, tags: list =("new")) :
+	async def change_status_tag(bot, self, thread: Thread, tags: list =("new"), attempt = 0) :
 		"""This function checks if there is space for the status tag, if not it removes one of the other tags"""
 		remove_tags = [status for status in ["new", "approved", "bump"] if status not in tags]
 		logging.info(remove_tags)
@@ -35,6 +36,11 @@ class TagController():
 			tags,
 			remove_tags
 		)
+		await asyncio.sleep(1)
+		if await self.verify_tags(thread) is False:
+			logging.warning("Thread has multiple status tags, restarting the process")
+			if attempt > 3 :
+
 
 	async def change_tags(self, forum: ForumChannel, thread: Thread, added_tags: str | list[str],
 	                      removed_tags: str | list[str] = ()) :
@@ -95,4 +101,16 @@ class TagController():
 			return
 		logging.info(f"Removing tags {', '.join([tag.name for tag in tags])} from {thread.name}")
 		queue().add(thread.remove_tags(*tags))
+
+	async def verify_tags(self, thread: Thread):
+		"""Checks if the thread does not have multiple status tags, such as new, approved, bump."""
+		tags = [tag.name.lower() for tag in thread.applied_tags]
+		status_tags = ["new", "approved", "bump"]
+		status_count = 0
+		for tag in tags:
+			if status_count > 1:
+				return False
+			if tag in status_tags:
+				status_count += 1
+		return True
 
