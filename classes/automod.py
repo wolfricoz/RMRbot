@@ -154,6 +154,10 @@ class AutoMod(ABC) :
 		queue().add(send_message(interaction.channel,
 		                         f"Post successfully bumped and awaiting manual review. You may bump again in {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')} after a staff member has approved your post.",
 		                         view=PostOptions(AutoMod)))
+		queue().add(automod_log(bot, interaction.guild_id,
+		                        f"User bumped post in {interaction.channel.mention} and changed were detected, pending manual approval",
+		                        "pendingapproval", message_type="Approval"))
+
 		await interaction.followup.send(
 			"You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.",
 			ephemeral=True)
