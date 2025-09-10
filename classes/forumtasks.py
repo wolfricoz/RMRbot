@@ -14,6 +14,7 @@ from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import delete_message, fetch_message_or_none, send_message
 from classes.TagController import TagController
 from classes.queue import queue
+from resources.enums.ForumStatus import ForumStatus
 
 
 class ForumTasks :
@@ -60,10 +61,13 @@ class ForumTasks :
 
 		tags = [tag.name.lower() for tag in thread.applied_tags]
 		result = list({'new', 'approved', 'bump'}.intersection(tags))
+		tagcontroller = TagController(self.forum, thread)
 		if not any(result) :
-			queue().add(TagController().change_tags(self.forum, thread, "new", ["approved", "bump"]))
+			await tagcontroller.set_status(ForumStatus.NEW.value)
+			queue().add(tagcontroller.commit_tags(), 0)
 		if "approved" in tags and "bump" in tags :
-			queue().add(TagController().change_tags(self.forum, thread, "approved", ["bump"]))
+			await tagcontroller.set_status(ForumStatus.APPROVED.value)
+			queue().add(tagcontroller.commit_tags(), 0)
 
 	async def cleanup_forum(self, thread: discord.Thread) :
 		logging.info("Cleaning up the forum")
