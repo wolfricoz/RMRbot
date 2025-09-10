@@ -4,6 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 import re
 
+import discord
 from discord import ForumChannel, ForumTag, Message, Thread
 
 from classes.Support.LogTo import automod_log
@@ -13,7 +14,35 @@ from classes.queue import queue
 class TagController():
 	"""This class is used to handle the tags for the forums."""
 
+
 	# WARNING: You can only apply tags once in the same function, otherwise it'll overwrite the previous tag.
+
+	# New workflow: Initialize class > add tags > commit.
+
+	def __init__(self, thread: discord.Thread):
+		self.thread = thread
+		self.status = ""
+		self.current_tags = [tag.name.lower() for tag in thread.applied_tags]
+		self.added_tags = [] # these tags need to be added, but aren't final yet
+		self.new_tags = [] # these are the final tags which will be set as: status + 4 tags.
+
+
+	async def add_tags(self, tags: str | list['str']):
+		if isinstance(tags, str):
+			self.added_tags.append(tags)
+		old = set(self.added_tags)
+		new = set([tag.lower() for tag in tags])
+		self.added_tags = self.added_tags + (list(new - old))
+
+	async def remove_tags(self, tags: str | list['str']):
+		pass
+
+	async def calculate_finalized_tags(self):
+		pass
+
+	async def commit_tags(self):
+		pass
+
 
 	async def get_status_tags(self, forum: ForumChannel, tags: list = ("new", "approved", "bump")) -> list[ForumTag] :
 		"""This function is used to find the status tags in the forum."""
