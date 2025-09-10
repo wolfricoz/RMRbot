@@ -22,6 +22,7 @@ from classes.databaseController import ApprovalTransactions, ConfigData, TimersT
 from classes.moduser import ModUser
 from classes.queue import queue
 from classes.searchbans import add_search_ban, warning_count_check
+from resources.enums.ForumStatus import ForumStatus
 from views.buttons.confirmButtons import confirmAction
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
@@ -89,6 +90,7 @@ class Forum(commands.GroupCog, name="forum") :
 
 	@commands.Cog.listener('on_thread_create')
 	async def on_profile_create(self, thread: discord.Thread) :
+		tagcontroller = TagController(thread.parent, thread)
 		try :
 			key = ConfigData().get_key_int(thread.guild.id, "rpprofiles")
 		except KeyError :
@@ -132,9 +134,12 @@ class Forum(commands.GroupCog, name="forum") :
 			await modchannel.send(
 				f"{thread.owner.mention} has posted an profile with underaged ages in {thread.mention}."
 				f"\nPreferred Character Age: {character_age}\nPreferred Writer Age: {writer_age}")
-			await TagController().change_status_tag(self.bot, thread, ["waiting"])
+			await tagcontroller.add_tags('waiting')
+			await tagcontroller.commit_tags()
 			return
-		await TagController().change_status_tag(self.bot,thread, ["approved"])
+		await tagcontroller.remove_tags('waiting')
+		await tagcontroller.set_status(ForumStatus.APPROVED.value)
+		await tagcontroller.commit_tags()
 
 	@commands.Cog.listener()
 	async def on_message(self, message) :

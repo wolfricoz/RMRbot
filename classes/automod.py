@@ -17,6 +17,7 @@ from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
 from classes.databaseController import ApprovalTransactions, ConfigData
 from classes.queue import queue
+from resources.enums.ForumStatus import ForumStatus
 from views.buttons.PostOptions import PostOptions
 
 
@@ -45,9 +46,11 @@ class AutoMod(ABC) :
 	@staticmethod
 	@abstractmethod
 	async def add_relevant_tags(forum, thread, msg, status="new") :
-		matched = [tag.name for tag in await TagController().find_tags_in_content(thread, forum, msg)]
-		matched.append(status)
-		queue().add(TagController().change_tags(forum, thread, matched))
+		tagcontroller = TagController(forum, thread)
+		await tagcontroller.set_status(status=status)
+		matched = [tag.name for tag in await tagcontroller.find_tags_in_content(thread, forum, msg)]
+		await tagcontroller.add_tags(matched)
+		queue().add(tagcontroller.commit_tags())
 		fm = ", ".join(matched)
 		queue().add(thread.send(
 			f"Automod has added: `{fm}` to your post. You can edit your tags by right-clicking the thread!"))
@@ -133,10 +136,13 @@ class AutoMod(ABC) :
 		forum = bot.get_channel(thread.parent_id)
 		og = await thread.fetch_message(thread.id)
 		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
+		tagcontroller = TagController(forum, thread)
+
 
 		if og_time is not None and current_time - og_time > timedelta(
 				hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
-			queue().add(TagController().change_status_tag(interaction.client, thread, ["approved"]), 2)
+			await tagcontroller.set_status(ForumStatus.APPROVED.value)
+			await tagcontroller.commit_tags()
 			queue().add(send_message(interaction.channel,
 			                         f"Post successfully bumped and automatically approved. You can bump again in: {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')}",
 			                         view=PostOptions(AutoMod)))
@@ -149,8 +155,8 @@ class AutoMod(ABC) :
 				ephemeral=True)
 
 			return
-
-		queue().add(TagController().change_status_tag(interaction.client, thread, ["bump"]), 2)
+		await tagcontroller.set_status(ForumStatus.BUMP.value)
+		await tagcontroller.commit_tags()
 		queue().add(send_message(interaction.channel,
 		                         f"Post successfully bumped and awaiting manual review. You may bump again in {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')} after a staff member has approved your post.",
 		                         view=PostOptions(AutoMod)))
