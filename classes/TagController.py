@@ -42,9 +42,9 @@ class TagController() :
 		if len(self.added_tags) >= 4 :
 			logging.info("Can't add more than 4 tags to the thread.")
 			return
-		old = set(self.added_tags)
+		old = set(self.tags)
 		new = set([tag.lower() for tag in tags])
-		self.added_tags = self.added_tags + (list(new - old))
+		self.tags = self.tags + (list(new - old))
 		logging.info(
 			f"[TagController] Added tags request={tags} | resulting added_tags={self.added_tags} for thread '{self.thread.name}'")
 
