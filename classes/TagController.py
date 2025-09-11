@@ -41,7 +41,7 @@ class TagController() :
 			if len(self.tags) >= 4 :
 				logging.info("Can't add more than 4 tags to the thread.")
 				return
-			self.added_tags.append(tags.lower())
+			self.tags.append(tags.lower())
 		for tag in tags :
 			if len(self.tags) >= 4 :
 				logging.info("Can't add more than 4 tags to the thread.")
@@ -53,15 +53,15 @@ class TagController() :
 	async def remove_tags(self, tags: str | list['str']) :
 		if isinstance(tags, str) :
 			try :
-				self.added_tags.remove(tags)
+				self.tags.remove(tags)
 			except ValueError :
 				logging.info(
 					f"[TagController] Tried to remove non-existent tag '{tags}' from added_tags for thread '{self.thread.name}'")
-		old = set(self.added_tags)
+		old = set(self.tags)
 		new = set([tag.lower() for tag in tags])
-		self.added_tags = list(old - new)
+		self.tags = list(old - new)
 		logging.info(
-			f"[TagController] Removed tags request={tags} | resulting added_tags={self.added_tags} for thread '{self.thread.name}'")
+			f"[TagController] Removed tags request={tags} | resulting added_tags={self.tags} for thread '{self.thread.name}'")
 
 	async def commit_tags(self) :
 		"""Applies the tags to the thread."""
