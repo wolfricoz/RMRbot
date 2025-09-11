@@ -38,15 +38,17 @@ class TagController() :
 
 	async def add_tags(self, tags: str | list['str']) :
 		if isinstance(tags, str) :
-			self.added_tags.append(tags)
-		if len(self.added_tags) >= 4 :
-			logging.info("Can't add more than 4 tags to the thread.")
-			return
-		old = set(self.tags)
-		new = set([tag.lower() for tag in tags])
-		self.tags = self.tags + (list(new - old))
-		logging.info(
-			f"[TagController] Added tags request={tags} | resulting added_tags={self.added_tags} for thread '{self.thread.name}'")
+			if len(self.tags) >= 4 :
+				logging.info("Can't add more than 4 tags to the thread.")
+				return
+			self.added_tags.append(tags.lower())
+		for tag in tags :
+			if len(self.tags) >= 4 :
+				logging.info("Can't add more than 4 tags to the thread.")
+				return
+			if tag.lower() in self.tags :
+				continue
+			self.tags.append(tag.lower())
 
 	async def remove_tags(self, tags: str | list['str']) :
 		if isinstance(tags, str) :
