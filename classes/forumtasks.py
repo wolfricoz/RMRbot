@@ -64,10 +64,10 @@ class ForumTasks :
 		tagcontroller = TagController(self.forum, thread)
 		if not any(result) :
 			await tagcontroller.set_status(ForumStatus.NEW.value)
-			queue().add(tagcontroller.commit_tags(), 0)
+			queue().add(tagcontroller.commit_tags(), 2)
 		if "approved" in tags and "bump" in tags :
 			await tagcontroller.set_status(ForumStatus.APPROVED.value)
-			queue().add(tagcontroller.commit_tags(), 0)
+			queue().add(tagcontroller.commit_tags(), 2)
 
 	async def cleanup_forum(self, thread: discord.Thread) :
 		logging.info("Cleaning up the forum")
