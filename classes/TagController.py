@@ -69,8 +69,8 @@ class TagController() :
 	async def commit_tags(self) :
 		"""Applies the tags to the thread."""
 		# self.calculate_finalized_tags()
-		await self.thread.edit(applied_tags=self.get_tags(self.tags))
-		logging.info(f"[TagController] Tags applied to thread '{self.thread.name}'")
+		await self.thread.edit(applied_tags=self.get_tags(self.tags[:4]))
+		logging.info(f"[TagController] Tags applied to thread '{self.thread.name }'")
 		return self.tags
 
 	# Support functions
