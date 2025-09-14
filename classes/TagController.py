@@ -33,6 +33,9 @@ class TagController() :
 	async def set_status(self, status: str) :
 		"""This function is used to set the status of the thread."""
 		self.status = self.status_tags.get(status.lower(), ForumStatus.NEW)
+		if len(self.tags) > 4:
+			self.tags[0] = status.lower()
+			return
 		self.tags.append(status.lower())
 		logging.info(f"[TagController] Status set to '{self.status}' for thread '{self.thread.name}'")
 
