@@ -33,6 +33,9 @@ class TagController() :
 	async def set_status(self, status: str) :
 		"""This function is used to set the status of the thread."""
 		self.status = self.status_tags.get(status.lower(), ForumStatus.NEW)
+		if len(self.tags) > 4:
+			self.tags[0] = status.lower()
+			return
 		self.tags.append(status.lower())
 		logging.info(f"[TagController] Status set to '{self.status}' for thread '{self.thread.name}'")
 
@@ -66,8 +69,8 @@ class TagController() :
 	async def commit_tags(self) :
 		"""Applies the tags to the thread."""
 		# self.calculate_finalized_tags()
-		await self.thread.edit(applied_tags=self.get_tags(self.tags))
-		logging.info(f"[TagController] Tags applied to thread '{self.thread.name}'")
+		await self.thread.edit(applied_tags=self.get_tags(self.tags[:4]))
+		logging.info(f"[TagController] Tags applied to thread '{self.thread.name }'")
 		return self.tags
 
 	# Support functions
