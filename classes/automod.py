@@ -175,7 +175,7 @@ class AutoMod(ABC) :
 
 		forums = AutoMod.config(thread.guild.id)
 		if thread.owner_id == 188647277181665280 :
-			return
+			return None
 		for c in forums :
 			forum = bot.get_channel(c)
 			checkdup = await AutomodComponents.check_duplicate(forum, thread, originalmsg)
@@ -184,8 +184,12 @@ class AutoMod(ABC) :
 					f"Hi, I am a bot of {thread.guild.name}. Your latest advertisement is too similar to {checkdup.channel.mention}; since 07/01/2023 you're only allowed to have the same advert up once. \n\n"
 					f"If you wish to bump your advert, do /forum bump on your advert, if you wish to move then please use /forum close"))
 				queue().add(Advert.send_advert_to_user(thread, originalmsg, "Your advert:", "no"))
+				loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
+				queue().add(Advert.logadvert(originalmsg, loggingchannel))
 				queue().add(thread.delete())
 				return checkdup
+
+		return None
 
 	@staticmethod
 	@abstractmethod
@@ -212,6 +216,8 @@ class AutoMod(ABC) :
 		"""This function is used to check the header."""
 		header = re.match(r"^\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}", message.content,
 		                  flags=re.IGNORECASE)
+		loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
+
 		if header is None :
 			queue().add(message.author.send(
 				"""Your advert has been removed because it does not have a header or your header does not follow the template below. Please re-post with a (correct) header.
@@ -232,6 +238,7 @@ You can use this website to check your header: https://regex101.com/r/HYkkf9/2
 This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
 """))
 			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
+			queue().add(Advert.logadvert(message, loggingchannel))
 			queue().add(thread.delete())
 			return True
 		age = header.group(2)
@@ -245,7 +252,6 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 		regex_pattern = r'^[\[\(\{][^\]\)\}]{1,10}[4\/x][^\]\)\}]{1,10}[\]\)\}]'
 		result = re.search(regex_pattern, thread.name, flags=re.IGNORECASE)
 		if result is None :
-			queue().add(thread.delete())
 			queue().add(message.author.send(
 				"""Your advert has been removed because it does not follow our title format. Please re-post with the correct format.
 ```text
@@ -253,6 +259,10 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 		Example: [m/m] Hi I am looking for a partner
 """))
 			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
+			loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
+			queue().add(Advert.logadvert(message, loggingchannel))
+
+			queue().add(thread.delete())
 
 
 			return False

@@ -40,6 +40,7 @@ class Forum(commands.GroupCog, name="forum") :
 		forums = AutoMod.config(guildid=thread.guild.id)
 		bot = self.bot
 		forum_channel = bot.get_channel(thread.parent_id)
+
 		if forum_channel.id not in forums :
 			return
 
@@ -57,6 +58,7 @@ class Forum(commands.GroupCog, name="forum") :
 			                        f"`pairing format not found in title {thread.name}` posted by {thread.owner.mention} and has been removed",
 			                        "automodlog"),
 			            priority=0)
+			return
 
 		header_status = await AutoMod.check_header(msg, thread)
 		duplicate_status = await AutoMod.duplicate(thread=thread, bot=bot, originalmsg=msg)
