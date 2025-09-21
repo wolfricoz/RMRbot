@@ -138,7 +138,6 @@ class AutoMod(ABC) :
 		og_time = og.edited_at.replace(tzinfo=utc) if og.edited_at else None
 		tagcontroller = TagController(forum, thread)
 
-
 		if og_time is not None and current_time - og_time > timedelta(
 				hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
 			await tagcontroller.set_status(ForumStatus.APPROVED.value)
@@ -214,8 +213,10 @@ class AutoMod(ABC) :
 	@abstractmethod
 	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | int | None :
 		"""This function is used to check the header."""
-		header = re.match(r"^\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}", message.content,
-		                  flags=re.IGNORECASE)
+		header = re.match(
+			r"^\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}",
+			message.content,
+			flags=re.IGNORECASE)
 		loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
 
 		if header is None :
@@ -254,16 +255,23 @@ This rule went in to effect on the 01/01/2024. If you have any questions, please
 		if result is None :
 			queue().add(message.author.send(
 				"""Your advert has been removed because it does not follow our title format. Please re-post with the correct format.
+This often errors on:
+* You may have forgotten the brackets
+* You haven't included the pairings in your title
+* You may have included the pairings in the body of your post, not the title
+
+Here is an example of a title that should work:
 ```text
-		[pairing/pairing] title here
-		Example: [m/m] Hi I am looking for a partner
+[pairing/pairing] title here
+Example: [m/m] Hi I am looking for a partner
+```
+If you've looked through the steps above and still have questions, please open a ticket!
 """))
 			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
 			loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
 			queue().add(Advert.logadvert(message, loggingchannel))
 
 			queue().add(thread.delete())
-
 
 			return False
 		return True
