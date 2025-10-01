@@ -27,7 +27,7 @@ async def add_search_ban(member: discord.Member, guild, reason: str, removal_tim
     role_id = ConfigData().get_key_int(guild.id, 'posttimeout')
     search_ban_role = guild.get_role(role_id)
     await member.add_roles(search_ban_role)
-    TimersTransactions.add_timer(member.id, guild.id, reason, removal_time)
+    TimersTransactions.add_timer(member.id, guild.id, removal_time, roleid=role_id, reason=reason)
     logging.debug(f"Added searchban to {member.name}")
 
 async def warning_count_check(interaction, member: discord.Member, guild, count: int):
