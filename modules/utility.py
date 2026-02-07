@@ -61,8 +61,8 @@ class Utility(commands.Cog) :
 			return
 
 		patterns = {
-			"fahrenheit": r"\b(\d+)\s*f\b",
-			"celcius": r"\b(\d+)\s*c\b"
+			"fahrenheit": r"\b(-?\d+(?:\.\d+)?)\s*°?\s*f\b",
+			"celcius": r"\b(-?\d+(?:\.\d+)?)\s*°?\s*c\b"
 		}
 		temp_type = None
 		value = None
