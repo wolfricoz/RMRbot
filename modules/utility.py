@@ -7,10 +7,10 @@ import discord
 import pycurl
 from discord import app_commands
 from discord.ext import commands
+from discord.ext.commands import Cog
 
 import classes.automod as automod
 import classes.permissions as permissions
-from classes.Support.discord_tools import send_response
 
 
 # the base for a cog.
@@ -55,24 +55,54 @@ class Utility(commands.Cog) :
 
 		await interaction.response.send_message(f"Here are all users in the forums:", file=discord.File("forumusers.txt"))
 
-	# @app_commands.command(name="archive_all")
-	# async def forumarchive(self, interaction: discord.Interaction) :
-	# 	await send_response(interaction, "starting the forum manager! The forum will be cleaned.")
-	# 	archived_thread: discord.Thread
-	# 	channel: discord.ForumChannel
-	# 	regex = re.compile(f"search", flags=re.IGNORECASE)
-	# 	channels = [
-	# 		channel
-	# 		for guild in self.bot.guilds
-	# 		for channel in guild.channels
-	# 		if channel.type == discord.ChannelType.forum and regex.search(channel.name)
-	# 	]
-	# 	for forum in channels :
-	# 		for thread in forum.threads :
-	# 			print(f"archiving {thread.name}")
-	# 			await thread.edit(archived=True)
-	# 			print(thread.archived)
-	# 			print(thread.archive_timestamp)
+	@Cog.listener(name="on_message")
+	async def on_message(self, message) :
+		if message.author.bot :
+			return
+
+		patterns = {
+			"fahrenheit": r"\b(\d+)\s*f\b",
+			"celcius": r"\b(\d+)\s*c\b"
+		}
+		temp_type = None
+		value = None
+		match_reg = None
+		for key, pattern in patterns.items() :
+			match_reg = re.search(pattern, message.content, re.IGNORECASE)
+			if match_reg :
+				temp_type = key
+				value = int(match_reg.group(1))
+		if not match_reg or not temp_type or value is None :
+			return
+		match temp_type:
+			case "fahrenheit" :
+				celsius = (value - 32) * 5/9
+				await message.channel.send(f"{value}°F is {celsius:.2f}°C", reference=message)
+			case "celcius" :
+				fahrenheit = (value * 9 / 5) + 32
+				await message.channel.send(f"{value}°C is {fahrenheit:.2f}°F", reference=message)
+
+
+
+
+# @app_commands.command(name="archive_all")
+# async def forumarchive(self, interaction: discord.Interaction) :
+# 	await send_response(interaction, "starting the forum manager! The forum will be cleaned.")
+# 	archived_thread: discord.Thread
+# 	channel: discord.ForumChannel
+# 	regex = re.compile(f"search", flags=re.IGNORECASE)
+# 	channels = [
+# 		channel
+# 		for guild in self.bot.guilds
+# 		for channel in guild.channels
+# 		if channel.type == discord.ChannelType.forum and regex.search(channel.name)
+# 	]
+# 	for forum in channels :
+# 		for thread in forum.threads :
+# 			print(f"archiving {thread.name}")
+# 			await thread.edit(archived=True)
+# 			print(thread.archived)
+# 			print(thread.archive_timestamp)
 
 
 async def setup(bot) :
