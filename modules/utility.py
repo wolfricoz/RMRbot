@@ -1,4 +1,5 @@
 """This cog is meant for every warning related command"""
+import logging
 import re
 from io import BytesIO
 
@@ -70,9 +71,12 @@ class Utility(commands.Cog) :
 		for key, pattern in patterns.items() :
 			match_reg = re.search(pattern, message.content, re.IGNORECASE)
 			if match_reg :
+				logging.info(f"Match pattern: {pattern}")
 				temp_type = key
 				value = int(match_reg.group(1))
+				break
 		if not match_reg or not temp_type or value is None :
+			logging.info(f"no temperature found in message: {message.content} with variables: temp_type: {temp_type}, value: {value}")
 			return
 		match temp_type:
 			case "fahrenheit" :
