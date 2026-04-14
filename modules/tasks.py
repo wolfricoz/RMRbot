@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
+from discord_py_utilities.invites import check_invite
 
 import classes.databaseController
 import classes.searchbans as searchbans
@@ -189,12 +190,12 @@ class Tasks(commands.GroupCog) :
 						continue
 
 					match = re.search(invite_pattern, message.content)
-					if match :
-						invite_link = match.group()
-						try :
-							await self.bot.fetch_invite(invite_link)
-						except discord.HTTPException or discord.NotFound :
-							await invite_channel.send(f"The invite link {invite_link} in {channel.mention} is invalid or expired.")
+					if not match :
+						continue
+					invite_link = match.group()
+					result = await check_invite(self.bot, guild, invite_link)
+					if not result :
+						await invite_channel.send(f"The invite link {invite_link} in {channel.mention} is invalid or expired.")
 		logging.info(f"Finished checking all invites, found {count} invites.")
 
 	@tasks.loop(hours=24)
