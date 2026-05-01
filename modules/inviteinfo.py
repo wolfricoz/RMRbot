@@ -20,6 +20,9 @@ class inviteInfo(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """reads invite dictionary, and outputs user info"""
+        # Disabled; this function is handled by ageverifier
+        return
+
         try:
             infochannel = ConfigData().get_key_int(member.guild.id, 'inviteinfo')
         except KeyError:
