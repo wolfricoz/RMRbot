@@ -524,7 +524,7 @@ class SearchWarningTransactions(ABC):
 class TimersTransactions(ABC):
     @staticmethod
     @abstractmethod
-    def add_timer(guildid, userid, time_in_hours, roleid=None, reason=None):
+    def add_timer(userid, guildid, time_in_hours, roleid=None, reason=None):
         """Adds timer to the database"""
         entry = Timers(uid=userid, guild=guildid, removal=time_in_hours, role=roleid, reason=reason)
         session.add(entry)
