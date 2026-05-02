@@ -96,7 +96,8 @@ class Tasks(commands.GroupCog) :
 
 		for data in DatabaseTransactions.get_table("timers") :
 			# Calculate expiration
-			removal_time = data.created_at + timedelta(hours=data.removal)
+			removal_time = data.created_at.replace(tzinfo=timezone.utc) + timedelta(hours=data.removal)
+			now = datetime.now(timezone.utc)
 
 			if now < removal_time :
 				continue
