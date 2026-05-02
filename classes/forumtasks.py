@@ -50,7 +50,9 @@ class ForumTasks :
 		"""Loop through archived posts and send a reminder there."""
 		logging.info("recovering archived posts")
 		async for archived_thread in self.archived :
-			if archived_thread.owner.id not in self.members :
+
+
+			if not archived_thread.owner or archived_thread.owner.id not in self.members :
 				queue().add(archived_thread.delete(), priority=0)
 				continue
 			if archived_thread.archived is False :
