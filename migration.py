@@ -1,14 +1,14 @@
 import json
 import os
+import time
 from datetime import datetime
 
+import databases.old as olddb
 import sqlalchemy.exc
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
 
 import databases.current as currentDB
-import databases.old as olddb
-import time
 
 currentDB.database.create()
 olddb.database().create()

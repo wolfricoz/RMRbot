@@ -6,22 +6,22 @@ import discord
 from discord.app_commands import AppCommandError
 
 import classes.databaseController
-from classes.databaseController import ConfigData, VerificationTransactions
+from classes.databaseController import ConfigData
 
 
 class ModUser(ABC):
 
     @staticmethod
     @abstractmethod
-    async def ban_user(interaction, member, bot, reason, appeal, idlist):
+    async def ban_user(interaction, member, bot, reason, appeal):
         """Checks the selected options, and ensures user doesn't ban self."""
         if member == interaction.user:
             await interaction.followup.send(f"Error: user ID belongs to {member.mention}.")
             return
         await ModUser.ban_user_from_guilds(interaction, member, bot, reason, appeal)
-        if idlist.name.upper() == "YES":
-            VerificationTransactions.set_idcheck_to_true(member.id, f"BAN: {reason}")
-            await interaction.channel.send(f"{member}({member.id}) added to ID list")
+        # if idlist.name.upper() == "YES":
+        #     VerificationTransactions.set_idcheck_to_true(member.id, f"BAN: {reason}")
+        #     await interaction.channel.send(f"{member}({member.id}) added to ID list")
 
     @staticmethod
     @abstractmethod

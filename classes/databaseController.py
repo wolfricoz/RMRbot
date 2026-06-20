@@ -1,16 +1,15 @@
 import datetime
 import json
 from abc import ABC, abstractmethod
-from datetime import timezone, timedelta, datetime
+from datetime import timedelta, timezone
 
 import sqlalchemy.exc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
-from classes.encryption import Encryption
-
 
 import databases.current as db
+from classes.encryption import Encryption
 from databases.current import *
 
 session = Session(bind=db.engine, expire_on_commit=False)

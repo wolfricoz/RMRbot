@@ -1,7 +1,6 @@
 """Handles all forum related actions; such as automod and warnings."""
 import asyncio
 import logging
-import os
 import re
 import typing
 from datetime import datetime, timedelta
@@ -18,7 +17,7 @@ from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message, send_response
 from classes.TagController import TagController
 from classes.automod import AutoMod
-from classes.databaseController import ApprovalTransactions, ConfigData, TimersTransactions
+from classes.databaseController import ApprovalTransactions, ConfigData
 from classes.moduser import ModUser
 from classes.queue import queue
 from classes.searchbans import add_search_ban, warning_count_check

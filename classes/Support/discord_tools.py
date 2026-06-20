@@ -1,8 +1,6 @@
 import logging
-from dis import disco
 
 import discord
-from discord import DMChannel
 from discord.ext.commands.help import MISSING
 
 max_length = 1800

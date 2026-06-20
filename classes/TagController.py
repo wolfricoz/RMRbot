@@ -1,13 +1,10 @@
 """In this file all ForumTag related functions will be stored, this includes the creation of tags, the deletion of tags, the editing of tags, and the checking of tags. This file will also contain the TagController class which will be used to create new tag types."""
-import asyncio
 import logging
 import re
 
 import discord
 from discord import ForumChannel, ForumTag, Message, Thread
 
-from classes.Support.LogTo import automod_log
-from classes.queue import queue
 from resources.enums.ForumStatus import ForumStatus
 
 

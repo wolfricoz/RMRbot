@@ -4,7 +4,7 @@ from datetime import datetime
 
 import discord
 
-from classes.databaseController import SearchWarningTransactions, ConfigData
+from classes.databaseController import ConfigData, SearchWarningTransactions
 
 
 class Advert(ABC):

@@ -1,8 +1,10 @@
 """Test file for debugging purposes"""
 import os
-from datetime import datetime, timedelta
-from databases import current as db
+
 from dotenv import load_dotenv
+
+from classes.databaseController import SearchWarningTransactions
+from databases import current as db
 
 # dcheck = datetime.now() + timedelta(hours=-70)
 # hours = abs(datetime.now() - dcheck).total_seconds() / 3600
@@ -11,8 +13,6 @@ from dotenv import load_dotenv
 #     print("72 hours has passed")
 # print(timeinfo)
 # print(round(hours, 2))
-
-from classes.databaseController import SearchWarningTransactions
 
 load_dotenv('.env')
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")

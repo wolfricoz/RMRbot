@@ -1,16 +1,14 @@
 """all moderation commands, except for warnings."""
 import asyncio
-import datetime
 import typing
 
 import discord
-import pytz
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData, TimersTransactions, UserTransactions
+from classes.databaseController import ConfigData, UserTransactions
 from classes.moduser import ModUser
 from views.modals import inputmodal
 from views.paginations.paginate import paginate
@@ -46,7 +44,7 @@ class moderation(commands.Cog, name="Moderation"):
     @permissions.check_app_roles_admin()
     async def banc(self, interaction: discord.Interaction, bantype: str, member: discord.User = None,
                    memberid: str = None, *,
-                   appeal: Choice[str], idlist: Choice[str]) -> None:
+                   appeal: Choice[str], ) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
@@ -59,13 +57,13 @@ class moderation(commands.Cog, name="Moderation"):
         if memberid is None and member is None:
             await interaction.followup.send("Please fill in the member or memberid field.")
         try:
-            await ModUser.ban_user(interaction, member, bot, reason, appeal, idlist)
+            await ModUser.ban_user(interaction, member, bot, reason, appeal)
         except Exception as e:
             if memberid is None:
                 await interaction.followup.send("User is not in the server, please use Memberid")
                 return
             member = await self.bot.fetch_user(int(memberid))
-            await ModUser.ban_user(interaction, member, bot, reason, appeal, idlist)
+            await ModUser.ban_user(interaction, member, bot, reason, appeal)
 
     @app_commands.command(name="mass_ban", description="ADMIN: mass bans the users. Please separate the userids with a comma. Two second delay per ban.")
     @app_commands.choices(
@@ -82,7 +80,7 @@ class moderation(commands.Cog, name="Moderation"):
     @permissions.check_app_roles_admin()
     async def mass_ban(self, interaction: discord.Interaction, bantype: str,
                        memberids: str = None, *,
-                       appeal: Choice[str], idlist: Choice[str]) -> None:
+                       appeal: Choice[str]) -> None:
         """Bans user from ALL Roleplay Meets servers. Use memberid if user is not in server."""
         bans: dict = ConfigData().get_key(interaction.guild.id, "BAN")
         reason = bans.get(bantype.upper(), "Banned by an admin for breaking the server rules.")
@@ -99,7 +97,7 @@ class moderation(commands.Cog, name="Moderation"):
                 await interaction.followup.send("User is not in the server, please use Memberid")
                 return
             member = await self.bot.fetch_user(int(memberid))
-            await ModUser.ban_user(interaction, member, bot, reason, appeal, idlist)
+            await ModUser.ban_user(interaction, member, bot, reason, appeal)
 
 
 

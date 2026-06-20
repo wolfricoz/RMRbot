@@ -14,9 +14,6 @@ from discord_py_utilities.invites import check_invite
 import classes.databaseController
 import classes.searchbans as searchbans
 from classes import permissions
-from classes.AutomodComponents import AutomodComponents
-from classes.Support.LogTo import automod_log
-from classes.Support.discord_tools import fetch_message_or_none, send_message
 from classes.databaseController import ConfigData, DatabaseTransactions, TimersTransactions, UserTransactions
 from classes.forumtasks import ForumTasks
 from classes.queue import queue

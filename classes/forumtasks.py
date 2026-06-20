@@ -1,15 +1,12 @@
-import asyncio
 import logging
-from collections.abc import AsyncIterator
-from itertools import count
 import re
+from collections.abc import AsyncIterator
 
 import discord
 from discord import Thread
 from discord.ext import commands
 
 from classes import permissions
-from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import delete_message, fetch_message_or_none, send_message
 from classes.TagController import TagController

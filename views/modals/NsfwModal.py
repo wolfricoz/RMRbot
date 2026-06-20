@@ -5,7 +5,7 @@ from datetime import datetime
 import discord
 
 from classes.AgeCalculations import AgeCalculations
-from classes.databaseController import UserTransactions, ConfigData, VerificationTransactions
+from classes.databaseController import ConfigData, UserTransactions, VerificationTransactions
 from classes.encryption import Encryption
 
 

@@ -4,11 +4,11 @@ from typing import List, Optional
 
 import pymysql
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, DateTime, ForeignKey, String, BigInteger, Boolean
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
-from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy_utils import create_database, database_exists
 
 pymysql.install_as_MySQLdb()
 load_dotenv('.env')

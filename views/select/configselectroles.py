@@ -1,14 +1,11 @@
 import discord
-
-from discord.ui import UserSelect
-from discord.ui import ChannelSelect
-# Only roles?
-from discord.ui import RoleSelect
-# Members and roles in one?
-from discord.ui import MentionableSelect
-
 # import for the decorator and callback...
-from discord import ui, Interaction
+from discord import Interaction, ui
+# Only roles?
+from discord.ui import ChannelSelect, RoleSelect, UserSelect
+
+
+# Members and roles in one?
 
 # using...
 # this example uses the UserSelect
