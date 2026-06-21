@@ -35,10 +35,6 @@ class moderation(commands.Cog, name="Moderation"):
                 Choice(name="Yes", value="To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com"),
                 Choice(name="No", value="This ban is permanent and can not be appealed.")
             ],
-            idlist=[
-                Choice(name="Yes", value="yes"),
-                Choice(name="No", value="no")
-            ]
     )
     @app_commands.autocomplete(bantype=ban_autocompletion)
     @permissions.check_app_roles_admin()
@@ -71,10 +67,6 @@ class moderation(commands.Cog, name="Moderation"):
                 Choice(name="Yes", value="To appeal this ban, you can send an email to roleplaymeetsappeals@gmail.com"),
                 Choice(name="No", value="This ban is permanent and can not be appealed.")
             ],
-            idlist=[
-                Choice(name="Yes", value="yes"),
-                Choice(name="No", value="no")
-            ]
     )
     @app_commands.autocomplete(bantype=ban_autocompletion)
     @permissions.check_app_roles_admin()
