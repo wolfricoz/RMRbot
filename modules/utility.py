@@ -12,6 +12,7 @@ from discord.ext.commands import Cog
 
 import classes.automod as automod
 import classes.permissions as permissions
+from views.buttons.CleanupButtons import CleanupButtons
 
 
 # the base for a cog.
@@ -81,10 +82,10 @@ class Utility(commands.Cog) :
 		match temp_type:
 			case "fahrenheit" :
 				celsius = (value - 32) * 5/9
-				await message.channel.send(f"{value}°F is {celsius:.2f}°C", reference=message)
+				await message.channel.send(f"{value}°F is {celsius:.2f}°C", reference=message, view=CleanupButtons())
 			case "celcius" :
 				fahrenheit = (value * 9 / 5) + 32
-				await message.channel.send(f"{value}°C is {fahrenheit:.2f}°F", reference=message)
+				await message.channel.send(f"{value}°C is {fahrenheit:.2f}°F", reference=message, view=CleanupButtons())
 
 
 1
