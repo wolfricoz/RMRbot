@@ -96,6 +96,19 @@ class Approvals(Base):
     thread: Mapped[int] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+class Advertisements(Base):
+    __tablename__ = "advertisements"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
+    thread_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    forum_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), index=True)
+    consent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+
+
+
 class database:
     @staticmethod
     def create():
