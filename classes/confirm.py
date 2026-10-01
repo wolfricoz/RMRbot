@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 
 class ConfirmDialogue(ABC):
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     async def confirm(bot, discord, interaction, desc, title):
         def check(m):
             return m.content is not None and m.channel == interaction.channel
