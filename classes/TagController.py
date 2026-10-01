@@ -42,6 +42,11 @@ class TagController() :
 				logging.info("Can't add more than 4 tags to the thread.")
 				return
 			self.tags.append(tags.lower())
+			# A single tag name is fully handled above. Without this return we fall through into
+			# the loop below, which iterates the string's CHARACTERS and appends them as bogus
+			# one-letter tags - burning the 4-tag budget and letting set_status() overwrite a real
+			# tag once the inflated count trips its cap check.
+			return
 		for tag in tags :
 			if len(self.tags) >= 4 :
 				logging.info("Can't add more than 4 tags to the thread.")
@@ -51,15 +56,21 @@ class TagController() :
 			self.tags.append(tag.lower())
 
 	async def remove_tags(self, tags: str | list['str']) :
+		# A single tag name arrives as a str and must be wrapped before we iterate it: looping over
+		# a bare string yields its characters, so removing "pending" used to build the set
+		# {d,e,g,i,n,p} and silently delete any tag whose whole name was one of those letters.
+		# Wrapping also routes the str case through .lower() below, so remove_tags("Pending") now
+		# matches the lowercased names stored in __init__ instead of quietly removing nothing.
 		if isinstance(tags, str) :
-			try :
-				self.tags.remove(tags)
-			except ValueError :
-				logging.info(
-					f"[TagController] Tried to remove non-existent tag '{tags}' from added_tags for thread '{self.thread.name}'")
-		old = set(self.tags)
-		new = set([tag.lower() for tag in tags])
-		self.tags = list(old - new)
+			tags = [tags]
+		removing = {tag.lower() for tag in tags}
+		missing = removing - set(self.tags)
+		if missing :
+			logging.info(
+				f"[TagController] Tried to remove non-existent tag(s) '{', '.join(sorted(missing))}' from added_tags for thread '{self.thread.name}'")
+		# Filter instead of a set difference so the surviving tags keep their order: set iteration
+		# order varies between runs, and both set_status() and commit_tags() index/slice this list.
+		self.tags = [tag for tag in self.tags if tag not in removing]
 		logging.info(
 			f"[TagController] Removed tags request={tags} | resulting added_tags={self.tags} for thread '{self.thread.name}'")
 
