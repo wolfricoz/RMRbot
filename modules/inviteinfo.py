@@ -4,7 +4,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from classes.databaseController import ConfigData
+from databases.transactions.ConfigData import ConfigData
 
 
 class inviteInfo(commands.Cog):

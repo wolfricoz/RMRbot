@@ -1,11 +1,16 @@
+import json
 import logging
 import re
+from abc import ABC, abstractmethod
+from datetime import datetime
 
 import discord
 from dateutil.relativedelta import relativedelta
 
 import databases.current
-from classes.databaseController import *
+from classes.encryption import Encryption
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.VerificationTransactions import VerificationTransactions
 
 
 class AgeCalculations(ABC):

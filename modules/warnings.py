@@ -5,7 +5,7 @@ from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData
+from databases.transactions.ConfigData import ConfigData
 from views.modals.warningmodal import WarningModal
 from views.paginations.paginate import paginate
 

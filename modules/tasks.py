@@ -11,10 +11,14 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from discord_py_utilities.invites import check_invite
 
-import classes.databaseController
+from databases.current import Timers
+from databases.exceptions.KeyNotFound import KeyNotFound
 import classes.searchbans as searchbans
 from classes import permissions
-from classes.databaseController import ConfigData, DatabaseTransactions, TimersTransactions, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.DatabaseTransactions import DatabaseTransactions
+from databases.transactions.TimersTransactions import TimersTransactions
+from databases.transactions.UserTransactions import UserTransactions
 from classes.forumtasks import ForumTasks
 from classes.queue import queue
 
@@ -79,7 +83,7 @@ class Tasks(commands.GroupCog) :
 		print("[auto refresh]List updated")
 		logging.debug("[auto refresh]List updated")
 
-	def remove_entry(self, data: classes.databaseController.Timers) :
+	def remove_entry(self, data: Timers) :
 		TimersTransactions.remove_timer(data)
 		logging.debug(
 			f"searchban expired with id {data.id} with data: {data.uid}, {data.guild}, {data.role}, {data.reason}, {data.removal}, {data.created_at}")
@@ -132,7 +136,7 @@ class Tasks(commands.GroupCog) :
 				if advert_mod_channel :
 					await advert_mod_channel.send(f"{member.mention}'s search ban has expired.")
 
-			except classes.databaseController.KeyNotFound :
+			except KeyNotFound :
 				self.remove_entry(data)
 			except Exception as e :
 				logging.error(f"Error processing search ban for {data.uid}: {e}")

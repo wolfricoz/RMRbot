@@ -10,7 +10,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from classes.databaseController import ConfigData
+from databases.transactions.ConfigData import ConfigData
 
 
 class Test(commands.Cog, name="test"):

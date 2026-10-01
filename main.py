@@ -9,7 +9,9 @@ from dotenv import load_dotenv
 
 from classes import permissions
 from classes.automod import AutoMod
-from classes.databaseController import ConfigData, ConfigTransactions, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.ConfigTransactions import ConfigTransactions
+from databases.transactions.UserTransactions import UserTransactions
 from databases import current as db
 from views.buttons.PostOptions import PostOptions
 

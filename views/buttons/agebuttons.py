@@ -1,7 +1,8 @@
 """Allowing and denying users based on age."""
 import discord
 
-from classes.databaseController import ConfigData, VerificationTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.VerificationTransactions import VerificationTransactions
 from classes.lobbyprocess import LobbyProcess
 
 

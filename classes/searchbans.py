@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 import discord
 import pytz
 
-from classes.databaseController import ConfigData, TimersTransactions, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.TimersTransactions import TimersTransactions
+from databases.transactions.UserTransactions import UserTransactions
 
 
 def get_cooldown_time(count) -> int:

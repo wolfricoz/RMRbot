@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 import discord
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData, DatabaseTransactions, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.DatabaseTransactions import DatabaseTransactions
+from databases.transactions.UserTransactions import UserTransactions
 
 
 # noinspection PyUnresolvedReferences

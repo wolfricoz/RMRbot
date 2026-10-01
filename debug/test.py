@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-from classes.databaseController import SearchWarningTransactions
+from databases.transactions.SearchWarningTransactions import SearchWarningTransactions
 from databases import current as db
 
 # dcheck = datetime.now() + timedelta(hours=-70)

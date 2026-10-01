@@ -1,7 +1,7 @@
 """Allows users to text(str) data into the database through discord.ui.Modal"""
 import discord
 
-from classes.databaseController import ConfigTransactions
+from databases.transactions.ConfigTransactions import ConfigTransactions
 
 
 class ConfigInputUnique(discord.ui.Modal, title='set config message'):

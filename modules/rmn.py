@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from classes import permissions
-from classes.databaseController import ConfigData
+from databases.transactions.ConfigData import ConfigData
 
 
 class moderation(commands.Cog, name="rmn"):

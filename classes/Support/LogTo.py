@@ -5,7 +5,7 @@ import logging
 from discord.ext import commands
 
 from classes.Support.discord_tools import send_message
-from classes.databaseController import ConfigData
+from databases.transactions.ConfigData import ConfigData
 
 
 def get_discord_channel(bot: commands.Bot, channel_id: int):

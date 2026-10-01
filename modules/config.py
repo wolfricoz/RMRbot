@@ -5,7 +5,8 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
-from classes.databaseController import ConfigData, ConfigTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.ConfigTransactions import ConfigTransactions
 from views.modals.configinput import ConfigInputUnique
 from views.select.configselectroles import *
 
