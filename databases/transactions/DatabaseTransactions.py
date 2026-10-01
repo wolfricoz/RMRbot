@@ -1,7 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
 from datetime import timedelta
 
+import sqlalchemy
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
 
 import databases.current as db
@@ -22,6 +25,17 @@ class DatabaseTransactions(ABC):
             raise CommitError()
         finally:
             session.close()
+
+    @staticmethod
+    def ping_db():
+        """Checks if the database is reachable, used by the /ping API route."""
+        try:
+            with Session(db.engine) as ping_session:
+                ping_session.execute(sqlalchemy.text("SELECT 1"))
+            return "alive"
+        except SQLAlchemyError as e:
+            logging.error(f"Database ping failed: {e}", exc_info=True)
+            return "error"
 
     @staticmethod
     @abstractmethod
