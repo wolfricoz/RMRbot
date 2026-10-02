@@ -24,6 +24,7 @@ from classes.moduser import ModUser
 from classes.queue import queue
 from classes.searchbans import add_search_ban, warning_count_check
 from resources.enums.ForumStatus import ForumStatus
+from views.buttons.InterestReport import InterestReport
 from views.buttons.confirmButtons import confirmAction
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
@@ -34,6 +35,9 @@ class Forum(commands.GroupCog, name="forum") :
 
 	def __init__(self, bot: commands.Bot) :
 		self.bot = bot
+		# Persistent, so the report buttons on older messages keep working after a restart. The interest button is
+		# part of PostOptions, which main.py registers.
+		self.bot.add_dynamic_items(InterestReport)
 
 	@commands.Cog.listener()
 	async def on_thread_create(self, thread: discord.Thread) :
