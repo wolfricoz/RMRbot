@@ -5,8 +5,8 @@ from datetime import datetime
 import discord
 from discord.app_commands import AppCommandError
 
-import classes.databaseController
-from classes.databaseController import ConfigData
+from databases.exceptions.KeyNotFound import KeyNotFound
+from databases.transactions.ConfigData import ConfigData
 
 
 class ModUser(ABC):
@@ -20,7 +20,7 @@ class ModUser(ABC):
             return
         await ModUser.ban_user_from_guilds(interaction, member, bot, reason, appeal)
         # if idlist.name.upper() == "YES":
-        #     VerificationTransactions.set_idcheck_to_true(member.id, f"BAN: {reason}")
+        #     VerificationTransactions().set_idcheck_to_true(member.id, f"BAN: {reason}")
         #     await interaction.channel.send(f"{member}({member.id}) added to ID list")
 
     @staticmethod
@@ -71,7 +71,7 @@ class ModUser(ABC):
             await log.send(embed=embed)
             if typeofaction == "banned":
                 await banlog.send(embed=embed)
-        except classes.databaseController.KeyNotFound as e:
+        except KeyNotFound as e:
 
             logging.exception(f"{guild.name}: {e}")
 
@@ -84,6 +84,6 @@ class ModUser(ABC):
                                   description=f"**Mention:** {member.mention} \n**UID:** {member.id}\n **Reason:** \n{reason}")
             embed.set_footer(text=f"Time:{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} {f'servers:{servers}' if servers else ''}")
             await interaction.channel.send(embed=embed)
-        except classes.databaseController.KeyNotFound as e:
+        except KeyNotFound as e:
             await interaction.guild.owner.send(f"could not send ban notification to {interaction.guild.name} \n")
             logging.exception(f"{guild.name}: {e}")

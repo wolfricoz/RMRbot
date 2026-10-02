@@ -10,7 +10,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from classes.databaseController import ConfigData
+from databases.transactions.ConfigData import ConfigData
 
 
 class Test(commands.Cog, name="test"):
@@ -166,6 +166,7 @@ class Test(commands.Cog, name="test"):
                 continue
             match = re.search(r"\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b", x.reason)
 
+            # TODO: dead code - match2 is never used
             match2 = re.search(r"THIS USER IS A MINOR", x.reason)
             if match is not None:
                 await ctx.send(f"{x.user.mention} {x.reason}")

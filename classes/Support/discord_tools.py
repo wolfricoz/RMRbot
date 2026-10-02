@@ -82,6 +82,7 @@ async def send_response(interaction: discord.Interaction, response, ephemeral=Fa
         return await interaction.channel.send(response, view=view, embed=embed)
 
 
+# TODO: dead code - never called
 async def get_all_threads(guild: discord.Guild):
     """Get all threads in a guild"""
     all_threads = []
@@ -96,6 +97,7 @@ async def get_all_threads(guild: discord.Guild):
     return all_threads
 
 
+# TODO: dead code - never called
 async def ban_member(bans_class, interaction, user, reason, days=1):
     try:
         await bans_class.add_ban(user.id, interaction.guild.id, reason, interaction.user.name)
@@ -107,6 +109,7 @@ async def ban_member(bans_class, interaction, user, reason, days=1):
         raise NoMessagePermissionException(missing_permissions=['ban_members'])
 
 
+# TODO: dead code - never called
 async def await_message(interaction, message) -> discord.Message | bool:
     msg: discord.Message = await send_message(interaction.channel,
                                               message)

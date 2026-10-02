@@ -11,10 +11,14 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from discord_py_utilities.invites import check_invite
 
-import classes.databaseController
+from databases.current import Timers
+from databases.exceptions.KeyNotFound import KeyNotFound
 import classes.searchbans as searchbans
 from classes import permissions
-from classes.databaseController import ConfigData, DatabaseTransactions, TimersTransactions, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.DatabaseTransactions import DatabaseTransactions
+from databases.transactions.TimersTransactions import TimersTransactions
+from databases.transactions.UserTransactions import UserTransactions
 from classes.forumtasks import ForumTasks
 from classes.queue import queue
 
@@ -25,7 +29,9 @@ class Tasks(commands.GroupCog) :
 	def __init__(self, bot: commands.Bot) :
 		"""loads tasks"""
 		self.bot = bot
+		# TODO: dead code - self.index is never read
 		self.index = 0
+		# TODO: dead code - self.forums is never read
 		self.forums = None  # Potential cache of forums
 		self.config_reload.start()
 		self.lobby_history.start()
@@ -79,8 +85,8 @@ class Tasks(commands.GroupCog) :
 		print("[auto refresh]List updated")
 		logging.debug("[auto refresh]List updated")
 
-	def remove_entry(self, data: classes.databaseController.Timers) :
-		TimersTransactions.remove_timer(data)
+	def remove_entry(self, data: Timers) :
+		TimersTransactions().remove_timer(data)
 		logging.debug(
 			f"searchban expired with id {data.id} with data: {data.uid}, {data.guild}, {data.role}, {data.reason}, {data.removal}, {data.created_at}")
 
@@ -91,7 +97,7 @@ class Tasks(commands.GroupCog) :
 		# Get the current time once to keep the comparison consistent
 		now = datetime.now(timezone.utc)
 
-		for data in DatabaseTransactions.get_table("timers") :
+		for data in DatabaseTransactions().get_table("timers") :
 			# Calculate expiration
 			removal_time = data.created_at.replace(tzinfo=timezone.utc) + timedelta(hours=data.removal)
 			now = datetime.now(timezone.utc)
@@ -132,13 +138,14 @@ class Tasks(commands.GroupCog) :
 				if advert_mod_channel :
 					await advert_mod_channel.send(f"{member.mention}'s search ban has expired.")
 
-			except classes.databaseController.KeyNotFound :
+			except KeyNotFound :
 				self.remove_entry(data)
 			except Exception as e :
 				logging.error(f"Error processing search ban for {data.uid}: {e}")
 
 		logging.info("Finished checking all roles on users for searchbans")
 
+	# TODO: dead code - only called by the commented-out check_users_expiration below
 	async def user_expiration_update(self, userids) :
 		"""updates entry time, if entry is expired this also removes it."""
 		logging.debug(f"Checking all entries for expiration at {datetime.now()}")
@@ -147,27 +154,29 @@ class Tasks(commands.GroupCog) :
 			for member in guild.members :
 				if member.id not in userids :
 					logging.debug(f"User {member.id} not found in database, adding.")
-					UserTransactions.add_user_empty(member.id)
+					UserTransactions().add_user_empty(member.id)
 					continue
 				updated_users.append(str(member.id))
-				UserTransactions.update_entry_date(member.id)
+				UserTransactions().update_entry_date(member.id)
 		logging.debug(f"Updating entry time for {len(updated_users)} users")
 		del updated_users
 
+	# TODO: dead code - only called by the commented-out check_users_expiration below
 	async def user_expiration_remove(self, userdata, removaldate) :
 		"""removes expired entries."""
 		for entry in userdata :
 			if entry.entry < removaldate :
-				UserTransactions.user_delete(entry.uid)
+				UserTransactions().user_delete(entry.uid)
 				logging.debug(f"Database record: {entry.uid} expired")
 
+	# TODO: dead code - commented-out check_users_expiration task
 	# @tasks.loop(hours=48)
 	# async def check_users_expiration(self) :
 	# 	"""updates entry time, if entry is expired this also removes it."""
 	# 	if self.check_users_expiration.current_loop == 0 :
 	# 		return
 	# 	print("checking user entries")
-	# 	userdata = UserTransactions.get_all_users()
+	# 	userdata = UserTransactions().get_all_users()
 	# 	userids = [x.uid for x in userdata]
 	# 	removaldate = datetime.now() - timedelta(days=730)
 	# 	await self.user_expiration_update(userids)

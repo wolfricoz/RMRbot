@@ -1,7 +1,7 @@
 """Allows users to text(str) data into the database through discord.ui.Modal"""
 import discord
 
-from classes.databaseController import ConfigTransactions
+from databases.transactions.ConfigTransactions import ConfigTransactions
 
 
 class ConfigInputUnique(discord.ui.Modal, title='set config message'):
@@ -17,7 +17,7 @@ class ConfigInputUnique(discord.ui.Modal, title='set config message'):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=self.key, value=self.text.value,
+        ConfigTransactions().config_unique_add(guildid=interaction.guild.id, key=self.key, value=self.text.value,
                                              overwrite=False)
 
         await interaction.response.send_message(f"{self.key} has been added to the database with value:\n{self.text.value}", ephemeral=True)
@@ -27,6 +27,7 @@ class ConfigInputUnique(discord.ui.Modal, title='set config message'):
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
 
 
+# TODO: dead code - ConfigInput is never used; config.py only uses ConfigInputUnique
 class ConfigInput(discord.ui.Modal, title='set config message'):
     custom_id = ""
 
@@ -42,7 +43,7 @@ class ConfigInput(discord.ui.Modal, title='set config message'):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        result = ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=self.key.upper(),
+        result = ConfigTransactions().config_unique_add(guildid=interaction.guild.id, key=self.key.upper(),
                                                       value=self.text.value, overwrite=False)
         if result is False:
             await interaction.response.send_message(f"{self.key} already exists", ephemeral=True)

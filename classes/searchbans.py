@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 import discord
 import pytz
 
-from classes.databaseController import ConfigData, TimersTransactions, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.TimersTransactions import TimersTransactions
+from databases.transactions.UserTransactions import UserTransactions
 
 
 def get_cooldown_time(count) -> int:
@@ -20,7 +22,7 @@ def get_cooldown_time(count) -> int:
 async def remove(member: discord.Member, role, timer):
     """removes role from user and removes timer"""
     await member.remove_roles(role)
-    TimersTransactions.remove_timer(timer)
+    TimersTransactions().remove_timer(timer)
     logging.debug(f"Removed searchban from {member.name}")
 
 async def add_search_ban(member: discord.Member, guild, reason: str, removal_time: int):
@@ -28,8 +30,8 @@ async def add_search_ban(member: discord.Member, guild, reason: str, removal_tim
     role_id = ConfigData().get_key_int(guild.id, 'posttimeout')
     search_ban_role = guild.get_role(role_id)
     await member.add_roles(search_ban_role)
-    UserTransactions.add_user_empty(member.id)
-    TimersTransactions.add_timer(member.id, guild.id, removal_time, roleid=role_id, reason=reason)
+    UserTransactions().add_user_empty(member.id)
+    TimersTransactions().add_timer(member.id, guild.id, removal_time, roleid=role_id, reason=reason)
     logging.debug(f"Added searchban to {member.name}")
 
 async def warning_count_check(interaction, member: discord.Member, guild, count: int):

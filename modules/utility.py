@@ -77,7 +77,6 @@ class Utility(commands.Cog) :
 				value = int(match_reg.group(1))
 				break
 		if not match_reg or not temp_type or value is None :
-			logging.info(f"no temperature found in message: {message.content} with variables: temp_type: {temp_type}, value: {value}")
 			return
 		match temp_type:
 			case "fahrenheit" :

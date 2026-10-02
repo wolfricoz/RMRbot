@@ -4,20 +4,28 @@ from typing import List, Optional
 
 import pymysql
 from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, create_engine
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
 from sqlalchemy_utils import create_database, database_exists
 
-pymysql.install_as_MySQLdb()
 load_dotenv('.env')
 DB = os.getenv('DB')
 
-engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False)
+connect_args = {}
+if DB.startswith("postgresql"):
+    # Timestamps are stored and read as UTC, which the rest of the bot assumes (e.g. the searchban timers).
+    connect_args["options"] = "-c timezone=utc"
+else:
+    # mysql:// and mariadb:// URLs without a driver load MySQLdb, which pymysql stands in for.
+    pymysql.install_as_MySQLdb()
+
+engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False, connect_args=connect_args)
 if not database_exists(engine.url):
     create_database(engine.url)
 
+# TODO: dead code - conn is never used, and it opens a DB connection at import that is never closed
 conn = engine.connect()
 
 
@@ -94,7 +102,25 @@ class Approvals(Base):
     uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"))
     guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
     thread: Mapped[int] = mapped_column(BigInteger)
+    # The advert's text as it was approved: edits are diffed against the latest one.
+    content: Mapped[Optional[str]] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Advertisements(Base):
+    __tablename__ = "advertisements"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
+    thread_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    forum_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), index=True)
+    consent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    # The post's page on the website, returned when it was published.
+    url: Mapped[Optional[str]] = mapped_column(String(255), default=None)
+    approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    deleted: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+
+
 
 class database:
     @staticmethod

@@ -1,3 +1,4 @@
+# TODO: dead code - VerifyButton is never sent or registered, so it and the legacy age-verification chain behind it (verifyModal, agebuttons, lobbyprocess, SendEmbed) are unreachable
 import discord
 
 from views.modals.verifyModal import VerifyModal

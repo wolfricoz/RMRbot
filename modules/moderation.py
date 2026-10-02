@@ -8,7 +8,8 @@ from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from classes.databaseController import ConfigData, UserTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.UserTransactions import UserTransactions
 from classes.moduser import ModUser
 from views.modals import inputmodal
 from views.paginations.paginate import paginate
@@ -114,7 +115,7 @@ class moderation(commands.Cog, name="Moderation"):
     async def watchlist(self, interaction: discord.Interaction, user: discord.Member, reason: str):
         """Adds a suspicious user to the watchlist and database."""
         await interaction.response.send_message(f"[watchlist info]watchlisting {user}", ephemeral=True)
-        UserTransactions.user_add_watchlist(user.id, reason)
+        UserTransactions().user_add_watchlist(user.id, reason)
         await ModUser.log_ban(interaction, user, reason, interaction.guild, typeofaction="watchlisted")
 
     @app_commands.command(name="watchhistory")

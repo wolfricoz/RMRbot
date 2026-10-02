@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-from classes.databaseController import SearchWarningTransactions
+from databases.transactions.SearchWarningTransactions import SearchWarningTransactions
 from databases import current as db
 
 # dcheck = datetime.now() + timedelta(hours=-70)
@@ -20,7 +20,7 @@ PREFIX = os.getenv("PREFIX")
 DBTOKEN = os.getenv("DB")
 version = os.getenv('VERSION')
 db.database.create()
-var1, var2 = SearchWarningTransactions.get_total_warnings(188647277181665280)
+var1, var2 = SearchWarningTransactions().get_total_warnings(188647277181665280)
 
 print(var1)
 print(var2)

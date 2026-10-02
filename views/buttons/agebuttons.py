@@ -1,7 +1,9 @@
+# TODO: dead code - only reachable through VerifyButton (views/buttons/verifybutton.py), which is never used
 """Allowing and denying users based on age."""
 import discord
 
-from classes.databaseController import ConfigData, VerificationTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.VerificationTransactions import VerificationTransactions
 from classes.lobbyprocess import LobbyProcess
 
 
@@ -36,7 +38,7 @@ class AgeButtons(discord.ui.View):
         idcheck = ConfigData().get_key_int(interaction.guild.id, "idlog")
         admin = ConfigData().get_key(interaction.guild.id, "admin")
         idlog = interaction.guild.get_channel(idcheck)
-        VerificationTransactions.set_idcheck_to_true(self.user.id, f"manually flagged by {interaction.user.name}")
+        VerificationTransactions().set_idcheck_to_true(self.user.id, f"manually flagged by {interaction.user.name}")
         await idlog.send(
                 f"<@&{admin[0]}> {interaction.user.mention} has flagged {self.user.mention} for manual ID.")
         return

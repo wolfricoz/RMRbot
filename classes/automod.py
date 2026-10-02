@@ -15,7 +15,9 @@ from classes.AutomodComponents import AutomodComponents
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
-from classes.databaseController import ApprovalTransactions, ConfigData
+from classes.AdvertReview import AdvertReview
+from databases.transactions.ApprovalTransactions import ApprovalTransactions
+from databases.transactions.ConfigData import ConfigData
 from classes.queue import queue
 from resources.enums.ForumStatus import ForumStatus
 from views.buttons.PostOptions import PostOptions
@@ -149,6 +151,8 @@ class AutoMod(ABC) :
 			queue().add(automod_log(bot, interaction.guild_id,
 			                        f"User bumped post in {interaction.channel.mention} and was automatically approved",
 			                        "automodlog", message_type="Approval"))
+			# Auto-approved: the bot is the approver.
+			queue().add(AdvertReview.bumped(thread, approver_id=bot.user.id))
 			await interaction.followup.send(
 				"You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.",
 				ephemeral=True)
@@ -162,6 +166,8 @@ class AutoMod(ABC) :
 		queue().add(automod_log(bot, interaction.guild_id,
 		                        f"User bumped post in {interaction.channel.mention} and changed were detected, pending manual approval",
 		                        "pendingapproval", message_type="Approval"))
+		# The website keeps the last approved version; the edit reaches it when a moderator approves.
+		queue().add(AdvertReview.bumped(thread))
 
 		await interaction.followup.send(
 			"You've successfully bumped your post! Your post has been added to the queue, and a follow-up message will be sent with the bump status.",
@@ -276,11 +282,12 @@ If you've looked through the steps above and still have questions, please open a
 			return False
 		return True
 
+	# TODO: dead code - never called (approvals are added via ApprovalTransactions directly)
 	@staticmethod
 	@abstractmethod
 	def approval_log(user_id, guild_id, thread_id) :
 		"""This function is used to log the approval."""
-		ApprovalTransactions.add_approval(user_id, guild_id, thread_id)
+		ApprovalTransactions().add_approval(user_id, guild_id, thread_id)
 
 	@staticmethod
 	@abstractmethod

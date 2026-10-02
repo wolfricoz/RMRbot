@@ -5,7 +5,8 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
-from classes.databaseController import ConfigData, ConfigTransactions
+from databases.transactions.ConfigData import ConfigData
+from databases.transactions.ConfigTransactions import ConfigTransactions
 from views.modals.configinput import ConfigInputUnique
 from views.select.configselectroles import *
 
@@ -51,7 +52,7 @@ class config(commands.GroupCog, name="config"):
             if view.value is None:
                 await interaction.followup.send("Setup cancelled")
                 return
-            ConfigTransactions.config_unique_add(interaction.guild.id, item, int(view.value[0]), overwrite=True)
+            ConfigTransactions().config_unique_add(interaction.guild.id, item, int(view.value[0]), overwrite=True)
         for expl,role in self.rolechoices.items():
             view = ConfigSelectRoles()
             msg = await interaction.channel.send(f"{expl}: {role}\nWill add role to the config, if you wish for the old role to be deleted please use the /config role command.", view=view)
@@ -60,7 +61,7 @@ class config(commands.GroupCog, name="config"):
             if view.value is None:
                 await interaction.followup.send("Setup cancelled")
                 return
-            ConfigTransactions.config_key_add(interaction.guild.id, role, int(view.value[0]), overwrite=True)
+            ConfigTransactions().config_key_add(interaction.guild.id, role, int(view.value[0]), overwrite=True)
 
         await interaction.followup.send("Config has been set up, please setup the messages with /config messages", ephemeral=True)
 
@@ -76,7 +77,7 @@ class config(commands.GroupCog, name="config"):
                 await interaction.response.send_modal(ConfigInputUnique(key=key.value))
             case 'remove':
                 await interaction.response.defer(ephemeral=True)
-                result = ConfigTransactions.config_unique_remove(guildid=interaction.guild.id, key=key.value)
+                result = ConfigTransactions().config_unique_remove(guildid=interaction.guild.id, key=key.value)
                 if result is False:
                     await interaction.followup.send(f"{key.value} was not in database")
                     return
@@ -91,9 +92,9 @@ class config(commands.GroupCog, name="config"):
         """Enables/Disables the welcome message for the general channel."""
         match action.value.upper():
             case "ENABLED":
-                ConfigTransactions.toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
+                ConfigTransactions().toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
             case "DISABLED":
-                ConfigTransactions.toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
+                ConfigTransactions().toggle_welcome(interaction.guild.id, "WELCOME", action.value.upper())
         await interaction.response.send_message(f"Welcome has been set to {action.value}", ephemeral=True)
 
     @app_commands.command()
@@ -108,11 +109,11 @@ class config(commands.GroupCog, name="config"):
             value = value.id
         match action.value.lower():
             case 'set':
-                ConfigTransactions.config_unique_add(guildid=interaction.guild.id, key=key.value, value=value,
+                ConfigTransactions().config_unique_add(guildid=interaction.guild.id, key=key.value, value=value,
                                                      overwrite=True)
                 await interaction.followup.send(f"{key.value} has been added to the database with value:\n{value}")
             case 'remove':
-                result = ConfigTransactions.config_unique_remove(guildid=interaction.guild.id, key=key.value)
+                result = ConfigTransactions().config_unique_remove(guildid=interaction.guild.id, key=key.value)
                 if result is False:
                     await interaction.followup.send(f"{key.value} was not in database")
                     return
@@ -130,11 +131,11 @@ class config(commands.GroupCog, name="config"):
         value = value.id
         match action.value.lower():
             case 'add':
-                ConfigTransactions.config_key_add(guildid=interaction.guild.id, key="FORUM", value=value,
+                ConfigTransactions().config_key_add(guildid=interaction.guild.id, key="FORUM", value=value,
                                                   overwrite=True)
                 await interaction.followup.send(f"Forum has been added to the database with value:\n{value}")
             case 'remove':
-                result = ConfigTransactions.config_key_remove(guildid=interaction.guild.id, key="FORUM", value=value)
+                result = ConfigTransactions().config_key_remove(guildid=interaction.guild.id, key="FORUM", value=value)
                 if result is False:
                     await interaction.followup.send(f"<#{value}> was not in database")
                     return
@@ -152,14 +153,14 @@ class config(commands.GroupCog, name="config"):
         value = value.id
         match action.value.lower():
             case 'add':
-                result = ConfigTransactions.config_key_add(guildid=interaction.guild.id, key=key.value.upper(),
+                result = ConfigTransactions().config_key_add(guildid=interaction.guild.id, key=key.value.upper(),
                                                            value=value, overwrite=False)
                 if result is False:
                     await interaction.followup.send(f"{key.name}: <@&{value}> already exists")
                     return
                 await interaction.followup.send(f"{key.name}: <@&{value}> has been added to the database")
             case 'remove':
-                result = ConfigTransactions.config_key_remove(guildid=interaction.guild.id, key=key.value.upper(),
+                result = ConfigTransactions().config_key_remove(guildid=interaction.guild.id, key=key.value.upper(),
                                                               value=value)
                 if result is False:
                     await interaction.followup.send(f"{key.name}: <@&{value}> could not be found in database")
@@ -184,7 +185,7 @@ class config(commands.GroupCog, name="config"):
 
             case 'remove':
                 await interaction.response.defer(ephemeral=True)
-                result = ConfigTransactions.config_unique_remove(guildid=interaction.guild.id, key=key.upper())
+                result = ConfigTransactions().config_unique_remove(guildid=interaction.guild.id, key=key.upper())
                 if result is False:
                     await interaction.followup.send(f"{key} could not be found in database")
                 await interaction.followup.send(f"{key} has been removed from the database")
@@ -206,7 +207,7 @@ class config(commands.GroupCog, name="config"):
                 await interaction.response.send_modal(ConfigInputUnique(key=key))
             case 'remove':
                 await interaction.response.defer(ephemeral=True)
-                result = ConfigTransactions.config_unique_remove(guildid=interaction.guild.id, key=key.upper())
+                result = ConfigTransactions().config_unique_remove(guildid=interaction.guild.id, key=key.upper())
                 if result is False:
                     await interaction.followup.send(f"{key.name} could not be found in database")
                 await interaction.followup.send(f"{key.name} has been removed from the database")
