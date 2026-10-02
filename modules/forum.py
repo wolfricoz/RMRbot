@@ -13,6 +13,7 @@ from discord.ext import commands
 
 import classes.permissions as permissions
 from classes.Advert import Advert
+from classes.AdvertReview import AdvertReview
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message, send_response
 from classes.TagController import TagController
@@ -26,6 +27,7 @@ from resources.enums.ForumStatus import ForumStatus
 from views.buttons.confirmButtons import confirmAction
 from views.modals.custom import Custom
 from views.paginations.paginate import paginate
+from classes.Website.Advert import Advert as WebsiteAdvert
 
 
 class Forum(commands.GroupCog, name="forum") :
@@ -87,7 +89,8 @@ class Forum(commands.GroupCog, name="forum") :
 		                        f"{thread.jump_url} successfully checked by automod and awaiting review by staff",
 		                        "pendingapproval", "Success"),
 		            priority=0)
-
+		# Creates the advert's record and asks the author whether it may go on the website.
+		queue().add(WebsiteAdvert(msg).run())
 	# await ForumAutoMod.age(msg, botmsg)
 
 	@commands.Cog.listener('on_thread_create')
@@ -206,8 +209,25 @@ class Forum(commands.GroupCog, name="forum") :
 		while count < len(message.content) :
 			await mod_channel.send(message.content[count :count + 1500])
 			count += 1500
+		# Website.on_raw_thread_delete marks the advert deleted and removes it from the website.
 		await message.channel.delete()
 		logging.debug("on_message_delete: finished")
+
+	# Raw: also fires for adverts that aren't in the bot's cache (e.g. posted before the last restart).
+	@commands.Cog.listener("on_raw_message_edit")
+	async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent) :
+		"""Keeps a diff against the last approved version in an edited advert's thread, for moderators to check when
+		it is bumped. The website gets the new version once a moderator approves it (see AdvertReview.approved)."""
+		# An advert is the opening message of a forum thread, whose id is the thread's id.
+		if payload.guild_id is None or payload.message_id != payload.channel_id :
+			return
+		if payload.message.author.bot :
+			return
+		guild = self.bot.get_guild(payload.guild_id)
+		thread = guild.get_thread(payload.channel_id) if guild else None
+		if thread is None or thread.parent_id not in AutoMod.config(guild.id) :
+			return
+		await AdvertReview.edited(thread, payload.message.content)
 
 	# Commands start here
 	# noinspection PyUnresolvedReferences
@@ -391,6 +411,52 @@ class Forum(commands.GroupCog, name="forum") :
 		await interaction.followup.send(
 			f"{member.mention} has been search banned for {days} day(s)\n\n The bot automatically removes the role.")
 
+	@app_commands.command(name="fillapprovals", description="Stores the current text of approved adverts on their earlier approvals, for edit diffs.")
+	@permissions.check_app_roles_admin()
+	async def fill_approvals(self, interaction: discord.Interaction) :
+		"""One-off backfill: approvals logged before the approved text was kept get the advert's current text, so later
+		edits can be diffed. Adverts awaiting review (bump tag) are skipped: their text has unreviewed edits."""
+		await interaction.response.defer(ephemeral=True)
+		forums = AutoMod.config(interaction.guild.id)
+		filled = deleted = pending = missing = 0
+		for thread_id in ApprovalTransactions().get_threads_without_content(interaction.guild.id) :
+			thread = interaction.guild.get_thread(thread_id)
+			if thread is None :
+				try :
+					thread = await interaction.guild.fetch_channel(thread_id)
+				except discord.NotFound :
+					# Deleted (older approvals that logged a reply's id end up here too): marked so they aren't retried.
+					ApprovalTransactions().fill_content(thread_id, "deleted")
+					deleted += 1
+					continue
+				except discord.HTTPException :
+					missing += 1
+					continue
+			if not isinstance(thread, discord.Thread) or thread.parent_id not in forums :
+				missing += 1
+				continue
+			if "bump" in [tag.name.lower() for tag in thread.applied_tags] :
+				pending += 1
+				continue
+			try :
+				message = await thread.fetch_message(thread.id)
+			except discord.NotFound :
+				# The advert itself was removed.
+				ApprovalTransactions().fill_content(thread.id, "deleted")
+				deleted += 1
+				continue
+			except discord.HTTPException :
+				missing += 1
+				continue
+			ApprovalTransactions().fill_content(thread.id, message.content)
+			filled += 1
+		await interaction.followup.send(
+			f"Filled {filled} approval(s) with the advert's current text and marked {deleted} as deleted.\n"
+			f"Skipped {pending} awaiting review (they get their text at the next approval) "
+			f"and {missing} that couldn't be checked or aren't adverts.",
+			ephemeral=True,
+		)
+
 	@app_commands.command(name="leaderboard", description="description")
 	@permissions.check_app_roles_admin()
 	async def leaderboard(self, interaction: discord.Interaction, days:int = 30) :
@@ -400,6 +466,9 @@ class Forum(commands.GroupCog, name="forum") :
 
 		records = ApprovalTransactions().get_all_approvals(days)
 		for record in records:
+			# Auto-approved bumps are logged with the bot as approver.
+			if record.uid == self.bot.user.id :
+				continue
 			uid = str(record.uid)
 			if uid not in lb:
 				lb[uid] = 0

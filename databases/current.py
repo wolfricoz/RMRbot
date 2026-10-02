@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import pymysql
 from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, create_engine
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
@@ -101,7 +101,10 @@ class Approvals(Base):
     uid: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"))
     guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"))
     thread: Mapped[int] = mapped_column(BigInteger)
+    # The advert's text as it was approved: edits are diffed against the latest one.
+    content: Mapped[Optional[str]] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
 
 class Advertisements(Base):
     __tablename__ = "advertisements"
@@ -111,6 +114,8 @@ class Advertisements(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), index=True)
     consent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    # The post's page on the website, returned when it was published.
+    url: Mapped[Optional[str]] = mapped_column(String(255), default=None)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
     deleted: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
 

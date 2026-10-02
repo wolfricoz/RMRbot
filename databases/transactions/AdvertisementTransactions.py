@@ -35,14 +35,23 @@ class AdvertisementTransactions(DatabaseTransactions):
             return session.scalars(query).all()
 
     def get_unpublished(self):
-        """Adverts that can be sent to the website but haven't been received by it yet."""
+        """Adverts with consent that haven't been received by the website yet."""
         with self.createsession() as session:
             return session.scalars(Select(Advertisements).where(
                     Advertisements.consent_at.is_not(None),
-                    Advertisements.approved.is_(True),
                     Advertisements.deleted.is_(None),
                     Advertisements.published_at.is_(None),
             )).all()
+
+    def get_ids(self) -> set[int]:
+        """The message ids of every advert the bot has a record of, deleted ones included."""
+        with self.createsession() as session:
+            return set(session.scalars(Select(Advertisements.id)).all())
+
+    def get_active(self):
+        """Adverts that aren't deleted."""
+        with self.createsession() as session:
+            return session.scalars(Select(Advertisements).where(Advertisements.deleted.is_(None))).all()
 
     def set_consent(self, message_id: int, consent: bool):
         return self._update(message_id, consent_at=datetime.now(tz=timezone.utc) if consent else None)
@@ -50,8 +59,13 @@ class AdvertisementTransactions(DatabaseTransactions):
     def set_approved(self, message_id: int, approved: bool):
         return self._update(message_id, approved=approved)
 
-    def set_published(self, message_id: int, published: bool = True):
-        return self._update(message_id, published_at=datetime.now(tz=timezone.utc) if published else None)
+    def set_published(self, message_id: int, published: bool = True, url: str | None = None):
+        """Marks the advert as received by the website, with its page url; unpublishing clears both."""
+        return self._update(
+                message_id,
+                published_at=datetime.now(tz=timezone.utc) if published else None,
+                url=url if published else None,
+        )
 
     def set_deleted(self, message_id: int, deleted: bool = True):
         return self._update(message_id, deleted=datetime.now(tz=timezone.utc) if deleted else None)
