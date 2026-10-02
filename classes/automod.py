@@ -39,11 +39,21 @@ class AutoMod(ABC) :
 		before = datetime.now() - timedelta(days=3)
 		count = 0
 		messages = [m async for m in thread.history(limit=1000, before=before, oldest_first=True) if
-		            m.author.id == bot.user.id and m.content.lower().startswith("post successfully bumped")]
+		            AutoMod.is_bump_message(m, bot)]
 		logging.info(f"Found {len(messages)} bump messages in {thread.name}")
 		for m in messages :
 			queue().add(m.delete(), 2)
 			count += 1
+
+	@staticmethod
+	@abstractmethod
+	def is_bump_message(message: discord.Message, bot: commands.Bot) -> bool :
+		"""The bot's bump messages, each with the Bump, Close and interest buttons: the "Thank you for posting" message
+		a new advert gets (see info) and the "Post successfully bumped..." messages. The bump cooldown counts from the
+		latest; clean_bumps removes the older ones when the advert is bumped, so only the newest keeps its buttons."""
+		content = message.content.lower()
+		return message.author.id == bot.user.id and (
+				content.startswith("post successfully bumped") or content.startswith("thank you for posting"))
 
 	@staticmethod
 	@abstractmethod
@@ -97,8 +107,6 @@ class AutoMod(ABC) :
 		hours = 72
 		thread: discord.Thread = interaction.channel
 		current_time = datetime.now(tz=utc)
-		messages = thread.history(oldest_first=False)
-		count = 0
 		user_count = 0
 		if "bump" in [x.name.lower() for x in thread.applied_tags] :
 			await interaction.followup.send("Your post has not been approved yet. Please wait for staff to review your post.",
@@ -111,28 +119,32 @@ class AutoMod(ABC) :
 			return
 		if interaction.channel.type != discord.ChannelType.public_thread :
 			return
-		async for m in messages :
-			if m.author.id == bot.application_id :
-				count += 1
-			if count == 1 :
-				message_time = m.created_at.replace(tzinfo=utc)
-				time_diff = current_time - message_time
-				if time_diff > timedelta(hours=hours) :
-					logging.info("Bump allowed")
-					break
-				logging.info(f"Cant bump yet with Time diff: {time_diff}")
-				time_remaining = timedelta(hours=hours) - time_diff
-				timeinfo = f"{int(time_remaining.total_seconds() / 3600)} hours and {int(time_remaining.total_seconds() / 60 % 60)} minutes"
-				queue().add(automod_log(bot, interaction.guild_id,
-				                        f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}",
-				                        "automodlog"))
-				await interaction.followup.send(
-					f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} before bumping again."
-					f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})",
-					ephemeral=True)
-				return
-			if m.author.id == interaction.user.id :
+		# Only the bump and "Thank you for posting" messages count: other bot messages in the thread (consent request,
+		# edit diffs, website link) must not restart the cooldown. Newest first, up to the latest of them; the author's
+		# messages since then are counted for the auto-approval below.
+		last_bump = None
+		async for m in thread.history(limit=None) :
+			if AutoMod.is_bump_message(m, bot) :
+				last_bump = m
+				break
+			if m.author.id == interaction.user.id and m.id != thread.id :
 				user_count += 1
+		# Neither found (e.g. removed): the cooldown counts from when the advert was posted.
+		message_time = (last_bump.created_at if last_bump else thread.created_at).replace(tzinfo=utc)
+		time_diff = current_time - message_time
+		if time_diff <= timedelta(hours=hours) :
+			logging.info(f"Cant bump yet with Time diff: {time_diff}")
+			time_remaining = timedelta(hours=hours) - time_diff
+			timeinfo = f"{int(time_remaining.total_seconds() / 3600)} hours and {int(time_remaining.total_seconds() / 60 % 60)} minutes"
+			queue().add(automod_log(bot, interaction.guild_id,
+			                        f"User tried to bump too soon in {interaction.channel.mention}: {timeinfo}",
+			                        "automodlog"))
+			await interaction.followup.send(
+				f"Your last bump was within the 72 hours cooldown period in {interaction.channel.mention}, please wait {timeinfo} before bumping again."
+				f"\nLast bump: {discord.utils.format_dt(message_time, style='f')} (timediff: {discord.utils.format_dt(message_time, style='R')})",
+				ephemeral=True)
+			return
+		logging.info("Bump allowed")
 		queue().add(AutoMod.clean_bumps(thread, bot), 2)
 
 		forum = bot.get_channel(thread.parent_id)
