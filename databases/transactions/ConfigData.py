@@ -42,6 +42,7 @@ class ConfigData(ABC):
                 continue
             self.conf[guildid][x.key] = x.value
 
+    # TODO: dead code - never called
     def get_config(self, guildid):
         try:
             return self.conf[guildid]

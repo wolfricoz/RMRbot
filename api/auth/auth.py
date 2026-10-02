@@ -1,3 +1,4 @@
+# TODO: dead code - Auth is never used by any router (api/status.py doesn't authenticate)
 import hmac
 import ipaddress
 import os

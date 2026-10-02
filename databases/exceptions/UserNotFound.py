@@ -1,3 +1,4 @@
+# TODO: dead code - UserNotFound is never raised or imported
 class UserNotFound(Exception):
     """config item was not found or has not been added yet."""
 

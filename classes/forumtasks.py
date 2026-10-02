@@ -86,6 +86,7 @@ class ForumTasks :
 			return None
 		return member
 
+	# TODO: dead code - never called
 	async def check_post(self, thread) :
 		"""Check if the main message still exists, if not it deletes the post"""
 		message = await fetch_message_or_none(thread, thread.id)

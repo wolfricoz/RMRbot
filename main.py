@@ -29,6 +29,7 @@ db.database.create()
 load_dotenv('.env')
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = os.getenv("PREFIX")
+# TODO: dead code - DBTOKEN is never used
 DBTOKEN = os.getenv("DB")
 version = os.getenv('VERSION')
 intents = discord.Intents.default()
@@ -37,6 +38,7 @@ intents.members = True
 activity = discord.Activity(type=discord.ActivityType.watching, name="over RMR")
 bot = commands.Bot(command_prefix=PREFIX, case_insensitive=True, intents=intents, activity=activity)
 bot.DEV = int(os.getenv("DEV"))
+# TODO: dead code - bot.KEY is never read (classes/encryption.py reads KEY from the env itself)
 bot.KEY = os.getenv("KEY")
 
 
@@ -133,6 +135,7 @@ async def on_member_join(member):
 # cogloader
 @bot.event
 async def setup_hook():
+    # TODO: dead code - bot.lobbyages is never read
     bot.lobbyages = bot.get_channel(454425835064262657)
     for filename in os.listdir("modules"):
 

@@ -25,6 +25,7 @@ engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False, connec
 if not database_exists(engine.url):
     create_database(engine.url)
 
+# TODO: dead code - conn is never used, and it opens a DB connection at import that is never closed
 conn = engine.connect()
 
 

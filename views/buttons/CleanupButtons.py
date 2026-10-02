@@ -20,6 +20,7 @@ class CleanupButtons(discord.ui.View) :
 		except Exception :
 			pass
 
+	# TODO: dead code - never called
 	async def load_data(self, interaction: discord.Interaction) :
 		"""Load data from embed"""
 		if len(interaction.message.embeds) < 1 :

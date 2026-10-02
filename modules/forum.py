@@ -10,6 +10,8 @@ import pytz
 from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
+# TODO: dead code - unused import
+from sqlalchemy.sql.functions import now
 
 import classes.permissions as permissions
 from classes.Advert import Advert
@@ -127,6 +129,7 @@ class Forum(commands.GroupCog, name="forum") :
 		items += ages
 		text = await thread.fetch_message(thread.id)
 		modchannel = self.bot.get_channel(ConfigData().get_key_int(thread.guild.id, "advertmod"))
+		# TODO: dead code - forum is never used
 		forum = self.bot.get_channel(thread.parent_id)
 		for item in items :
 			match = re.search(item, text.content, re.I)

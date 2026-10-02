@@ -33,6 +33,7 @@ class ConfigTransactions(DatabaseTransactions):
         ConfigData().load_guild(guildid)
         return True
 
+    # TODO: dead code - never called
     def config_unique_get(self, guildid: int, key: str):
         if self.key_exists_check(guildid, key) is False:
             return

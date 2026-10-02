@@ -1,3 +1,4 @@
+# TODO: dead code - this module is never imported; the JSON user/guild config was replaced by the database
 import datetime
 import json
 import os

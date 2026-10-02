@@ -13,6 +13,7 @@ class VerificationTransactions(DatabaseTransactions):
         with self.createsession() as session:
             return session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
 
+    # TODO: dead code - never called
     def update_check(self, userid, reason: str = None, idcheck=True):
         with self.createsession() as session:
             userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
@@ -41,6 +42,7 @@ class VerificationTransactions(DatabaseTransactions):
             userdata.reason = reason
             self.commit(session)
 
+    # TODO: dead code - never called
     def set_idcheck_to_false(self, userid: int, ):
         with self.createsession() as session:
             userdata: IdVerification = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))
@@ -52,6 +54,7 @@ class VerificationTransactions(DatabaseTransactions):
             userdata.reason = None
             self.commit(session)
 
+    # TODO: dead code - never called
     def idverify_add(self, userid: int, dob: str, idcheck=True):
         UserTransactions().add_user_empty(userid, True)
         with self.createsession() as session:
@@ -59,6 +62,7 @@ class VerificationTransactions(DatabaseTransactions):
             self.commit(session)
         UserTransactions().update_user_dob(userid, dob)
 
+    # TODO: dead code - never called
     def idverify_update(self, userid, dob: str, guildname, idverified=True):
         with self.createsession() as session:
             userdata = session.scalar(Select(IdVerification).where(IdVerification.uid == userid))

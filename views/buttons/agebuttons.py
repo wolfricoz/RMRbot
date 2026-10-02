@@ -1,3 +1,4 @@
+# TODO: dead code - only reachable through VerifyButton (views/buttons/verifybutton.py), which is never used
 """Allowing and denying users based on age."""
 import discord
 

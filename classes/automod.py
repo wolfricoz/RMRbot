@@ -282,6 +282,7 @@ If you've looked through the steps above and still have questions, please open a
 			return False
 		return True
 
+	# TODO: dead code - never called (approvals are added via ApprovalTransactions directly)
 	@staticmethod
 	@abstractmethod
 	def approval_log(user_id, guild_id, thread_id) :

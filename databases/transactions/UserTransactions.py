@@ -62,6 +62,7 @@ class UserTransactions(DatabaseTransactions):
         with self.createsession() as session:
             return session.scalar(Select(Users).where(Users.uid == userid))
 
+    # TODO: dead code - only referenced by the commented-out check_users_expiration in modules/tasks.py
     def get_all_users(self):
         with self.createsession() as session:
             return session.scalars(Select(Users)).all()
@@ -77,6 +78,7 @@ class UserTransactions(DatabaseTransactions):
             except CommitError:
                 pass
 
+    # TODO: dead code - never called, only raises NotImplementedError
     def update(self):
         raise NotImplementedError
 

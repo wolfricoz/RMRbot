@@ -1,3 +1,4 @@
+# TODO: dead code - one-off migration script; it imports databases.old, which no longer exists
 import json
 import os
 import time

@@ -20,6 +20,7 @@ class inviteInfo(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """reads invite dictionary, and outputs user info"""
+        # TODO: dead code - everything after the early return below is unreachable
         # Disabled; this function is handled by ageverifier
         return
 

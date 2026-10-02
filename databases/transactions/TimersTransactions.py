@@ -12,6 +12,7 @@ class TimersTransactions(DatabaseTransactions):
             session.add(Timers(uid=userid, guild=guildid, removal=time_in_hours, role=roleid, reason=reason))
             self.commit(session)
 
+    # TODO: dead code - never called
     def get_timer_with_role(self, userid, guildid, roleid):
         """Gets the timer from the database with userid, guild and roleid"""
         with self.createsession() as session:

@@ -6,6 +6,7 @@ from discord.ext import commands
 from classes.Advert import Advert
 from classes.AdvertReview import AdvertReview
 from classes.TagController import TagController
+# TODO: dead code - unused import
 from classes.automod import AutoMod
 from classes.queue import queue
 from views.modals.custom import Custom
@@ -30,6 +31,7 @@ class contextmenus(commands.Cog, name="contextmenus"):
                       message: discord.Message) -> None:
         """Approves the post"""
         await interaction.response.defer(ephemeral=True)
+        # TODO: dead code - bot is never used
         bot = self.bot
         thread: discord.Thread = None
         if message.channel.type is discord.ChannelType.text:

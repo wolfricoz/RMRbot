@@ -29,7 +29,9 @@ class Tasks(commands.GroupCog) :
 	def __init__(self, bot: commands.Bot) :
 		"""loads tasks"""
 		self.bot = bot
+		# TODO: dead code - self.index is never read
 		self.index = 0
+		# TODO: dead code - self.forums is never read
 		self.forums = None  # Potential cache of forums
 		self.config_reload.start()
 		self.lobby_history.start()
@@ -143,6 +145,7 @@ class Tasks(commands.GroupCog) :
 
 		logging.info("Finished checking all roles on users for searchbans")
 
+	# TODO: dead code - only called by the commented-out check_users_expiration below
 	async def user_expiration_update(self, userids) :
 		"""updates entry time, if entry is expired this also removes it."""
 		logging.debug(f"Checking all entries for expiration at {datetime.now()}")
@@ -158,6 +161,7 @@ class Tasks(commands.GroupCog) :
 		logging.debug(f"Updating entry time for {len(updated_users)} users")
 		del updated_users
 
+	# TODO: dead code - only called by the commented-out check_users_expiration below
 	async def user_expiration_remove(self, userdata, removaldate) :
 		"""removes expired entries."""
 		for entry in userdata :
@@ -165,6 +169,7 @@ class Tasks(commands.GroupCog) :
 				UserTransactions().user_delete(entry.uid)
 				logging.debug(f"Database record: {entry.uid} expired")
 
+	# TODO: dead code - commented-out check_users_expiration task
 	# @tasks.loop(hours=48)
 	# async def check_users_expiration(self) :
 	# 	"""updates entry time, if entry is expired this also removes it."""

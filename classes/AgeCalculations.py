@@ -135,6 +135,7 @@ class AgeCalculations(ABC):
         age_calculate = a.years - int(age)
         return age_calculate, a.years
 
+    # TODO: dead code - never called
     @staticmethod
     @abstractmethod
     def dob_to_age(dob):
@@ -161,6 +162,7 @@ class AgeCalculations(ABC):
         except ValueError:
             return "ValueError"
 
+    # TODO: dead code - never called
     @staticmethod
     @abstractmethod
     async def validatedob(arg2, interaction):

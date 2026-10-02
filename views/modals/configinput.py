@@ -27,6 +27,7 @@ class ConfigInputUnique(discord.ui.Modal, title='set config message'):
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
 
 
+# TODO: dead code - ConfigInput is never used; config.py only uses ConfigInputUnique
 class ConfigInput(discord.ui.Modal, title='set config message'):
     custom_id = ""
 
