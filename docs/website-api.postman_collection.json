@@ -1,0 +1,86 @@
+{
+	"info": {
+		"name": "RoleplayMeets website API (RMRbot)",
+		"description": "The calls RMRbot makes to the website (classes/Website/Advert.py). Set baseUrl to the site the bot's WEBSITE_URL points at and token to its WEBSITE_KEY (the full \"id|...\" token from `php artisan api:create-key <user>`, made on that same site). Start with \"Check token\": 200 means the token works, 401 means that site doesn't know it.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{ "key": "token", "value": "{{token}}", "type": "string" }
+		]
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+		{ "key": "token", "value": "" },
+		{ "key": "messageId", "value": "1000000000000000001" },
+		{ "key": "discordUserId", "value": "188647277181665280" }
+	],
+	"item": [
+		{
+			"name": "Check token",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Accept", "value": "application/json" }
+				],
+				"url": "{{baseUrl}}/api/v1/posts",
+				"description": "Lists the token owner's own posts. 200: the token works. 401 {\"message\":\"Unauthenticated.\"}: this site has no such token (made on another site, deleted, or cut off when copied)."
+			}
+		},
+		{
+			"name": "Publish advert (as the bot)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"url": "{{baseUrl}}/api/v1/posts",
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"user_id\": \"{{discordUserId}}\",\n  \"user\": {\n    \"username\": \"postman-test\",\n    \"global_name\": \"Postman test\",\n    \"avatar\": null\n  },\n  \"message_id\": \"{{messageId}}\",\n  \"charage\": 20,\n  \"partnerage\": 18,\n  \"source\": \"Roleplay Meets discord\",\n  \"approved\": true,\n  \"title\": \"[MxF] Postman test advert, please ignore\",\n  \"content\": \"<p>This is a test advert sent from Postman to check the website API that RMRbot uses to cross-post adverts. It can be deleted with the Delete request in the same collection. The API requires at least five hundred characters of content, so this paragraph keeps going for a while longer than a test really needs to.</p><p>It describes nothing in particular: a slow-burn fantasy story in a coastal town, two characters who keep running into each other at the harbour market, and a mystery about a ship that came back without its crew. Replies a few times a week, third person, past tense.</p>\",\n  \"nsfw\": \"sfw\",\n  \"genres\": [\"Fantasy\", \"Romance\"]\n}"
+				},
+				"description": "The same payload as Advert._publish. 201 returns the post with its url. 409: too similar to an existing post. 422 with message_id: a post for this message already exists (change messageId)."
+			}
+		},
+		{
+			"name": "Update advert by message id",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" }
+				],
+				"url": "{{baseUrl}}/api/v1/posts/message/{{messageId}}",
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"[MxF] Postman test advert, edited\",\n  \"charage\": 21,\n  \"partnerage\": 21,\n  \"approved\": true\n}"
+				},
+				"description": "What the bot sends after an approved edit (Advert.updateOnWebsite), here with only a few fields. 200 returns the updated post."
+			}
+		},
+		{
+			"name": "Bump advert by message id",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Accept", "value": "application/json" }
+				],
+				"url": "{{baseUrl}}/api/v1/posts/message/{{messageId}}/bump",
+				"description": "Advert.bumpOnWebsite. 200 when bumped."
+			}
+		},
+		{
+			"name": "Delete advert by message id",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Accept", "value": "application/json" }
+				],
+				"url": "{{baseUrl}}/api/v1/posts/message/{{messageId}}",
+				"description": "Advert.deleteFromWebsite. 204 when deleted, 404 when there is no post for this message."
+			}
+		}
+	]
+}
