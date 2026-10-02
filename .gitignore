@@ -27,3 +27,8 @@ test files/codetest.py
 /forumusers.txt
 /log-10-16-2023.txt
 /.idea/material_theme_project_new.xml
+/.idea/copilot.data.migration.*.xml
+/.idea/dataSources.xml
+/.idea/dataSources.local.xml
+/.idea/dataSources/
+__pycache__/
