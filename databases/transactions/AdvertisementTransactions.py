@@ -48,6 +48,13 @@ class AdvertisementTransactions(DatabaseTransactions):
         with self.createsession() as session:
             return set(session.scalars(Select(Advertisements.id)).all())
 
+    def get_by_forums(self, forum_ids: list[int]):
+        """Every advert in these forums, deleted ones included (for statistics)."""
+        if not forum_ids:
+            return []
+        with self.createsession() as session:
+            return session.scalars(Select(Advertisements).where(Advertisements.forum_id.in_(forum_ids))).all()
+
     def get_active(self):
         """Adverts that aren't deleted."""
         with self.createsession() as session:

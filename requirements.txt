@@ -19,3 +19,4 @@ gunicorn
 discord-py-utilities>=0.1.0.1
 fastapi
 uvicorn
+matplotlib>=3.9  # charts for the /stats commands

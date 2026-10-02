@@ -22,6 +22,14 @@ class ApprovalTransactions(DatabaseTransactions):
         with self.createsession() as session:
             return session.scalars(Select(Approvals).filter(Approvals.created_at > check_date)).all()
 
+    def get_by_guild(self, guild_id: int, days: int):
+        """The guild's approvals of the last days."""
+        check_date = datetime.now(timezone.utc) - timedelta(days=days)
+        with self.createsession() as session:
+            return session.scalars(
+                    Select(Approvals).where(Approvals.guild == guild_id, Approvals.created_at > check_date)
+            ).all()
+
     def get_threads_without_content(self, guild_id: int) -> list[int]:
         """Threads (as logged) that were approved in this guild but have no approval with the text stored."""
         with self.createsession() as session:
