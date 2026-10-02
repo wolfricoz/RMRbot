@@ -90,7 +90,7 @@ class PaginationView(discord.ui.View):
             return
         pgdata = self.get_current_page_data()
 
-        UserTransactions.user_remove_warning(int(pgdata[0]))
+        UserTransactions().user_remove_warning(int(pgdata[0]))
         self.data.pop(self.current_page - 1)
         self.current_page = 1
         await self.update_message(self.get_current_page_data())
@@ -112,7 +112,7 @@ class paginate(ABC):
     @staticmethod
     @abstractmethod
     async def create_pagination_user(interaction, user, wtype, warningtype="official"):
-        data, warndict = UserTransactions.user_get_warnings(user.id, wtype)
+        data, warndict = UserTransactions().user_get_warnings(user.id, wtype)
         pagination_view = PaginationView()
         pagination_view.data = data
         pagination_view.warndict = warndict
@@ -123,7 +123,7 @@ class paginate(ABC):
     @staticmethod
     @abstractmethod
     async def create_pagination_table(interaction, table_name, warningtype="official"):
-        data, warndict = DatabaseTransactions.get_all_timers(table_name)
+        data, warndict = DatabaseTransactions().get_all_timers(table_name)
         pagination_view = PaginationView()
         pagination_view.data = data
         pagination_view.warndict = warndict

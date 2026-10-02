@@ -20,7 +20,7 @@ class LobbyProcess(ABC):
         if await AgeCalculations.id_check(guild, user, age, dob):
             return
         # updates user's age if it exists, otherwise makes a new entry
-        exists = UserTransactions.update_user_dob(user.id, dob, guild.name)
+        exists = UserTransactions().update_user_dob(user.id, dob, guild.name)
 
         # check add the right age role
         queue().add(LobbyProcess.calculate_age_role(user, guild, age), priority=2)

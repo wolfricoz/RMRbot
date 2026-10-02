@@ -1,9 +1,10 @@
 """Modal for the NSFW section, similar to lobby but is fully automatic"""
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 
 import discord
 
+import databases.current
 from classes.AgeCalculations import AgeCalculations
 from databases.transactions.ConfigData import ConfigData
 from databases.transactions.UserTransactions import UserTransactions
@@ -66,7 +67,7 @@ class NsfwVerifyModal(discord.ui.Modal):
     # Add in all the checks before it even gets to the lobby; age matches dob, dob already exists but diff?
 
     async def on_submit(self, interaction: discord.Interaction):
-        userdata: databases.current.Users = UserTransactions.get_user(interaction.user.id)
+        userdata: databases.current.Users = UserTransactions().get_user(interaction.user.id)
         modlobby = ConfigData().get_key_int(interaction.guild.id, "lobbymod")
         idlog = ConfigData().get_key_int(interaction.guild.id, "idlog")
         admin = ConfigData().get_key(interaction.guild.id, "admin")
@@ -85,8 +86,8 @@ class NsfwVerifyModal(discord.ui.Modal):
             await interaction.response.send_message(
                     f'Unfortunately you are too young for our server. If you are 17 you may wait in the lobby.',
                     ephemeral=True)
-            VerificationTransactions.set_idcheck_to_true(interaction.user.id,
-                                                         f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18")
+            VerificationTransactions().set_idcheck_to_true(interaction.user.id,
+                                                         f"{datetime.now(timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18")
             return
         # Checks if user is underaged
         agechecked, years = AgeCalculations.agechecker(int(age), dob)

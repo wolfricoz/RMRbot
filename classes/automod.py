@@ -281,7 +281,7 @@ If you've looked through the steps above and still have questions, please open a
 	@abstractmethod
 	def approval_log(user_id, guild_id, thread_id) :
 		"""This function is used to log the approval."""
-		ApprovalTransactions.add_approval(user_id, guild_id, thread_id)
+		ApprovalTransactions().add_approval(user_id, guild_id, thread_id)
 
 	@staticmethod
 	@abstractmethod

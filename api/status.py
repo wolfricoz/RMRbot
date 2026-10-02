@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.post("/ping")
 async def ping():
-    status = DatabaseTransactions.ping_db()
+    status = DatabaseTransactions().ping_db()
     q = queue()
     return {
         "status"               : status,

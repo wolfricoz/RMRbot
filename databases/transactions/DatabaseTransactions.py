@@ -1,69 +1,75 @@
 import logging
-from abc import ABC, abstractmethod
 from datetime import timedelta
 
-import sqlalchemy
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy import text
+from sqlalchemy.exc import InvalidRequestError, PendingRollbackError, SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import Select
 
 import databases.current as db
+from classes.singleton import Singleton
 from databases.exceptions.CommitError import CommitError
-from databases.session import session
 
 
-class DatabaseTransactions(ABC):
+class DatabaseTransactions(metaclass=Singleton):
+    """Base class for all transactions; every method opens its own session through createsession()."""
+    sessionmanager = sessionmaker(bind=db.engine)
 
-    @staticmethod
-    @abstractmethod
-    def commit(session):
+    def createsession(self):
+        return self.sessionmanager(expire_on_commit=False)
+
+    def commit(self, session):
         try:
             session.commit()
         except SQLAlchemyError as e:
-            print(e)
+            logging.warning(f"DB commit failed (SQLAlchemyError), rolling back: {e}", exc_info=True)
             session.rollback()
             raise CommitError()
         finally:
             session.close()
 
-    @staticmethod
-    def ping_db():
+    def ping_db(self):
         """Checks if the database is reachable, used by the /ping API route."""
         try:
-            with Session(db.engine) as ping_session:
-                ping_session.execute(sqlalchemy.text("SELECT 1"))
+            with self.createsession() as session:
+                session.execute(text("SELECT 1"))
+                return "alive"
+        except PendingRollbackError:
+            logging.warning("Pending rollback during DB ping.")
+            return "error"
+        except InvalidRequestError:
+            logging.warning("Invalid session state during DB ping.")
             return "alive"
         except SQLAlchemyError as e:
-            logging.error(f"Database ping failed: {e}", exc_info=True)
+            logging.error(f"SQLAlchemy error during DB ping: {e}", exc_info=True)
+            return "error"
+        except Exception as e:
+            logging.error(f"Unexpected error during DB ping: {e}", exc_info=True)
             return "error"
 
-    @staticmethod
-    @abstractmethod
-    def get_table(name):
+    def get_table(self, name):
         """This function will return the table requested."""
-        match name.lower():
-            case "config":
-                return session.scalars(Select(db.Config)).all()
-            case "users":
-                return session.scalars(Select(db.Users)).all()
-            case "warnings":
-                return session.scalars(Select(db.Warnings)).all()
-            case "servers":
-                return session.scalars(Select(db.Servers)).all()
-            case "timers":
-                return session.scalars(Select(db.Timers).order_by(db.Timers.uid)).all()
-            case "idverification":
-                return session.scalars(Select(db.IdVerification)).all()
+        with self.createsession() as session:
+            match name.lower():
+                case "config":
+                    return session.scalars(Select(db.Config)).all()
+                case "users":
+                    return session.scalars(Select(db.Users)).all()
+                case "warnings":
+                    return session.scalars(Select(db.Warnings)).all()
+                case "servers":
+                    return session.scalars(Select(db.Servers)).all()
+                case "timers":
+                    return session.scalars(Select(db.Timers).order_by(db.Timers.uid)).all()
+                case "idverification":
+                    return session.scalars(Select(db.IdVerification)).all()
 
-    @staticmethod
-    @abstractmethod
-    def get_all_timers(table_name):
+    def get_all_timers(self, table_name):
         """This function will return the table requested."""
-        table = DatabaseTransactions.get_table(table_name)
+        table = self.get_table(table_name)
         print(f"table: {table}")
         warning_dict = {}
         warning_list = []
-        session.close()
         if len(table) == 0 or table is None:
             return False
         for entry in table:

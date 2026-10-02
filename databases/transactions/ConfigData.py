@@ -18,10 +18,10 @@ class ConfigData(ABC):
     def load_guild(self, guildid):
         # Imported here because ConfigTransactions imports ConfigData to reload the cache after changes.
         from databases.transactions.ConfigTransactions import ConfigTransactions
-        config = ConfigTransactions.server_config_get(guildid)
+        config = ConfigTransactions().server_config_get(guildid)
 
         settings = config
-        # settings = ConfigTransactions.server_config_get(guildid)
+        # settings = ConfigTransactions().server_config_get(guildid)
         self.conf[guildid] = {}
         self.conf[guildid]["SEARCH"] = {}
         self.conf[guildid]["BAN"] = {}

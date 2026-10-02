@@ -1,25 +1,19 @@
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.sql import Select
 
-import databases.current as db
 from databases.current import Approvals
-from databases.session import session
 from databases.transactions.DatabaseTransactions import DatabaseTransactions
 
 
-class ApprovalTransactions(ABC):
+class ApprovalTransactions(DatabaseTransactions):
 
-    @staticmethod
-    @abstractmethod
-    def add_approval(user_id: int, guild_id: int, thread_id: int,):
-        approval = db.Approvals(uid=user_id, guild=guild_id, thread=thread_id)
-        session.add(approval)
-        DatabaseTransactions.commit(session)
+    def add_approval(self, user_id: int, guild_id: int, thread_id: int):
+        with self.createsession() as session:
+            session.add(Approvals(uid=user_id, guild=guild_id, thread=thread_id))
+            self.commit(session)
 
-    @staticmethod
-    @abstractmethod
-    def get_all_approvals(days = 30):
-        check_date = datetime.now() - timedelta(days=days)
-        return session.scalars(Select(db.Approvals).filter(Approvals.created_at > check_date)).all()
+    def get_all_approvals(self, days=30):
+        check_date = datetime.now(timezone.utc) - timedelta(days=days)
+        with self.createsession() as session:
+            return session.scalars(Select(Approvals).filter(Approvals.created_at > check_date)).all()

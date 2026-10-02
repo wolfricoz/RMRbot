@@ -42,7 +42,7 @@ class VerifyModal(discord.ui.Modal):
     # Add in all the checks before it even gets to the lobby; age matches dob, dob already exists but diff?
 
     async def on_submit(self, interaction: discord.Interaction):
-        userdata: databases.current.Users = UserTransactions.get_user(interaction.user.id)
+        userdata: databases.current.Users = UserTransactions().get_user(interaction.user.id)
         modlobby = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "lobbymod"))
         admin = ConfigData().get_key(interaction.guild.id, "admin")
         idchannel = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "idlog"))
@@ -59,7 +59,7 @@ class VerifyModal(discord.ui.Modal):
             await interaction.response.send_message(
                     f'Unfortunately you are too young for our server. If you are 17 you may wait in the lobby.',
                     ephemeral=True)
-            VerificationTransactions.set_idcheck_to_true(interaction.user.id,
+            VerificationTransactions().set_idcheck_to_true(interaction.user.id,
 
             f"{datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y')}: User is under the age of 18. The user gave the age of {age}, due to GDPR we are unable to log the date of birth.")
             logging.debug(f"userid: {interaction.user.id} gave an age below 18 and was added to the ID list. Age given: {age}. Dob is NOT logged")

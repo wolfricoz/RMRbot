@@ -20,7 +20,7 @@ class ModUser(ABC):
             return
         await ModUser.ban_user_from_guilds(interaction, member, bot, reason, appeal)
         # if idlist.name.upper() == "YES":
-        #     VerificationTransactions.set_idcheck_to_true(member.id, f"BAN: {reason}")
+        #     VerificationTransactions().set_idcheck_to_true(member.id, f"BAN: {reason}")
         #     await interaction.channel.send(f"{member}({member.id}) added to ID list")
 
     @staticmethod

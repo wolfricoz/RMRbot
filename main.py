@@ -104,7 +104,7 @@ async def on_ready():
     guilds = []
     for guild in bot.guilds:
         bot.invites[guild.id] = await guild.invites()
-        ConfigTransactions.server_add(guild.id)
+        ConfigTransactions().server_add(guild.id)
         ConfigData().load_guild(guild.id)
         guilds.append(guild.name)
         bot.invites[guild.id] = await guild.invites()
@@ -121,13 +121,13 @@ async def on_ready():
 @bot.event
 async def on_guild_join(guild):
     # adds user to database
-    ConfigTransactions.server_add(guild.id)
+    ConfigTransactions().server_add(guild.id)
     ConfigData().load_guild(guild.id)
 
 
 @bot.event
 async def on_member_join(member):
-    UserTransactions.add_user_empty(member.id)
+    UserTransactions().add_user_empty(member.id)
 
 
 # cogloader

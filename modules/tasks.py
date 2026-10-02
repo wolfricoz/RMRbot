@@ -84,7 +84,7 @@ class Tasks(commands.GroupCog) :
 		logging.debug("[auto refresh]List updated")
 
 	def remove_entry(self, data: Timers) :
-		TimersTransactions.remove_timer(data)
+		TimersTransactions().remove_timer(data)
 		logging.debug(
 			f"searchban expired with id {data.id} with data: {data.uid}, {data.guild}, {data.role}, {data.reason}, {data.removal}, {data.created_at}")
 
@@ -95,7 +95,7 @@ class Tasks(commands.GroupCog) :
 		# Get the current time once to keep the comparison consistent
 		now = datetime.now(timezone.utc)
 
-		for data in DatabaseTransactions.get_table("timers") :
+		for data in DatabaseTransactions().get_table("timers") :
 			# Calculate expiration
 			removal_time = data.created_at.replace(tzinfo=timezone.utc) + timedelta(hours=data.removal)
 			now = datetime.now(timezone.utc)
@@ -151,10 +151,10 @@ class Tasks(commands.GroupCog) :
 			for member in guild.members :
 				if member.id not in userids :
 					logging.debug(f"User {member.id} not found in database, adding.")
-					UserTransactions.add_user_empty(member.id)
+					UserTransactions().add_user_empty(member.id)
 					continue
 				updated_users.append(str(member.id))
-				UserTransactions.update_entry_date(member.id)
+				UserTransactions().update_entry_date(member.id)
 		logging.debug(f"Updating entry time for {len(updated_users)} users")
 		del updated_users
 
@@ -162,7 +162,7 @@ class Tasks(commands.GroupCog) :
 		"""removes expired entries."""
 		for entry in userdata :
 			if entry.entry < removaldate :
-				UserTransactions.user_delete(entry.uid)
+				UserTransactions().user_delete(entry.uid)
 				logging.debug(f"Database record: {entry.uid} expired")
 
 	# @tasks.loop(hours=48)
@@ -171,7 +171,7 @@ class Tasks(commands.GroupCog) :
 	# 	if self.check_users_expiration.current_loop == 0 :
 	# 		return
 	# 	print("checking user entries")
-	# 	userdata = UserTransactions.get_all_users()
+	# 	userdata = UserTransactions().get_all_users()
 	# 	userids = [x.uid for x in userdata]
 	# 	removaldate = datetime.now() - timedelta(days=730)
 	# 	await self.user_expiration_update(userids)

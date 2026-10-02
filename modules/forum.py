@@ -398,7 +398,7 @@ class Forum(commands.GroupCog, name="forum") :
 
 		}
 
-		records = ApprovalTransactions.get_all_approvals(days)
+		records = ApprovalTransactions().get_all_approvals(days)
 		for record in records:
 			uid = str(record.uid)
 			if uid not in lb:
