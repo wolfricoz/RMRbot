@@ -13,6 +13,16 @@ def check_admin(user: discord.Member):
     return any(x in adminroles for x in user_roles)
 
 
+def check_staff(user: discord.Member):
+    """Whether the member has a mod or admin role."""
+    if not isinstance(user, discord.Member):
+        return False
+    modroles = ConfigData().get_key(user.guild.id, 'mod')
+    adminroles = ConfigData().get_key(user.guild.id, 'admin')
+    user_roles = [x.id for x in user.roles]
+    return any(x in adminroles for x in user_roles) or any(x in modroles for x in user_roles)
+
+
 def check_roles():
     async def pred(ctx):
         modroles = ConfigData().get_key(ctx.guild.id, 'mod')

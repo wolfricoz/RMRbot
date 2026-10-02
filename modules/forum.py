@@ -173,10 +173,11 @@ class Forum(commands.GroupCog, name="forum") :
 			return
 		if message.id == message.channel.id :
 			return
-		if match :
+		# Staff can mention bumping (e.g. to remind the author to use the bump command) without it being removed.
+		if match and not permissions.check_staff(message.author) :
 			remind = await message.channel.send(
 				f"Please use the bump command instead of bumping manually. You can do this by typing `/forum bump`. "
-				f"This message will he removed in 60 seconds so you can bump!")
+				f"This message will be removed in 60 seconds so you can bump!")
 			await asyncio.sleep(60)
 			try :
 				await message.delete()
