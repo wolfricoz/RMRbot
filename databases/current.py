@@ -10,11 +10,18 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
 from sqlalchemy_utils import create_database, database_exists
 
-pymysql.install_as_MySQLdb()
 load_dotenv('.env')
 DB = os.getenv('DB')
 
-engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False)
+connect_args = {}
+if DB.startswith("postgresql"):
+    # Timestamps are stored and read as UTC, which the rest of the bot assumes (e.g. the searchban timers).
+    connect_args["options"] = "-c timezone=utc"
+else:
+    # mysql:// and mariadb:// URLs without a driver load MySQLdb, which pymysql stands in for.
+    pymysql.install_as_MySQLdb()
+
+engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False, connect_args=connect_args)
 if not database_exists(engine.url):
     create_database(engine.url)
 
