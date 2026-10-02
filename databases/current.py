@@ -121,6 +121,21 @@ class Advertisements(Base):
     deleted: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
 
 
+class Interests(Base):
+    """The "I'm interested" messages sent to advert authors, for statistics. The text isn't kept: reports send it to
+    the advert moderators."""
+    __tablename__ = "interests"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"), index=True)
+    thread_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    author_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), index=True)
+    sender_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.uid", ondelete="CASCADE"), index=True)
+    # False when the author doesn't accept direct messages.
+    delivered: Mapped[bool] = mapped_column(Boolean, default=False)
+    reported_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
 
 class database:
     @staticmethod

@@ -2,6 +2,7 @@ import logging
 
 import discord
 
+from databases.transactions.InterestTransactions import InterestTransactions
 from views.buttons.InterestReport import InterestReport
 
 
@@ -32,14 +33,18 @@ class InterestModal(discord.ui.Modal, title="Let them know you're interested") :
 		embed.add_field(name="Advert", value=f"[{self.thread.name}]({self.thread.jump_url})", inline=True)
 		embed.set_footer(text=f"Sent through {interaction.guild.name}. "
 		                      f"If this message is abusive, press Report to send it to the staff.")
+		# Logged first, so the report button can carry its id; it counts as delivered once the DM went through.
+		interest_id = InterestTransactions().add(interaction.guild.id, self.thread.id, author.id, interaction.user.id)
 		try :
-			await author.send(embed=embed, view=InterestReport.view(interaction.guild.id, interaction.user.id))
+			await author.send(embed=embed,
+			                  view=InterestReport.view(interaction.guild.id, interaction.user.id, interest_id))
 		except discord.Forbidden :
 			await interaction.response.send_message(
 				f"{author.mention} doesn't accept direct messages, so your message could not be delivered.",
 				ephemeral=True)
 			return
 
+		InterestTransactions().set_delivered(interest_id)
 		self.on_sent(interaction.user.id, self.thread.id)
 		await interaction.response.send_message(f"Your message has been sent to {author.mention}!", ephemeral=True)
 

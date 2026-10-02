@@ -3,6 +3,7 @@ import logging
 import discord
 
 from databases.transactions.ConfigData import ConfigData
+from databases.transactions.InterestTransactions import InterestTransactions
 
 
 class InterestReportModal(discord.ui.Modal, title="Report this message") :
@@ -16,10 +17,11 @@ class InterestReportModal(discord.ui.Modal, title="Report this message") :
 		max_length=500,
 	)
 
-	def __init__(self, guild_id: int, sender_id: int) :
+	def __init__(self, guild_id: int, sender_id: int, interest_id: int | None = None) :
 		super().__init__(timeout=None)
 		self.guild_id = guild_id
 		self.sender_id = sender_id
+		self.interest_id = interest_id
 
 	async def on_submit(self, interaction: discord.Interaction) :
 		guild = interaction.client.get_guild(self.guild_id)
@@ -40,6 +42,8 @@ class InterestReportModal(discord.ui.Modal, title="Report this message") :
 			embed.add_field(name="Advert", value=advert, inline=False)
 		embed.add_field(name="Reason", value=self.reason.value or "No reason given", inline=False)
 		await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+		if self.interest_id :
+			InterestTransactions().set_reported(self.interest_id)
 
 		# Only one report per message.
 		await interaction.response.edit_message(view=None)
