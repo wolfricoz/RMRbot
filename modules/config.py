@@ -175,7 +175,7 @@ class config(commands.GroupCog, name="config"):
         """Adds search command to the /forum warn command"""
 
         if len(name) > 10:
-            await interaction.followup.send("Please keep the name under 10 characters")
+            await interaction.response.send_message("Please keep the name under 10 characters", ephemeral=True)
             return
         key = f"SEARCH-{name}"
         match action.value.lower():
@@ -188,6 +188,7 @@ class config(commands.GroupCog, name="config"):
                 result = ConfigTransactions().config_unique_remove(guildid=interaction.guild.id, key=key.upper())
                 if result is False:
                     await interaction.followup.send(f"{key} could not be found in database")
+                    return
                 await interaction.followup.send(f"{key} has been removed from the database")
             case _:
                 raise NotImplementedError
@@ -199,7 +200,7 @@ class config(commands.GroupCog, name="config"):
         """Adds an option to the /ban command."""
 
         if len(name) > 10:
-            await interaction.followup.send("Please keep the name under 10 characters")
+            await interaction.response.send_message("Please keep the name under 10 characters", ephemeral=True)
             return
         key = f"BAN-{name}"
         match action.value.lower():
@@ -209,8 +210,9 @@ class config(commands.GroupCog, name="config"):
                 await interaction.response.defer(ephemeral=True)
                 result = ConfigTransactions().config_unique_remove(guildid=interaction.guild.id, key=key.upper())
                 if result is False:
-                    await interaction.followup.send(f"{key.name} could not be found in database")
-                await interaction.followup.send(f"{key.name} has been removed from the database")
+                    await interaction.followup.send(f"{key} could not be found in database")
+                    return
+                await interaction.followup.send(f"{key} has been removed from the database")
             case _:
                 raise NotImplementedError
 
