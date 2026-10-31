@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import or_
 from sqlalchemy.sql import Select
 
-from databases.current import Advertisements
+from databases.current import AdvertisementHolds, Advertisements
 from databases.transactions.DatabaseTransactions import DatabaseTransactions
 from databases.transactions.UserTransactions import UserTransactions
 
@@ -35,12 +36,15 @@ class AdvertisementTransactions(DatabaseTransactions):
             return session.scalars(query).all()
 
     def get_unpublished(self):
-        """Adverts with consent that haven't been received by the website yet."""
+        """Adverts with consent that haven't been received by the website yet, unless they're held back until later."""
         with self.createsession() as session:
-            return session.scalars(Select(Advertisements).where(
+            return session.scalars(Select(Advertisements).outerjoin(
+                    AdvertisementHolds, AdvertisementHolds.advert_id == Advertisements.id,
+            ).where(
                     Advertisements.consent_at.is_not(None),
                     Advertisements.deleted.is_(None),
                     Advertisements.published_at.is_(None),
+                    or_(AdvertisementHolds.retry_at.is_(None), AdvertisementHolds.retry_at <= datetime.now(tz=timezone.utc)),
             )).all()
 
     def get_ids(self) -> set[int]:
@@ -68,11 +72,30 @@ class AdvertisementTransactions(DatabaseTransactions):
 
     def set_published(self, message_id: int, published: bool = True, url: str | None = None):
         """Marks the advert as received by the website, with its page url; unpublishing clears both."""
+        if published:
+            self.clear_hold(message_id)
         return self._update(
                 message_id,
                 published_at=datetime.now(tz=timezone.utc) if published else None,
                 url=url if published else None,
         )
+
+    def set_hold(self, message_id: int, reason: str, retry_at: datetime | None = None) -> bool:
+        """Stores why the advert isn't on the website and when to try again. Returns whether the reason is new, so the
+        author is told once."""
+        with self.createsession() as session:
+            hold = session.get(AdvertisementHolds, message_id)
+            is_new = hold is None or hold.reason != reason
+            session.merge(AdvertisementHolds(advert_id=message_id, reason=reason, retry_at=retry_at))
+            self.commit(session)
+        return is_new
+
+    def clear_hold(self, message_id: int):
+        with self.createsession() as session:
+            hold = session.get(AdvertisementHolds, message_id)
+            if hold is not None:
+                session.delete(hold)
+                self.commit(session)
 
     def set_deleted(self, message_id: int, deleted: bool = True):
         return self._update(message_id, deleted=datetime.now(tz=timezone.utc) if deleted else None)

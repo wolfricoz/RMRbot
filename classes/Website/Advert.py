@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from datetime import datetime, timedelta, timezone
 
 import discord
 import aiohttp
@@ -21,6 +22,10 @@ HEADER_RE = re.compile(
 PARTNER_AGE_RE = re.compile(r"(?:partner|writer)s?\b[^\n\d]{0,20}([1-9][0-9])", re.IGNORECASE)
 # The website's allowed ages.
 MIN_AGE, MAX_AGE = 18, 999
+# The website's minimum lengths (StorePostRequest). The content's length includes the HTML from discord_to_html.
+MIN_TITLE, MIN_CONTENT = 10, 500
+# How long publish_pending leaves an advert the website refused: asking again right away gets the same answer.
+REFUSED_RETRY = timedelta(days=1)
 
 
 class Advert:
@@ -65,6 +70,12 @@ class Advert:
 			self._publishing.discard(self.message.id)
 
 	async def _publish(self) -> str | None:
+		fields = self._websiteFields()
+		# The website would refuse it, so it isn't sent. publish_pending checks again: a fixed advert goes out by itself.
+		problem = self._lengthProblem(fields)
+		if problem:
+			await self._hold(problem)
+			return None
 		member = self.message.author
 		payload = {
 			"user_id"    : str(member.id),  # send as a string
@@ -76,7 +87,7 @@ class Advert:
 			"message_id" : str(self.message.id),  # lets the website post be deleted by this message later
 			"source"     : "Roleplay Meets discord",
 			"approved"   : True,
-			**self._websiteFields(),
+			**fields,
 		}
 		try:
 			async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as session:
@@ -94,14 +105,45 @@ class Advert:
 						return None
 					if response.status == 409:
 						# Too similar to a post already on the website, usually the author's previous advert that is still
-						# up. Left unpublished: publish_pending retries it once that post is removed.
+						# up. Left unpublished: publish_pending retries it daily, so it goes out once that post is removed.
 						post_id = (await response.json()).get("post_id")
 						logging.info(f"Advert {self.message.id} is waiting for similar website post {post_id} to be removed")
+						await self._hold(f"it's too similar to your post at {self.baseUrl}/posts/view/{post_id}. It will be sent once that post is removed.", REFUSED_RETRY)
 						return None
 					logging.warning(f"Failed to publish advert {self.message.id} to website: {response.status} {await response.text()}")
+					if response.status == 422:
+						# Not a rule _lengthProblem knows. The log above has the website's reason, which may not be for the
+						# author's eyes (e.g. that their account is banned there).
+						await self._hold("the website refused it. Please ask staff to look into it.", REFUSED_RETRY)
 		except Exception as e:
 			logging.warning(f"Failed to publish advert {self.message.id} to website: {e}")
 		return None
+
+	@staticmethod
+	def _lengthProblem(fields: dict) -> str | None:
+		"""Why the website would refuse these fields, for the author. The website trims them before it checks."""
+		if len(fields["title"].strip()) < MIN_TITLE:
+			return f"its title needs at least {MIN_TITLE} characters. Rename this thread and it will be sent automatically."
+		if len(fields["content"].strip()) < MIN_CONTENT:
+			return f"it needs at least {MIN_CONTENT} characters, not counting the header. It will be sent once your edit is approved."
+		return None
+
+	async def _hold(self, reason: str, retry_after: timedelta | None = None):
+		"""Keeps the advert off the website for this reason and tells its author, once per reason. With retry_after,
+		publish_pending leaves it alone until then; an approval still tries again right away."""
+		retry_at = datetime.now(tz=timezone.utc) + retry_after if retry_after else None
+		if not AdvertisementTransactions().set_hold(self.message.id, reason, retry_at):
+			return
+		logging.info(f"Advert {self.message.id} is held back from the website: {reason}")
+		owner_id = self.message.channel.owner_id
+		try:
+			await self.message.channel.send(
+				f"<@{owner_id}> Your advert isn't on the website yet: {reason}",
+				allowed_mentions=discord.AllowedMentions(users=[discord.Object(id=owner_id)]),
+			)
+		except discord.HTTPException as e:
+			# The hold stays, or a thread the bot can't post in would fail again on every run.
+			logging.warning(f"Failed to tell the author why advert {self.message.id} isn't on the website: {e}")
 
 	def _websiteFields(self) -> dict:
 		"""The parts of the website post that follow the advert: sent on publish and on every approved edit."""
