@@ -43,7 +43,7 @@ class Website(Cog) :
 	@tasks.loop(minutes=5)
 	async def publish_pending(self) :
 		"""Sends the approved adverts with consent that aren't on the website yet (consent given while a publish failed,
-		or the website was down)."""
+		or the website was down). Adverts the website refused wait out their hold: see Advert._hold."""
 		for advert in AdvertisementTransactions().get_unpublished() :
 			message = await self._fetch_advert(advert)
 			# Unapproved adverts wait for their approval, which publishes them.

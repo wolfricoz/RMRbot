@@ -121,6 +121,17 @@ class Advertisements(Base):
     deleted: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
 
 
+class AdvertisementHolds(Base):
+    """Why an advert isn't on the website yet. A table of its own because database.create() adds new tables, but no
+    columns to existing ones."""
+    __tablename__ = "advertisement_holds"
+    advert_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("advertisements.id", ondelete="CASCADE"), primary_key=True, autoincrement=False)
+    # What the author was told, so the same reason isn't sent twice.
+    reason: Mapped[str] = mapped_column(Text)
+    # publish_pending leaves the advert alone until then; without one it checks the advert on every run.
+    retry_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+
+
 class Interests(Base):
     """The "I'm interested" messages sent to advert authors, for statistics. The text isn't kept: reports send it to
     the advert moderators."""
