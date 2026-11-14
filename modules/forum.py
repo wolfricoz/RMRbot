@@ -512,7 +512,7 @@ class Forum(commands.GroupCog, name="forum") :
 				continue
 			for thread in channel.threads :
 				if "approved" not in [tag.name.lower() for tag in thread.applied_tags] :
-					pending_adverts.append(f"- {thread.jump_url} by {thread.owner.mention}.")
+					pending_adverts.append(f"- {thread.jump_url} by <@{thread.owner_id}>.")
 			if len(pending_adverts)  < 1 :
 				pending_msg = f"{channel.name} is up to date! All adverts are checked and approved! Good job everyone!"
 				queue().add(send_message(interaction.user, pending_msg))
