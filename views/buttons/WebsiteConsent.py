@@ -1,7 +1,7 @@
 import discord
 
 from classes.Website.Advert import Advert
-from databases.transactions.AdvertisementTransactions import AdvertisementTransactions
+from database.transactions.AdvertisementTransactions import AdvertisementTransactions
 
 
 class WebsiteConsent(discord.ui.View) :

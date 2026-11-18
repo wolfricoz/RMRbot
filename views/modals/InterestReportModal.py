@@ -2,8 +2,8 @@ import logging
 
 import discord
 
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.InterestTransactions import InterestTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.InterestTransactions import InterestTransactions
 
 
 class InterestReportModal(discord.ui.Modal, title="Report this message") :

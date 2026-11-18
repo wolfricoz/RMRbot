@@ -9,7 +9,7 @@ import sqlalchemy.exc
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
 
-import databases.current as currentDB
+import database.database as currentDB
 
 currentDB.database.create()
 olddb.database().create()

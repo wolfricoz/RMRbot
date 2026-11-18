@@ -11,9 +11,9 @@ from discord.ext import commands
 import classes.Charts as Charts
 import classes.permissions as permissions
 from classes.automod import AutoMod
-from databases.transactions.AdvertisementTransactions import AdvertisementTransactions
-from databases.transactions.ApprovalTransactions import ApprovalTransactions
-from databases.transactions.InterestTransactions import InterestTransactions
+from database.transactions.AdvertisementTransactions import AdvertisementTransactions
+from database.transactions.ApprovalTransactions import ApprovalTransactions
+from database.transactions.InterestTransactions import InterestTransactions
 
 Days = app_commands.Range[int, 1, 365]
 

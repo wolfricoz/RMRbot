@@ -1,6 +1,6 @@
 import discord
 
-from databases.transactions.UserTransactions import UserTransactions
+from database.transactions.UserTransactions import UserTransactions
 
 
 class WarningModal(discord.ui.Modal, title='Official Warning'):

@@ -3,8 +3,8 @@ import os
 
 from dotenv import load_dotenv
 
-from databases.transactions.SearchWarningTransactions import SearchWarningTransactions
-from databases import current as db
+from database.transactions.SearchWarningTransactions import SearchWarningTransactions
+from database import database as db
 
 # dcheck = datetime.now() + timedelta(hours=-70)
 # hours = abs(datetime.now() - dcheck).total_seconds() / 3600
@@ -17,7 +17,6 @@ from databases import current as db
 load_dotenv('.env')
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = os.getenv("PREFIX")
-DBTOKEN = os.getenv("DB")
 version = os.getenv('VERSION')
 db.database.create()
 var1, var2 = SearchWarningTransactions().get_total_warnings(188647277181665280)

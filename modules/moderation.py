@@ -8,8 +8,8 @@ from discord.app_commands import Choice
 from discord.ext import commands
 
 import classes.permissions as permissions
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.UserTransactions import UserTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.UserTransactions import UserTransactions
 from classes.moduser import ModUser
 from views.modals import inputmodal
 from views.paginations.paginate import paginate

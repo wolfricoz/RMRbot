@@ -7,9 +7,9 @@ import discord
 import aiohttp
 
 from classes.Website.DiscordToHTML import discord_to_html
-from databases.current import Advertisements
-from databases.transactions.AdvertisementTransactions import AdvertisementTransactions
-from databases.transactions.ApprovalTransactions import ApprovalTransactions
+from database.database import Advertisements
+from database.transactions.AdvertisementTransactions import AdvertisementTransactions
+from database.transactions.ApprovalTransactions import ApprovalTransactions
 from resources.enums.ForumStatus import ForumStatus
 
 # The advert's header (see AutoMod.check_header): "All characters are (age)+", optional lines, then a line of dashes.

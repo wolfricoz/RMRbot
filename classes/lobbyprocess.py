@@ -7,8 +7,8 @@ import discord
 from discord.utils import get
 
 from classes.AgeCalculations import AgeCalculations
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.UserTransactions import UserTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.UserTransactions import UserTransactions
 from classes.queue import queue
 from views.embeds.SendEmbed import send_embed
 

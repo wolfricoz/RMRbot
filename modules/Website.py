@@ -8,8 +8,8 @@ from discord.ext.commands import Cog, Bot
 from classes.Website.Advert import Advert
 from classes.automod import AutoMod
 from classes.queue import queue
-from databases.current import Advertisements
-from databases.transactions.AdvertisementTransactions import AdvertisementTransactions
+from database.database import Advertisements
+from database.transactions.AdvertisementTransactions import AdvertisementTransactions
 from views.buttons.WebsiteConsent import WebsiteConsent
 
 

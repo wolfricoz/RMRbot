@@ -2,14 +2,12 @@ import json
 import os
 from abc import ABC
 
-from databases.exceptions.ConfigNotFound import ConfigNotFound
-from databases.exceptions.KeyNotFound import KeyNotFound
+from database.exceptions.ConfigNotFound import ConfigNotFound
+from database.exceptions.KeyNotFound import KeyNotFound
 
 
 class ConfigData(ABC):
-    """
-    The goal of this class is to save the config to reduce database calls for the config; especially the roles.
-    """
+    """Caches the config to reduce database calls for it, especially for the roles."""
     conf = {}
 
     def __init__(self):
@@ -17,7 +15,7 @@ class ConfigData(ABC):
 
     def load_guild(self, guildid):
         # Imported here because ConfigTransactions imports ConfigData to reload the cache after changes.
-        from databases.transactions.ConfigTransactions import ConfigTransactions
+        from database.transactions.ConfigTransactions import ConfigTransactions
         config = ConfigTransactions().server_config_get(guildid)
 
         settings = config

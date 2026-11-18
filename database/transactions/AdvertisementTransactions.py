@@ -3,14 +3,14 @@ from datetime import datetime, timezone
 from sqlalchemy import or_
 from sqlalchemy.sql import Select
 
-from databases.current import AdvertisementHolds, Advertisements
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
-from databases.transactions.UserTransactions import UserTransactions
+from database.database import AdvertisementHolds, Advertisements
+from database.transactions.DatabaseTransactions import DatabaseTransactions
+from database.transactions.UserTransactions import UserTransactions
 
 
 class AdvertisementTransactions(DatabaseTransactions):
-    """Index of the adverts posted in the server; an advert is sent to the website when it has consent, is approved
-    and is not deleted."""
+    """Index of the adverts posted in the server."""
+    # An advert is sent to the website when it has consent, is approved and is not deleted.
 
     def add(self, message_id: int, thread_id: int, forum_id: int, user_id: int):
         # user_id is a foreign key to users.uid, so the user has to exist first.

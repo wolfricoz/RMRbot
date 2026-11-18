@@ -12,7 +12,7 @@ from discord.app_commands import AppCommandError, CheckFailure, command
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from databases.exceptions.CommitError import CommitError
+from database.exceptions.CommitError import CommitError
 
 load_dotenv('main.env')
 channels72 = os.getenv('channels72')

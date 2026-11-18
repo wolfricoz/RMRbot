@@ -1,32 +1,74 @@
+"""Database connection and every table the bot uses.
+
+The connection is built from the DB_* environment variables (see .env.example). The old single DB url is still
+read when DB_HOST isn't set, so a server that hasn't moved its .env over yet keeps working.
+"""
+import logging
 import os
 from datetime import datetime
 from typing import List, Optional
 
 import pymysql
-from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, URL, create_engine, make_url
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
 from sqlalchemy_utils import create_database, database_exists
 
-load_dotenv('.env')
-DB = os.getenv('DB')
+from data.env.loader import env, load_environment
 
+load_environment()
+
+# DB_TYPE -> (SQLAlchemy driver name, the port that server listens on by default). Anything else is used as given.
+_DIALECTS = {
+    "mysql"     : ("mysql", 3306),
+    "mariadb"   : ("mysql", 3306),
+    "postgresql": ("postgresql", 5432),
+    "postgres"  : ("postgresql", 5432),
+}
+
+
+def build_database_url() -> URL:
+    """The database url from the DB_* variables. Pure string building, so it can be checked without a connection."""
+    # `or` instead of env()'s default, because .env.example leaves unused values as empty strings.
+    database_name = env('DB_NAME') or 'rmrbotnew'
+    legacy_url = env('DB')
+    if not env('DB_HOST') and legacy_url:
+        logging.warning("DB is deprecated: set DB_TYPE, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT and DB_NAME instead.")
+        return make_url(f"{legacy_url.rstrip('/')}/{database_name}")
+
+    db_type = env('DB_TYPE') or 'mysql'
+    drivername, default_port = _DIALECTS.get(db_type.lower(), (db_type, 3306))
+    # URL.create escapes special characters in the password, which an f-string url would not.
+    return URL.create(
+        drivername=drivername,
+        username=env('DB_USER') or None,
+        password=env('DB_PASSWORD') or None,
+        host=env('DB_HOST') or '127.0.0.1',
+        port=int(env('DB_PORT') or default_port),
+        database=database_name,
+    )
+
+
+db_url = build_database_url()
 connect_args = {}
-if DB.startswith("postgresql"):
+if db_url.get_backend_name() == "postgresql":
     # Timestamps are stored and read as UTC, which the rest of the bot assumes (e.g. the searchban timers).
     connect_args["options"] = "-c timezone=utc"
 else:
-    # mysql:// and mariadb:// URLs without a driver load MySQLdb, which pymysql stands in for.
+    # mysql:// urls without a driver load MySQLdb, which pymysql stands in for.
     pymysql.install_as_MySQLdb()
 
-engine = create_engine(f"{DB}/rmrbotnew", poolclass=NullPool, echo=False, connect_args=connect_args)
-if not database_exists(engine.url):
-    create_database(engine.url)
+# NullPool opens a fresh connection per session, so the bot never holds on to a stale one.
+engine = create_engine(db_url, poolclass=NullPool, pool_pre_ping=True, connect_args=connect_args)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
-# TODO: dead code - conn is never used, and it opens a DB connection at import that is never closed
-conn = engine.connect()
+
+def ensure_database_exists():
+    """Creates the database itself when it's missing; called by database.create() so importing this file opens no
+    connection."""
+    if not database_exists(engine.url):
+        create_database(engine.url)
 
 
 class Base(DeclarativeBase):
@@ -122,8 +164,8 @@ class Advertisements(Base):
 
 
 class AdvertisementHolds(Base):
-    """Why an advert isn't on the website yet. A table of its own because database.create() adds new tables, but no
-    columns to existing ones."""
+    """Why an advert isn't on the website yet."""
+    # A table of its own because database.create() adds new tables, but no columns to existing ones.
     __tablename__ = "advertisement_holds"
     advert_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("advertisements.id", ondelete="CASCADE"), primary_key=True, autoincrement=False)
     # What the author was told, so the same reason isn't sent twice.
@@ -133,8 +175,8 @@ class AdvertisementHolds(Base):
 
 
 class Interests(Base):
-    """The "I'm interested" messages sent to advert authors, for statistics. The text isn't kept: reports send it to
-    the advert moderators."""
+    """The "I'm interested" messages sent to advert authors, for statistics."""
+    # The text isn't kept: reports send it to the advert moderators.
     __tablename__ = "interests"
     id: Mapped[int] = mapped_column(primary_key=True)
     guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"), index=True)
@@ -147,9 +189,24 @@ class Interests(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 
-
 class database:
     @staticmethod
     def create():
+        ensure_database_exists()
         Base.metadata.create_all(engine)
         print("Database built")
+
+
+def create_bot_database():
+    ensure_database_exists()
+    Base.metadata.create_all(engine)
+
+
+def drop_bot_database():
+    """Drops every table; for throwaway test databases only."""
+    if os.getenv('DISCORD_TOKEN'):
+        raise Exception("You cannot drop the database while the bot is in production")
+    if not engine.url.database.endswith("_test"):
+        raise Exception(f"drop_bot_database() only drops test databases; DB_NAME '{engine.url.database}' doesn't end "
+                        f"in '_test'.")
+    Base.metadata.drop_all(engine)

@@ -4,8 +4,8 @@ from datetime import datetime
 
 import discord
 
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.SearchWarningTransactions import SearchWarningTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.SearchWarningTransactions import SearchWarningTransactions
 
 
 class Advert(ABC):

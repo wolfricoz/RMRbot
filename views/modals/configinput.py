@@ -3,7 +3,7 @@ import logging
 
 import discord
 
-from databases.transactions.ConfigTransactions import ConfigTransactions
+from database.transactions.ConfigTransactions import ConfigTransactions
 
 
 class ConfigInputUnique(discord.ui.Modal, title='set config message'):

@@ -2,7 +2,7 @@ import logging
 
 import discord
 
-from databases.transactions.InterestTransactions import InterestTransactions
+from database.transactions.InterestTransactions import InterestTransactions
 from views.buttons.InterestReport import InterestReport
 
 

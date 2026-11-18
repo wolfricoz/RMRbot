@@ -4,7 +4,7 @@ import logging
 import discord
 
 from classes.Advert import Advert
-from databases.transactions.ConfigData import ConfigData
+from database.transactions.ConfigData import ConfigData
 
 
 class Custom(discord.ui.Modal, title='Custom Warning'):

@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.sql import Select
 
-from databases.current import Warnings
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
-from databases.transactions.UserTransactions import UserTransactions
+from database.database import Warnings
+from database.transactions.DatabaseTransactions import DatabaseTransactions
+from database.transactions.UserTransactions import UserTransactions
 
 
 class SearchWarningTransactions(DatabaseTransactions):

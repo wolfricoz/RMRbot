@@ -1,3 +1,8 @@
+"""This is the base class for ALL database transactions, it holds the session factory and the shared functions.
+
+Every method opens its own session with `with self.createsession() as session:`, so a failed transaction only voids
+that one session instead of locking up a shared connection.
+"""
 import logging
 from datetime import timedelta
 
@@ -6,19 +11,21 @@ from sqlalchemy.exc import InvalidRequestError, PendingRollbackError, SQLAlchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import Select
 
-import databases.current as db
-from classes.singleton import Singleton
-from databases.exceptions.CommitError import CommitError
+import database.database as db
+from database.exceptions.CommitError import CommitError
 
 
-class DatabaseTransactions(metaclass=Singleton):
+class DatabaseTransactions:
     """Base class for all transactions; every method opens its own session through createsession()."""
-    sessionmanager = sessionmaker(bind=db.engine)
+    # expire_on_commit=False keeps the attributes of returned objects readable after their session is closed.
+    sessionmanager = sessionmaker(bind=db.engine, expire_on_commit=False)
 
     def createsession(self):
-        return self.sessionmanager(expire_on_commit=False)
+        """Creates a new session; use one per transaction."""
+        return self.sessionmanager()
 
     def commit(self, session):
+        """Commits the session, rolls it back and raises CommitError when that fails, and always closes it."""
         try:
             session.commit()
         except SQLAlchemyError as e:

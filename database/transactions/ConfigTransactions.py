@@ -1,9 +1,9 @@
 from sqlalchemy.sql import Select
 
-import databases.current as db
-from databases.current import Config
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
+import database.database as db
+from database.database import Config
+from database.transactions.ConfigData import ConfigData
+from database.transactions.DatabaseTransactions import DatabaseTransactions
 
 
 class ConfigTransactions(DatabaseTransactions):

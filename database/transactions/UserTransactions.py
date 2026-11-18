@@ -2,13 +2,13 @@ from datetime import datetime, timezone
 
 from sqlalchemy.sql import Select
 
-import databases.current as db
+import database.database as db
 from classes.encryption import Encryption
-from databases.current import Users, Warnings
-from databases.exceptions.CommitError import CommitError
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.ConfigTransactions import ConfigTransactions
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
+from database.database import Users, Warnings
+from database.exceptions.CommitError import CommitError
+from database.transactions.ConfigData import ConfigData
+from database.transactions.ConfigTransactions import ConfigTransactions
+from database.transactions.DatabaseTransactions import DatabaseTransactions
 
 
 class UserTransactions(DatabaseTransactions):

@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from databases.transactions.ConfigData import ConfigData
+from database.transactions.ConfigData import ConfigData
 
 
 def check_admin(user: discord.Member):

@@ -1,7 +1,7 @@
 from sqlalchemy.sql import Select
 
-from databases.current import Timers
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
+from database.database import Timers
+from database.transactions.DatabaseTransactions import DatabaseTransactions
 
 
 class TimersTransactions(DatabaseTransactions):

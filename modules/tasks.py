@@ -11,14 +11,14 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from discord_py_utilities.invites import check_invite
 
-from databases.current import Timers
-from databases.exceptions.KeyNotFound import KeyNotFound
+from database.database import Timers
+from database.exceptions.KeyNotFound import KeyNotFound
 import classes.searchbans as searchbans
 from classes import permissions
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
-from databases.transactions.TimersTransactions import TimersTransactions
-from databases.transactions.UserTransactions import UserTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.DatabaseTransactions import DatabaseTransactions
+from database.transactions.TimersTransactions import TimersTransactions
+from database.transactions.UserTransactions import UserTransactions
 from classes.forumtasks import ForumTasks
 from classes.queue import queue
 

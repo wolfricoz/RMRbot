@@ -16,8 +16,8 @@ from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
 from classes.AdvertReview import AdvertReview
-from databases.transactions.ApprovalTransactions import ApprovalTransactions
-from databases.transactions.ConfigData import ConfigData
+from database.transactions.ApprovalTransactions import ApprovalTransactions
+from database.transactions.ConfigData import ConfigData
 from classes.queue import queue
 from resources.enums.ForumStatus import ForumStatus
 from views.buttons.PostOptions import PostOptions

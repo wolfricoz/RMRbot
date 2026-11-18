@@ -7,8 +7,8 @@ import logging
 import discord
 
 from classes.Website.Advert import Advert as WebsiteAdvert
-from databases.transactions.AdvertisementTransactions import AdvertisementTransactions
-from databases.transactions.ApprovalTransactions import ApprovalTransactions
+from database.transactions.AdvertisementTransactions import AdvertisementTransactions
+from database.transactions.ApprovalTransactions import ApprovalTransactions
 
 # Starts every edit diff message, so the bot can find them again to remove them.
 DIFF_HEADER = "**This advert was edited.** Changes since it was last approved:"

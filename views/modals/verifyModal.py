@@ -4,11 +4,11 @@ import logging
 
 import discord
 
-import databases.current
+import database.database
 from classes.AgeCalculations import AgeCalculations
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.UserTransactions import UserTransactions
-from databases.transactions.VerificationTransactions import VerificationTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.UserTransactions import UserTransactions
+from database.transactions.VerificationTransactions import VerificationTransactions
 from classes.encryption import Encryption
 from views.buttons.agebuttons import AgeButtons
 
@@ -43,7 +43,7 @@ class VerifyModal(discord.ui.Modal):
     # Add in all the checks before it even gets to the lobby; age matches dob, dob already exists but diff?
 
     async def on_submit(self, interaction: discord.Interaction):
-        userdata: databases.current.Users = UserTransactions().get_user(interaction.user.id)
+        userdata: database.database.Users = UserTransactions().get_user(interaction.user.id)
         modlobby = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "lobbymod"))
         admin = ConfigData().get_key(interaction.guild.id, "admin")
         idchannel = interaction.guild.get_channel(ConfigData().get_key_int(interaction.guild.id, "idlog"))

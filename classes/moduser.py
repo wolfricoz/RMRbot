@@ -5,8 +5,8 @@ from datetime import datetime
 import discord
 from discord.app_commands import AppCommandError
 
-from databases.exceptions.KeyNotFound import KeyNotFound
-from databases.transactions.ConfigData import ConfigData
+from database.exceptions.KeyNotFound import KeyNotFound
+from database.transactions.ConfigData import ConfigData
 
 
 class ModUser(ABC):

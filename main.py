@@ -15,10 +15,10 @@ import api
 
 from classes import permissions
 from classes.automod import AutoMod
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.ConfigTransactions import ConfigTransactions
-from databases.transactions.UserTransactions import UserTransactions
-from databases import current as db
+from database.transactions.ConfigData import ConfigData
+from database.transactions.ConfigTransactions import ConfigTransactions
+from database.transactions.UserTransactions import UserTransactions
+from database import database as db
 from views.buttons.PostOptions import PostOptions
 
 # Creating database
@@ -29,8 +29,6 @@ db.database.create()
 load_dotenv('.env')
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = os.getenv("PREFIX")
-# TODO: dead code - DBTOKEN is never used
-DBTOKEN = os.getenv("DB")
 version = os.getenv('VERSION')
 intents = discord.Intents.default()
 intents.message_content = True

@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 import discord
 
 import classes.permissions as permissions
-from databases.transactions.ConfigData import ConfigData
-from databases.transactions.DatabaseTransactions import DatabaseTransactions
-from databases.transactions.UserTransactions import UserTransactions
+from database.transactions.ConfigData import ConfigData
+from database.transactions.DatabaseTransactions import DatabaseTransactions
+from database.transactions.UserTransactions import UserTransactions
 
 
 # noinspection PyUnresolvedReferences
