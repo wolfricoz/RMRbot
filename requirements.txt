@@ -20,3 +20,4 @@ discord-py-utilities>=0.1.0.1
 fastapi
 uvicorn
 matplotlib>=3.9  # charts for the /stats commands
+regex>=2024.4.16  # staff-set automod regexes, with a timeout (/config template)

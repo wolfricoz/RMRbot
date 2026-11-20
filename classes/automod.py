@@ -2,7 +2,6 @@
 import asyncio
 import logging
 import os.path
-import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 
@@ -12,6 +11,7 @@ from discord.ext import commands
 
 from classes.Advert import Advert
 from classes.AutomodComponents import AutomodComponents
+from classes.ForumTemplate import ForumTemplate, TimedOut
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
@@ -230,61 +230,38 @@ class AutoMod(ABC) :
 	@staticmethod
 	@abstractmethod
 	async def check_header(message: discord.Message, thread: discord.Thread) -> bool | int | None :
-		"""This function is used to check the header."""
-		header = re.match(
-			r"^\`{0,3}\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?([\S\n\t\v ]*)[-|—]{5,100}",
-			message.content,
-			flags=re.IGNORECASE)
+		"""Checks the advert's header against its forum's template (see ForumTemplate). Removes the advert when it
+		doesn't match and returns True; returns the characters' age when it is under 18."""
+		template = ForumTemplate.for_forum(thread.guild.id, thread.parent_id)
+		header = await ForumTemplate.search(template.header, message.content)
+		if header is TimedOut :
+			queue().add(ForumTemplate.report_timeout(thread, "header"), priority=0)
+			return None
 		loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
 
 		if header is None :
-			queue().add(message.author.send(
-				"""Your advert has been removed because it does not have a header or your header does not follow the template below. Please re-post with a (correct) header.
-```text
-All characters are (ages)+
-(optional) Tags: (Your tags here!)
-(optional) Pairings: (Your pairings here!)
-(Any other information you want to stand out!)
------------------------------------
-(Your advert here)
-```
-Common Errors:
-* This goes in the body of your post above your advert, not in the title.
-* You may have altered 'all characters are', this will cause it to fail as I look for this specifically.
-* You may have forgotten the line of dashes (-)
-* It is highly recommended to only change the information in the (brackets)
-You can use this website to check your header: https://regex101.com/r/HYkkf9/2
-This rule went in to effect on the 01/01/2024. If you have any questions, please open a ticket!
-"""))
+			queue().add(message.author.send(template.header_message))
 			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
 			queue().add(Advert.logadvert(message, loggingchannel))
 			queue().add(thread.delete())
 			return True
-		age = header.group(2)
+		age = ForumTemplate.age(header)
 		logging.info(age)
-		if age.isnumeric() and int(age) < 18 :
-			return int(age)
+		if age is not None and age < 18 :
+			return age
 
 	@staticmethod
 	@abstractmethod
 	async def check_title(message, thread: discord.Thread) :
-		regex_pattern = r'^[\[\(\{][^\]\)\}]{1,10}[4\/x][^\]\)\}]{1,10}[\]\)\}]'
-		result = re.search(regex_pattern, thread.name, flags=re.IGNORECASE)
+		"""Checks the thread's title against its forum's title rule (see ForumTemplate). Removes the advert and
+		returns False when it doesn't match."""
+		template = ForumTemplate.for_forum(thread.guild.id, thread.parent_id)
+		result = await ForumTemplate.search(template.title, thread.name)
+		if result is TimedOut :
+			queue().add(ForumTemplate.report_timeout(thread, "title"), priority=0)
+			return True
 		if result is None :
-			queue().add(message.author.send(
-				"""Your advert has been removed because it does not follow our title format. Please re-post with the correct format.
-This often errors on:
-* You may have forgotten the brackets
-* You haven't included the pairings in your title
-* You may have included the pairings in the body of your post, not the title
-
-Here is an example of a title that should work:
-```text
-[pairing/pairing] title here
-Example: [m/m] Hi I am looking for a partner
-```
-If you've looked through the steps above and still have questions, please open a ticket!
-"""))
+			queue().add(message.author.send(template.title_message))
 			queue().add(Advert.send_advert_to_user(message, message, "Your advert:", "no"))
 			loggingchannel = thread.guild.get_channel(ConfigData().get_key_int(thread.guild.id, "ADVERTLOG"))
 			queue().add(Advert.logadvert(message, loggingchannel))
