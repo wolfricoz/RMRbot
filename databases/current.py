@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import pymysql
 from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, create_engine
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import func
@@ -146,6 +146,24 @@ class Interests(Base):
     reported_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
+
+
+class PurgeDates(Base):
+    """Yearly search forum purge dates; checked marks the guild's most recent completed purge."""
+    __tablename__ = "purge_dates"
+    __table_args__ = (UniqueConstraint("guild", "month", "day", name="uq_purge_dates_guild_month_day"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    guild: Mapped[int] = mapped_column(BigInteger, ForeignKey("servers.guild", ondelete="CASCADE"), index=True)
+    # Repeats every year on this day and month.
+    day: Mapped[int]
+    month: Mapped[int]
+    checked: Mapped[bool] = mapped_column(Boolean, default=False)
+    # When this date last ran, so it runs once a year.
+    last_purged_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    # When the 7-day announcement went out, so it goes out once per purge.
+    announced_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=None)
+    # A date added after its day has passed waits for next year.
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class database:
