@@ -7,6 +7,8 @@ from discord.ext import commands
 
 from databases.transactions.ConfigData import ConfigData
 from databases.transactions.ConfigTransactions import ConfigTransactions
+from classes.ForumTemplate import FIELDS, ForumTemplate
+from views.modals.ForumTemplateModal import ForumTemplateModal, ForumTemplateTestModal
 from views.modals.configinput import ConfigInputUnique
 from views.select.configselectroles import *
 
@@ -35,7 +37,7 @@ class config(commands.GroupCog, name="config"):
 
     messagechoices = ['welcomemessage', "lobbywelcome", "reminder"]
     channelchoices = ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
-                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "blog", "automodlog", "watchlist", "checkinvites", "rpprofiles", "pendingapproval", "pendingboard"]
+                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "blog", "automodlog", "watchlist", "checkinvites", "rpprofiles", "pendingapproval", "pendingboard", "purgeannouncement"]
     rolechoices = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW",
                    "Partner role": "partner", "Searchban role": "posttimeout"}
 
@@ -213,6 +215,37 @@ class config(commands.GroupCog, name="config"):
                     await interaction.followup.send(f"{key} could not be found in database")
                     return
                 await interaction.followup.send(f"{key} has been removed from the database")
+            case _:
+                raise NotImplementedError
+
+    @app_commands.command()
+    @app_commands.choices(action=[Choice(name=x, value=x) for x in ["set", "reset", "view", "test"]])
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def template(self, interaction: discord.Interaction, forum: discord.ForumChannel, action: Choice[str]):
+        """Sets the title rule and header template automod checks a forum's adverts against."""
+        match action.value:
+            case "set":
+                await interaction.response.send_modal(ForumTemplateModal(forum))
+            case "test":
+                await interaction.response.send_modal(ForumTemplateTestModal(forum))
+            case "reset":
+                for field in FIELDS:
+                    ConfigTransactions().config_unique_remove(interaction.guild.id, ForumTemplate.key(field, forum.id))
+                await interaction.response.send_message(f"{forum.mention} now uses the default template.",
+                                                        ephemeral=True)
+            case "view":
+                template = ForumTemplate.for_forum(interaction.guild.id, forum.id)
+                embed = discord.Embed(title=f"Template for {forum.name}")
+                parts = [("Header regex", "HEADER", template.header),
+                         ("Header removal message", "HEADERMSG", template.header_message),
+                         ("Title regex", "TITLE", template.title),
+                         ("Title removal message", "TITLEMSG", template.title_message)]
+                for name, field, value in parts:
+                    origin = "custom" if template.custom[field] else "default"
+                    shown = value if len(value) <= 1000 else value[:1000] + "…"
+                    embed.add_field(name=f"{name} ({origin})", value=f"```\n{shown.replace('```', '`​``')}\n```",
+                                    inline=False)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
             case _:
                 raise NotImplementedError
 

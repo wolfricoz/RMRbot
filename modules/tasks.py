@@ -20,6 +20,7 @@ from databases.transactions.DatabaseTransactions import DatabaseTransactions
 from databases.transactions.TimersTransactions import TimersTransactions
 from databases.transactions.UserTransactions import UserTransactions
 from classes.forumtasks import ForumTasks
+from classes.ForumPurge import check_purge_dates
 from classes.queue import queue
 
 OLDLOBBY = int(os.getenv("OLDLOBBY"))
@@ -39,6 +40,7 @@ class Tasks(commands.GroupCog) :
 		# self.check_users_expiration.start()
 		self.check_invites_task.start()
 		self.forum_manager.start()
+		self.purge_schedule.start()
 
 	def cog_unload(self) :
 		"""unloads tasks"""
@@ -48,6 +50,7 @@ class Tasks(commands.GroupCog) :
 # 		self.check_users_expiration.cancel()
 		self.check_invites_task.cancel()
 		self.forum_manager.cancel()
+		self.purge_schedule.cancel()
 
 	@tasks.loop(hours=3)
 	async def config_reload(self) :
@@ -201,6 +204,12 @@ class Tasks(commands.GroupCog) :
 			forum = ForumTasks(channel, self.bot)
 			queue().add(forum.start())
 
+	@tasks.loop(hours=1)
+	async def purge_schedule(self) :
+		"""Announces the yearly search forum purges 7 days ahead and runs them on their day."""
+		# Purges missed while the bot was offline are reported once, on the first run after a start.
+		await check_purge_dates(self.bot, report_missed=self.purge_schedule.current_loop == 0)
+
 	@tasks.loop(hours=24)
 	async def check_invites_task(self) :
 		"""Checks if the invite is still valid."""
@@ -244,6 +253,10 @@ class Tasks(commands.GroupCog) :
 		# Reload the logs module
 		logging.info("Reloading logs module")
 		await self.bot.reload_extension("logs")
+
+	@purge_schedule.before_loop
+	async def before_purge_schedule(self) :
+		await self.bot.wait_until_ready()
 
 	@forum_manager.before_loop  # it's called before the actual task runs
 	async def before_forum_manager(self) :

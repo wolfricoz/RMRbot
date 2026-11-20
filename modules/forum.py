@@ -17,12 +17,15 @@ import classes.permissions as permissions
 from classes.Advert import Advert
 from classes.AdvertReview import AdvertReview
 from classes.PendingAdverts import PendingAdverts
+from classes import PurgeSchedule
+from classes.ForumPurge import ForumPurge, MANUAL_REMINDER, check_purge_dates
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message, send_response
 from classes.TagController import TagController
 from classes.automod import AutoMod
 from databases.transactions.ApprovalTransactions import ApprovalTransactions
 from databases.transactions.ConfigData import ConfigData
+from databases.transactions.PurgeTransactions import PurgeTransactions
 from classes.moduser import ModUser
 from classes.queue import queue
 from classes.searchbans import add_search_ban, warning_count_check
@@ -353,53 +356,77 @@ class Forum(commands.GroupCog, name="forum") :
 			await interaction.followup.send("Purge cancelled")
 			return
 		await interaction.followup.send(f"Purge started")
-		amount = 0
-		forums = ConfigData().get_key(interaction.guild.id, "FORUM")
-		for x in forums :
-			forum: discord.ForumChannel = self.bot.get_channel(x)
-			if isinstance(forum, discord.ForumChannel) is False :
-				continue
-			for thread in forum.threads :
-				try :
-					if thread.owner.id == interaction.user.id :
-						continue
-				except AttributeError :
-					pass
-				try :
-					thread_message = await thread.fetch_message(thread.id)
-					queue().add(Advert.send_advert_to_user(interaction, thread_message,
-					                                       "Your advert has been removed due to a purge; you may repost "
-					                                       "them once the purge has finished. Thank you for using RMR!",
-					                                       "purge"), 0)
-					queue().add(thread.delete(), 0)
-					amount += 1
-				except discord.NotFound :
-					queue().add(await thread.delete(), 0)
-					continue
-				except Exception as e :
-					await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
-			async for thread in forum.archived_threads(limit=None) :
-				try :
-					if thread.owner.id == interaction.user.id :
-						continue
-				except AttributeError :
-					pass
-				try :
-					thread_message = await thread.fetch_message(thread.id)
-					queue().add(Advert.send_advert_to_user(interaction, thread_message,
-					                                       f"Your advert `{thread.name}` has been removed due to a purge;"
-					                                       f"you may repost them once the purge has finished. Thank you for "
-					                                       f"using RMR!\nYour advert:",
-					                                       "purge"), 0)
-					queue().add(thread.delete(), 0)
-					amount += 1
-				except discord.NotFound :
-					queue().add(thread.delete(), 0)
-					continue
-				except Exception as e :
-					await interaction.channel.send(f"failed to remove {thread.mention} because {e}")
-		await interaction.channel.send(f"Purge queued, {amount} to be adverts removed.")
-		queue().add(send_message(interaction.channel, f"Purge completed, {amount} adverts removed."), 0)
+
+		async def done(purge: ForumPurge) :
+			await send_message(interaction.channel, purge.summary())
+
+		amount = await ForumPurge(self.bot, interaction.guild).run(MANUAL_REMINDER, on_complete=done,
+		                                                           keep_owner_id=interaction.user.id)
+		await interaction.channel.send(f"Purge queued, {amount} adverts to be removed.")
+
+	purgedates = app_commands.Group(name="purgedates", description="The yearly search forum purge dates")
+
+	@purgedates.command(name="add")
+	@permissions.check_app_roles_admin()
+	async def purgedates_add(self, interaction: discord.Interaction, day: app_commands.Range[int, 1, 31],
+	                         month: app_commands.Range[int, 1, 12]) :
+		"""Adds a purge date that repeats every year; announced 7 days before."""
+		if not PurgeSchedule.is_valid_date(day, month) :
+			await send_response(interaction, f"{day}-{month} isn't a date every year.", ephemeral=True)
+			return
+		date = PurgeSchedule.format_date(day, month)
+		if not PurgeTransactions().add(interaction.guild.id, day, month) :
+			await send_response(interaction, f"{date} is already a purge date.", ephemeral=True)
+			return
+		upcoming = PurgeSchedule.next_occurrence(day, month, discord.utils.utcnow())
+		await send_response(interaction, f"Added {date}. The next purge on it is "
+		                                 f"{PurgeSchedule.discord_time(upcoming, 'F')} "
+		                                 f"({PurgeSchedule.discord_time(upcoming, 'R')}).", ephemeral=True)
+
+	@purgedates.command(name="remove")
+	@permissions.check_app_roles_admin()
+	async def purgedates_remove(self, interaction: discord.Interaction, day: app_commands.Range[int, 1, 31],
+	                            month: app_commands.Range[int, 1, 12]) :
+		"""Removes a purge date."""
+		removed = PurgeTransactions().remove(interaction.guild.id, day, month)
+		date = PurgeSchedule.format_date(day, month) if PurgeSchedule.is_valid_date(day, month) else f"{day}-{month}"
+		await send_response(interaction, f"Removed {date}." if removed else f"{date} isn't a purge date.",
+		                    ephemeral=True)
+
+	@purgedates.command(name="list")
+	@permissions.check_app_roles()
+	async def purgedates_list(self, interaction: discord.Interaction) :
+		"""Shows the purge dates; ✅ marks the most recent completed purge."""
+		entries = PurgeTransactions().get_for_guild(interaction.guild.id)
+		if not entries :
+			await send_response(interaction, "There are no purge dates; add one with /forum purgedates add.",
+			                    ephemeral=True)
+			return
+		now = discord.utils.utcnow()
+		upcoming = {entry.id : PurgeSchedule.next_occurrence(entry.day, entry.month, now) for entry in entries}
+		soonest = min(upcoming, key=upcoming.get)
+		lines = []
+		for entry in entries :
+			mark = "✅" if entry.checked else "⬜"
+			last = (PurgeSchedule.discord_time(PurgeSchedule.as_utc(entry.last_purged_at), "d")
+			        if entry.last_purged_at else "never")
+			line = (f"{mark} **{PurgeSchedule.format_date(entry.day, entry.month)}**: last run {last}, next "
+			        f"{PurgeSchedule.discord_time(upcoming[entry.id], 'R')}")
+			if entry.id == soonest :
+				line += " ⏭️"
+			lines.append(line)
+		embed = discord.Embed(title="Search forum purge dates", description="\n".join(lines))
+		embed.set_footer(text="✅ most recent purge · ⏭️ next purge · announced 7 days before · purges at midnight US/Eastern")
+		await send_response(interaction, None, embed=embed, ephemeral=True)
+
+	@purgedates.command(name="check")
+	@permissions.check_app_roles_admin()
+	async def purgedates_check(self, interaction: discord.Interaction) :
+		"""Runs the hourly purge check now: posts due announcements and starts due purges."""
+		await interaction.response.defer(ephemeral=True)
+		await check_purge_dates(self.bot, report_missed=True)
+		await interaction.followup.send("Purge dates checked; anything it did is logged in the automod log.",
+		                                ephemeral=True)
 
 	@app_commands.command(name="count", description="counts all posts in the search forums")
 	async def count_posts(self, interaction: discord.Interaction) :
