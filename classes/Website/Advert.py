@@ -12,7 +12,8 @@ from databases.transactions.AdvertisementTransactions import AdvertisementTransa
 from databases.transactions.ApprovalTransactions import ApprovalTransactions
 from resources.enums.ForumStatus import ForumStatus
 
-# The advert's header (see AutoMod.check_header): "All characters are (age)+", optional lines, then a line of dashes.
+# The advert's header (the default template, see ForumTemplate.DEFAULT_HEADER): "All characters are (age)+", optional
+# lines, then a line of dashes. Adverts in a forum with a custom header (/config template) are sent whole.
 # Lazy, so it ends at the first line of dashes rather than one further down in the advert.
 HEADER_RE = re.compile(
 	r"^(`{0,3})\.?\s*\.?\s*\.?\s*All\s*character'?s?\s*are:?\s*\(?\s*([1-9][0-9])\s*\)?(.*?)[-|—]{5,100}",
