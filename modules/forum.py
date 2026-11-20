@@ -578,6 +578,13 @@ class Forum(commands.GroupCog, name="forum") :
 		PendingAdverts.note_removed(payload.thread_id)
 		PendingAdverts.refresh(self.bot, guild)
 
+	@commands.Cog.listener('on_message')
+	async def refresh_pending_on_log(self, message: discord.Message) :
+		"""Crosses out the lines that were out of date when the bot posted them in the pendingapproval channel: the
+		daily pending list goes through the queue, so an advert can be approved before its line is posted."""
+		if PendingAdverts.is_log_message(self.bot, message) :
+			PendingAdverts.refresh(self.bot, message.guild)
+
 	@app_commands.command(name="copy", description="Copy a forum with all settings!")
 	@app_commands.checks.has_permissions(manage_channels=True)
 	async def copy(self, interaction: discord.Interaction, forum: discord.ForumChannel, name: str = None) :

@@ -8,7 +8,8 @@ are approved, removed or posted:
 
 The same update also crosses out, in the `pendingapproval` channel, the lines about adverts that are no longer
 pending: approved (with the approver, when the bot saw who it was) or removed. Only the last LOG_HISTORY messages there
-are checked. Approvers and removals are remembered in memory, so after a restart lines are crossed out without the
+are checked. The bot posting there also triggers an update, so a line that is out of date by the time it is posted
+(the daily list goes through the queue) is crossed out too. Approvers and removals are remembered in memory, so after a restart lines are crossed out without the
 approver, and removals from before the restart aren't crossed out.
 
 Updates are batched per guild, so a burst of approvals edits each message once. Ported from mousebot."""
@@ -69,6 +70,17 @@ class PendingAdverts :
 	def note_approval(thread_id: int, approver_id: int) :
 		"""Remembers who approved the advert, so its pending lines are crossed out with their name."""
 		PendingAdverts._remember(PendingAdverts._approvers, thread_id, (approver_id, discord.utils.utcnow()))
+
+	@staticmethod
+	def is_log_message(bot: commands.Bot, message: discord.Message) -> bool :
+		"""Whether the bot posted the message in the guild's pendingapproval channel."""
+		if message.guild is None or bot.user is None or message.author.id != bot.user.id :
+			return False
+		try :
+			channel_id = ConfigData().get_key_or_none(message.guild.id, "PENDINGAPPROVAL")
+		except KeyError :
+			return False
+		return channel_id is not None and int(channel_id) == message.channel.id
 
 	@staticmethod
 	def note_removed(thread_id: int) :
@@ -230,8 +242,10 @@ class PendingAdverts :
 
 	@staticmethod
 	def _cross_out_line(guild: discord.Guild, line: str, posted_at: datetime, detailed: bool) -> str :
-		# The daily list's lines are list items: the strikethrough goes after the "- ", or the list breaks.
-		bullet = "- " if line.startswith("- ") else ""
+		# The daily list's lines are list items: the strikethrough goes after the "- ", or the list breaks. Its first
+		# item starts with a space.
+		indent = line[: len(line) - len(line.lstrip())]
+		bullet = indent + "- " if line.lstrip().startswith("- ") else indent
 		text = line[len(bullet) :]
 		reference = THREAD_REFERENCE.search(text)
 		if reference is None or text.startswith("~~") :
