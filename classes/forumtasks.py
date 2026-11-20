@@ -7,6 +7,7 @@ from discord import Thread
 from discord.ext import commands
 
 from classes import permissions
+from classes.PendingAdverts import PendingAdverts
 from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import delete_message, fetch_message_or_none, send_message
 from classes.TagController import TagController
@@ -31,7 +32,7 @@ class ForumTasks :
 		pending_adverts = []
 		for thread in self.threads :
 			if "approved" not in [tag.name.lower() for tag in thread.applied_tags] :
-				pending_adverts.append(f"- {thread.jump_url} by {thread.owner.mention}.")
+				pending_adverts.append(PendingAdverts.line(thread))
 			queue().add(self.check_status_tag(thread), priority=0)
 			queue().add(self.check_abandoned_status(thread), priority=0)
 			queue().add(self.cleanup_forum(thread), priority=0)

@@ -1,11 +1,12 @@
-"""The list of adverts waiting for staff approval, per automod forum. Staff see it in two places that the bot keeps
-up to date as adverts are approved, removed or posted:
+"""The list of adverts waiting for staff approval, per automod forum. Each advert is labelled New (a fresh post) or
+Bump (bumped with changes, back in review). Staff see the list in two places that the bot keeps up to date as adverts
+are approved, removed or posted:
 
 * the pending board: one message per forum in the channel set as `pendingboard` (/config channels). Its message ids
   are kept in the config (PENDINGBOARD-<forum id>), so the board carries on after a restart;
 * the DMs /forum pendingadverts sends. These are tracked in memory only: after a restart, older DMs stop updating.
 
-Updates are batched per guild, so a burst of approvals edits each message once."""
+Updates are batched per guild, so a burst of approvals edits each message once. Ported from mousebot."""
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -15,6 +16,7 @@ from discord.ext import commands
 
 from databases.transactions.ConfigData import ConfigData
 from databases.transactions.ConfigTransactions import ConfigTransactions
+from resources.enums.ForumStatus import ForumStatus
 
 # Seconds to wait after a change before editing, so changes close together become one edit.
 DEBOUNCE = 10
@@ -50,7 +52,19 @@ class PendingAdverts :
 	def pending(forum: discord.ForumChannel) -> list[discord.Thread] :
 		"""The forum's open adverts without the approved tag."""
 		return [thread for thread in forum.threads
-		        if "approved" not in [tag.name.lower() for tag in thread.applied_tags]]
+		        if ForumStatus.APPROVED.value not in [tag.name.lower() for tag in thread.applied_tags]]
+
+	@staticmethod
+	def kind(thread: discord.Thread) -> str :
+		"""Bump when the advert is back in review after a bump, New otherwise (a fresh post awaiting its first review)."""
+		if ForumStatus.BUMP.value in [tag.name.lower() for tag in thread.applied_tags] :
+			return "Bump"
+		return "New"
+
+	@staticmethod
+	def line(thread: discord.Thread) -> str :
+		"""One pending advert as a list entry. Uses owner_id: the author may not be cached."""
+		return f"- **{PendingAdverts.kind(thread)}** {thread.jump_url} by <@{thread.owner_id}>"
 
 	@staticmethod
 	def render(forum: discord.ForumChannel) -> discord.Embed :
@@ -66,15 +80,17 @@ class PendingAdverts :
 		lines = []
 		length = 0
 		for index, thread in enumerate(threads) :
-			line = f"- {thread.jump_url} by <@{thread.owner_id}>"
+			line = PendingAdverts.line(thread)
 			# Leaves room for the "...and N more" line.
 			if length + len(line) + 1 > DESCRIPTION_LIMIT - 30 :
 				lines.append(f"...and {len(threads) - index} more")
 				break
 			lines.append(line)
 			length += len(line) + 1
+		bumps = sum(1 for thread in threads if PendingAdverts.kind(thread) == "Bump")
 		return discord.Embed(
-			title=f"{forum.name}: {len(threads)} pending advert{'s' if len(threads) != 1 else ''}",
+			title=f"{forum.name}: {len(threads)} pending advert{'s' if len(threads) != 1 else ''} "
+			      f"({len(threads) - bumps} new, {bumps} bump{'s' if bumps != 1 else ''})",
 			description="\n".join(lines),
 			color=discord.Color.orange(),
 			timestamp=discord.utils.utcnow(),
@@ -141,6 +157,9 @@ class PendingAdverts :
 			except discord.HTTPException as e :
 				logging.warning(f"Failed to post the pending board for forum {forum_id} in {guild.name}: {e}")
 				continue
+			# The config table's key includes an autoincrement id, so overwrite=True would add a second row instead
+			# of replacing the old message id: remove it first.
+			ConfigTransactions().config_unique_remove(guild.id, key)
 			ConfigTransactions().config_unique_add(guild.id, key, message.id, overwrite=True)
 
 	@staticmethod

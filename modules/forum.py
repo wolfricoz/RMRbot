@@ -537,8 +537,8 @@ class Forum(commands.GroupCog, name="forum") :
 	@app_commands.guild_only()
 	@permissions.check_app_roles()
 	async def pending_adverts(self, interaction: discord.Interaction):
-		"""DMs you the adverts awaiting approval in each automod forum. The DMs update themselves for 24 hours as
-		adverts are approved or removed (see PendingAdverts)."""
+		"""DMs you the adverts awaiting approval in each automod forum, labelled New or Bump. The DMs update themselves
+		for 24 hours as adverts are approved or removed (see PendingAdverts)."""
 		await send_response(interaction, f"Checking all channels for pending adverts, please wait...")
 		for forum in PendingAdverts.forums(self.bot, interaction.guild) :
 			queue().add(self._send_pending_dm(interaction.user, interaction.guild.id, forum))
@@ -552,10 +552,20 @@ class Forum(commands.GroupCog, name="forum") :
 			return
 		PendingAdverts.track_dm(guild_id, forum.id, message)
 
+	@staticmethod
+	def _is_automod_forum(guild: discord.Guild | None, forum_id: int | None) -> bool :
+		"""Whether forum_id is one of the guild's automod forums; False while the guild's config isn't loaded."""
+		if guild is None :
+			return False
+		try :
+			return forum_id in AutoMod.config(guild.id)
+		except Exception :
+			return False
+
 	@commands.Cog.listener()
 	async def on_thread_update(self, before: discord.Thread, after: discord.Thread) :
-		"""Updates the pending adverts list when an advert's tags change: approved, back in review, or tagged as new."""
-		if before.applied_tags == after.applied_tags or after.parent_id not in AutoMod.config(after.guild.id) :
+		"""Updates the pending adverts list when an advert's tags change: approved, bumped, or tagged as new."""
+		if before.applied_tags == after.applied_tags or not self._is_automod_forum(after.guild, after.parent_id) :
 			return
 		PendingAdverts.refresh(self.bot, after.guild)
 
@@ -563,7 +573,7 @@ class Forum(commands.GroupCog, name="forum") :
 	async def on_raw_thread_delete(self, payload: discord.RawThreadDeleteEvent) :
 		"""Updates the pending adverts list when an advert is removed (warned, closed, purged or by automod)."""
 		guild = self.bot.get_guild(payload.guild_id)
-		if guild is None or payload.parent_id not in AutoMod.config(guild.id) :
+		if not self._is_automod_forum(guild, payload.parent_id) :
 			return
 		PendingAdverts.refresh(self.bot, guild)
 
