@@ -37,7 +37,7 @@ class config(commands.GroupCog, name="config"):
 
     messagechoices = ['welcomemessage', "lobbywelcome", "reminder"]
     channelchoices = ["dev", 'helpchannel', 'inviteinfo', 'general', "lobby", "lobbylog", "lobbymod",
-                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "blog", "automodlog", "watchlist", "checkinvites", "rpprofiles", "pendingapproval", "purgeannouncement"]
+                      "idlog", "advertmod", "advertlog", "removallog", "nsfwlog", "warnlog", "blog", "automodlog", "watchlist", "checkinvites", "rpprofiles", "pendingapproval", "pendingboard", "purgeannouncement"]
     rolechoices = {"moderator": "mod", "administrator": "admin", 'add to user': 'add', 'remove from user': "rem", "18+ role": "18", "21+ role": "21", "25+ role": "25", "return to lobby": "return", "NSFW role": "NSFW",
                    "Partner role": "partner", "Searchban role": "posttimeout"}
 

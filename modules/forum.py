@@ -16,6 +16,7 @@ from sqlalchemy.sql.functions import now
 import classes.permissions as permissions
 from classes.Advert import Advert
 from classes.AdvertReview import AdvertReview
+from classes.PendingAdverts import PendingAdverts
 from classes import PurgeSchedule
 from classes.ForumPurge import ForumPurge, MANUAL_REMINDER, check_purge_dates
 from classes.Support.LogTo import automod_log
@@ -43,6 +44,16 @@ class Forum(commands.GroupCog, name="forum") :
 		# Persistent, so the report buttons on older messages keep working after a restart. The interest button is
 		# part of PostOptions, which main.py registers.
 		self.bot.add_dynamic_items(InterestReport)
+
+	async def cog_load(self) :
+		# Kept, so the task isn't garbage collected before it runs.
+		self._pending_start = asyncio.create_task(self._refresh_pending_on_start())
+
+	async def _refresh_pending_on_start(self) :
+		"""Brings the pending boards up to date with changes made while the bot was offline."""
+		await self.bot.wait_until_ready()
+		for guild in self.bot.guilds :
+			PendingAdverts.refresh(self.bot, guild)
 
 	@commands.Cog.listener()
 	async def on_thread_create(self, thread: discord.Thread) :
@@ -526,27 +537,35 @@ class Forum(commands.GroupCog, name="forum") :
 	@app_commands.guild_only()
 	@permissions.check_app_roles()
 	async def pending_adverts(self, interaction: discord.Interaction):
-		regex = re.compile(f"search", flags=re.IGNORECASE)
-		channels = [
-			channel
-			for channel in interaction.guild.channels
-			if channel.type == discord.ChannelType.forum and regex.search(channel.name)
-		]
+		"""DMs you the adverts awaiting approval in each automod forum. The DMs update themselves for 24 hours as
+		adverts are approved or removed (see PendingAdverts)."""
 		await send_response(interaction, f"Checking all channels for pending adverts, please wait...")
-		for channel in channels :
-			pending_adverts = []
-			if channel.id == interaction.channel.id :
-				continue
-			for thread in channel.threads :
-				if "approved" not in [tag.name.lower() for tag in thread.applied_tags] :
-					pending_adverts.append(f"- {thread.jump_url} by <@{thread.owner_id}>.")
-			if len(pending_adverts)  < 1 :
-				pending_msg = f"{channel.name} is up to date! All adverts are checked and approved! Good job everyone!"
-				queue().add(send_message(interaction.user, pending_msg))
-				continue
-			posts = '\n'.join(pending_adverts)
-			pending_msg = f"{channel.name} has {len(pending_adverts)} pending adverts:\n {posts}"
-			queue().add(send_message(interaction.user, pending_msg))
+		for forum in PendingAdverts.forums(self.bot, interaction.guild) :
+			queue().add(self._send_pending_dm(interaction.user, interaction.guild.id, forum))
+
+	@staticmethod
+	async def _send_pending_dm(user: discord.User | discord.Member, guild_id: int, forum: discord.ForumChannel) :
+		try :
+			message = await user.send(embed=PendingAdverts.render(forum))
+		except discord.HTTPException as e :
+			logging.warning(f"Failed to DM {user} the pending adverts of {forum.name}: {e}")
+			return
+		PendingAdverts.track_dm(guild_id, forum.id, message)
+
+	@commands.Cog.listener()
+	async def on_thread_update(self, before: discord.Thread, after: discord.Thread) :
+		"""Updates the pending adverts list when an advert's tags change: approved, back in review, or tagged as new."""
+		if before.applied_tags == after.applied_tags or after.parent_id not in AutoMod.config(after.guild.id) :
+			return
+		PendingAdverts.refresh(self.bot, after.guild)
+
+	@commands.Cog.listener()
+	async def on_raw_thread_delete(self, payload: discord.RawThreadDeleteEvent) :
+		"""Updates the pending adverts list when an advert is removed (warned, closed, purged or by automod)."""
+		guild = self.bot.get_guild(payload.guild_id)
+		if guild is None or payload.parent_id not in AutoMod.config(guild.id) :
+			return
+		PendingAdverts.refresh(self.bot, guild)
 
 	@app_commands.command(name="copy", description="Copy a forum with all settings!")
 	@app_commands.checks.has_permissions(manage_channels=True)
