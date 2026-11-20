@@ -16,6 +16,7 @@ from classes.Support.LogTo import automod_log
 from classes.Support.discord_tools import send_message
 from classes.TagController import TagController
 from classes.AdvertReview import AdvertReview
+from classes.PendingAdverts import PendingAdverts
 from databases.transactions.ApprovalTransactions import ApprovalTransactions
 from databases.transactions.ConfigData import ConfigData
 from classes.queue import queue
@@ -155,6 +156,8 @@ class AutoMod(ABC) :
 		if og_time is not None and current_time - og_time > timedelta(
 				hours=hours) and user_count <= 0 or og_time is None and user_count <= 0 :
 			await tagcontroller.set_status(ForumStatus.APPROVED.value)
+			# Auto-approved: the bot is the approver in the pendingapproval channel.
+			PendingAdverts.note_approval(thread.id, bot.user.id)
 			await tagcontroller.commit_tags()
 			queue().add(send_message(interaction.channel,
 			                         f"Post successfully bumped and automatically approved. You can bump again in: {discord.utils.format_dt(datetime.now() + timedelta(days=3), style='R')}",

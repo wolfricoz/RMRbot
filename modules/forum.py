@@ -575,6 +575,7 @@ class Forum(commands.GroupCog, name="forum") :
 		guild = self.bot.get_guild(payload.guild_id)
 		if not self._is_automod_forum(guild, payload.parent_id) :
 			return
+		PendingAdverts.note_removed(payload.thread_id)
 		PendingAdverts.refresh(self.bot, guild)
 
 	@app_commands.command(name="copy", description="Copy a forum with all settings!")

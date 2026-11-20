@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from classes.Advert import Advert
 from classes.AdvertReview import AdvertReview
+from classes.PendingAdverts import PendingAdverts
 from classes.TagController import TagController
 # TODO: dead code - unused import
 from classes.automod import AutoMod
@@ -40,6 +41,8 @@ class contextmenus(commands.Cog, name="contextmenus"):
             thread = message.channel
         tagcontroller = TagController(thread.parent, thread)
         await tagcontroller.set_status('approved')
+        # Before the tags change: the change updates the pendingapproval channel, which names the approver.
+        PendingAdverts.note_approval(thread.id, interaction.user.id)
         await tagcontroller.commit_tags()
         # await TagController().change_status_tag(interaction.client, thread, ["approved"])
         await interaction.followup.send("bump successfully approved")
