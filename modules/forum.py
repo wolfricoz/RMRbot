@@ -3,6 +3,7 @@ import asyncio
 import logging
 import re
 import typing
+from collections import Counter
 from datetime import datetime, timedelta
 
 import discord
@@ -503,35 +504,24 @@ class Forum(commands.GroupCog, name="forum") :
 			ephemeral=True,
 		)
 
-	@app_commands.command(name="leaderboard", description="description")
+	@app_commands.command(name="leaderboard", description="ADMIN: moderators with the most advert approvals")
+	@app_commands.guild_only()
 	@permissions.check_app_roles_admin()
-	async def leaderboard(self, interaction: discord.Interaction, days:int = 30) :
-		lb = {
-
-		}
-
-		records = ApprovalTransactions().get_all_approvals(days)
-		for record in records:
-			# Auto-approved bumps are logged with the bot as approver.
-			if record.uid == self.bot.user.id :
-				continue
-			uid = str(record.uid)
-			if uid not in lb:
-				lb[uid] = 0
-			lb[uid] += 1
+	async def leaderboard(self, interaction: discord.Interaction, days: int = 30) :
+		"""The 10 members of this server with the most approvals in the last days."""
+		# Auto-approved bumps are logged with the bot as approver.
+		counts = Counter(record.uid for record in ApprovalTransactions().get_by_guild(interaction.guild.id, days)
+		                 if record.uid != self.bot.user.id)
 		embed = discord.Embed(title=f"Approval Leaderboard of the last {days} days", color=0x00ff00)
 		embed.set_footer(text="Top 10 Approvals")
-		lb = dict(sorted(lb.items(), key=lambda x: x[1], reverse=True))
-		count = 1
-		for key, value in lb.items() :
-			if count > 9:
+		for uid, total in counts.most_common() :
+			if len(embed.fields) >= 10 :
 				break
-			member = interaction.guild.get_member(int(key))
+			member = interaction.guild.get_member(uid)
 			if member is None :
 				continue
-			embed.add_field(name=member.name, value=value, inline=False)
+			embed.add_field(name=member.name, value=total, inline=False)
 		await send_response(interaction, "", embed=embed)
-		count += 1
 
 	@app_commands.command(name="pendingadverts", description="checks for pending adverts")
 	@app_commands.guild_only()
